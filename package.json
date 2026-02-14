@@ -1,0 +1,27 @@
+{
+  "name": "iitk-projectspace",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
+    "frontend": "cd frontend && npm run dev",
+    "backend": "set PYTHONUTF8=1&& cd backend && venv\\Scripts\\activate && fastapi dev main.py",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"green,blue\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aman02032006/IITK-ProjectSpace.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Aman02032006/IITK-ProjectSpace/issues"
+  },
+  "homepage": "https://github.com/Aman02032006/IITK-ProjectSpace#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
