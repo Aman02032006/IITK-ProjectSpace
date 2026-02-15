@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.database import create_db_and_tables
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="IITK ProjectSpace API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This runs BEFORE the app starts
+    print("Connecting to Docker Database...")
+    create_db_and_tables()
+    print("✅ Tables created!")
+    yield
+
+
+app = FastAPI(title="IITK ProjectSpace API", lifespan=lifespan)
 
 # Allow Frontend (Port 3000) to talk to Backend (Port 8000)
 app.add_middleware(
@@ -11,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def read_root():

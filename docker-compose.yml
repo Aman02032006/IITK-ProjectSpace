@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15
+    container_name: iitk_projectspace_db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123kernel456  # Simple password for local dev
+      - POSTGRES_DB=projectspace_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
