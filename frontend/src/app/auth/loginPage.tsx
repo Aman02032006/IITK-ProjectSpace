@@ -157,8 +157,8 @@ const loginPage = () => {
               Update Password
             </button>
             
-            <p className="link" onClick={() => setMode("forgot-email")}>
-              Go Back
+            <p className="link" onClick={() => setMode("login")}>
+              Back to Login
             </p>
           </>
         )}
