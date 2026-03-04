@@ -165,6 +165,18 @@ input {
   margin-left: auto;
 }
 
+input[type = "password"] {
+  font-family: Verdana, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+input[type = "password"]::placeholder {
+  font-family: var(--font-montserrat);
+  font-size: 0.95rem;
+  letter-spacing: normal;
+}
+
 
 /* BUTTONS */
 .primary-btn {

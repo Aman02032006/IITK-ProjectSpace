@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator
 from typing import Optional, List
 import uuid
 from datetime import datetime
@@ -12,9 +12,43 @@ class UserBase(BaseModel):
     fullname: str = None
     iitk_email: EmailStr
 
+    @field_validator('iitk_email')
+    @classmethod
+    def validate_iitk_domain(cls, v: str) -> str:
+        if not v.endswith('@iitk.ac.in'):
+            raise ValueError('Only IITK Emails are allowed during registration.')
+        return v
+
+# OTP Verification
+
+class OTPVerify(BaseModel):
+    iitk_email: EmailStr
+    otp_code: str
+    password: str = Field(min_length=8, max_length=20)
+
+class OTPCheck(BaseModel):
+    iitk_email: EmailStr
+    otp_code: str
+    purpose: str
+
+# Forgot Password
+
+class ForgotPasswordRequest(BaseModel):
+    iitk_email: EmailStr
+
+    @field_validator
+    @classmethod
+    def validate_iitk_domain(cls, v: str) -> str:
+        if not v.endswith('@iitk.ac.in'):
+            raise ValueError('Only IITK Emails are allowed for Password Resets.')
+        return v
+
+class ForgotPasswordVerify(BaseModel):
+    iitk_email: EmailStr
+    otp_code: str
+    new_password: str = Field(min_length=8, max_length=40)
 
 # Registeration
-
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=20)

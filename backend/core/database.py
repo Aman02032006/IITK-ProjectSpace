@@ -1,14 +1,13 @@
 from sqlmodel import SQLModel, create_engine, Session
-import os
-from dotenv import load_dotenv
+from core.config import settings
 
-load_dotenv()
+from models.user import User
+from models.otp import OTPVerification
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
+if not settings.DATABASE_URL:
     raise ValueError("DATABASE_URL is missing. Check .env file in the backend folder.")
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=True)
 
 
 def get_session():
