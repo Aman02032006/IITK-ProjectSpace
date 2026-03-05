@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import "./loginPage.css";
 import OtpPopUp from "./otpPopUp";
+import { requestOTP,checkOTP, verifyOTP, registerUser } from "../../lib/authApi";
+
+
 
 type Mode =
   | "login"
@@ -11,31 +14,73 @@ type Mode =
   | "forgot-reset";
 
 const loginPage = () => {
+  const [fullname, setFullname] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [verifiedOtp, setVerifiedOtp] = useState("");
   const [mode, setMode] = useState<Mode>("login");
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpPurpose, setOtpPurpose] =
     useState<"register" | "forgot" | null>(null);
-
+  const [confirmPassword, setConfirmPassword] = useState("");
   const showTabs =
     mode === "login" ||
     mode === "register-step1" ||
     mode === "register-password";
 
-  const openOtp = (purpose: "register" | "forgot") => {
-    setOtpPurpose(purpose);
-    setShowOtpModal(true);
-  };
-
-  const handleOtpVerify = ( otp: string ) => {
-    // OTP verification backend wiring to be done here
-    setShowOtpModal(false);
-
-    if (otpPurpose === "register") {
-      setMode("register-password");
-    } else {
-      setMode("forgot-reset");
+  const openOtp = async (purpose: "register" | "forgot") => {
+  try {
+    if (!email || !fullname) {
+      alert("Please enter email and name first");
+      return;
     }
-  };
+
+    const res = await requestOTP(email, fullname);
+
+    if (res.message) {
+      setOtpPurpose(purpose);
+      setShowOtpModal(true);
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to send OTP");
+  }
+};
+
+  const handleOtpVerify = async (otp: string) => {
+  try {
+    const res = await checkOTP(email, otp);
+
+    if (res.message === "OTP is valid.") {
+      setShowOtpModal(false);
+      setVerifiedOtp(otp);
+      if (otpPurpose === "register") {
+        setMode("register-password");
+      } else {
+        setMode("forgot-reset");
+      }
+    }
+
+  } catch (err) {
+    alert("Invalid or expired OTP");
+  }
+};
+const handleRegister = async () => {
+  try {
+    const res = await registerUser(email, fullname, password);
+
+    if (res) {
+      await verifyOTP(email, verifiedOtp);
+
+      alert("Account created successfully!");
+      setMode("login");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Registration failed");
+  }
+};
 
   return (
     <div className="auth-container">
@@ -90,10 +135,10 @@ const loginPage = () => {
         {mode === "register-step1" && (
           <>
             <label>Full Name</label>
-            <input placeholder="Enter your full name" />
+            <input placeholder="Enter your full name" value={fullname} onChange={(e) => setFullname(e.target.value)}/>
 
             <label>IITK Email ID</label>
-            <input placeholder="Enter your IITK Email ID" />
+            <input placeholder="Enter your IITK Email ID" value={email} onChange={(e) => setEmail(e.target.value)} />
 
             <button
               className="primary-btn"
@@ -108,18 +153,19 @@ const loginPage = () => {
         {mode === "register-password" && (
           <>
             <label>Full Name</label>
-            <input placeholder="Enter your full name" />
+            <input value={fullname} disabled />
 
             <label>IITK Email ID</label>
-            <input disabled placeholder="Verified Email" />
+            <input value={email} disabled />
 
             <label>New Password</label>
-            <input type="password" placeholder="Create a strong password" />
+            <input type="password" placeholder="Create a strong password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
             <label>Confirm Password</label>
-            <input type="password" placeholder="Confirm your password" />
-
-            <button className="primary-btn">Register</button>
+            <input  type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
+            <button className="primary-btn" onClick={handleRegister}>
+  Register
+</button>
           </>
         )}
 

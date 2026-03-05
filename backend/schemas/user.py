@@ -36,7 +36,7 @@ class OTPCheck(BaseModel):
 class ForgotPasswordRequest(BaseModel):
     iitk_email: EmailStr
 
-    @field_validator
+    @field_validator("iitk_email")
     @classmethod
     def validate_iitk_domain(cls, v: str) -> str:
         if not v.endswith('@iitk.ac.in'):
