@@ -56,7 +56,7 @@ export async function registerUser(
   return res.json();
 }
 export async function verifyOTP(email: string, otp: string) {
-  const res = await fetch('${API}/verify-otp', {
+  const res = await fetch(`${API}/verify-otp`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
