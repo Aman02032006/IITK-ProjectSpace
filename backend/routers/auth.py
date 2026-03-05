@@ -21,7 +21,7 @@ from crud.user import create_user, get_user_by_email
 from core.security import verify_password, create_access_token, get_password_hash
 from core.email import send_otp_email
 
-router = APIRouter(prefix="/auth", tags=["Authenitication"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 def get_session():
@@ -63,15 +63,12 @@ async def request_otp(request_data: UserBase, db: Session = Depends(get_session)
         name=request_data.fullname,
         purpose="register",
     )
-
     return {"message": "Verification code sent successfully."}
 
 
 # Verifying OTP Endpoint
-@router.post(
-    "/verify-otp", response_model=UserPublic, status_code=status.HTTP_201_CREATED
-)
-def verify_otp_and_register(verify_data: OTPVerify, db: Session = Depends(get_session)):
+@router.post("/verify-otp", status_code=status.HTTP_200_OK)
+def verify_otp(verify_data: OTPVerify, db: Session = Depends(get_session)):
 
     otp_record = db.exec(
         select(OTPVerification)
@@ -79,37 +76,11 @@ def verify_otp_and_register(verify_data: OTPVerify, db: Session = Depends(get_se
         .where(OTPVerification.purpose == "register")
     ).first()
 
-    if not otp_record:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No verification request found.",
-        )
-
-    if otp_record.otp_code != verify_data.otp_code:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code."
-        )
-
-    if otp_record.expires_at < datetime.utcnow():
+    if otp_record:
         db.delete(otp_record)
         db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification code has expired. Please request a new one.",
-        )
 
-    new_user_data = UserCreate(
-        fullname=otp_record.full_name,
-        iitk_email=otp_record.email,
-        password=verify_data.password,
-    )
-    created_user = create_user(session=db, user_create=new_user_data)
-
-    db.delete(otp_record)
-    db.commit()
-
-    return created_user
-
+    return {"message": "OTP removed"}
 
 @router.post("/check-otp", status_code=status.HTTP_200_OK)
 def check_otp(check_data: OTPCheck, db: Session = Depends(get_session)):
@@ -140,7 +111,26 @@ def check_otp(check_data: OTPCheck, db: Session = Depends(get_session)):
 
     return {"message": "OTP is valid."}
 
+@router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+def register_user(user_data: UserCreate, db: Session = Depends(get_session)):
+    existing_user = get_user_by_email(session=db, email=user_data.iitk_email)
 
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered."
+        )
+    created_user = create_user(session=db, user_create=user_data)
+    otp_record = db.exec(
+        select(OTPVerification)
+        .where(OTPVerification.email == user_data.iitk_email)
+        .where(OTPVerification.purpose == "register")
+    ).first()
+
+    if otp_record:
+        db.delete(otp_record)
+        db.commit()
+    return created_user
 # Login Endpoint
 @router.post("/login")
 def login_user(user_credentials: UserLogin, db: Session = Depends(get_session)):

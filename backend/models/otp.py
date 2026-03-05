@@ -10,5 +10,5 @@ class OTPVerification(SQLModel, table=True):
     full_name: str = Field(max_length=64)
 
     otp_code: str = Field(max_length=6)
-    purpose: str = Field(default="register", max_length=7)
+    purpose: str = Field(default="register", max_length=20)
     expires_at: datetime
