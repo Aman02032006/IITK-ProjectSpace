@@ -1,3 +1,5 @@
+import { saveToken, removeToken } from "@/lib/token";
+
 const API = "http://127.0.0.1:8000/auth";
 
 export async function loginUser(email: string, password: string) {
@@ -7,14 +9,25 @@ export async function loginUser(email: string, password: string) {
     body: JSON.stringify({ iitk_email: email, password: password }),
   });
   if (!res.ok) throw new Error("Login failed");
-  return res.json();
+  const data = await res.json();
+
+  // Persist token so all subsequent API calls can use it
+  if (data.access_token) {
+    saveToken(data.access_token);
+  }
+
+  return data;
+}
+
+export async function logoutUser() {
+  removeToken();
 }
 
 export async function requestRegistrationOTP(email: string, fullname: string) {
   const res = await fetch(`${API}/request-otp`, {
     method: "POST",
-    headers: {"Content-Type": "application/json",},
-    body: JSON.stringify({iitk_email: email, fullname: fullname,}),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ iitk_email: email, fullname: fullname }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Failed to send OTP");
@@ -35,8 +48,8 @@ export async function requestResetOTP(email: string) {
 export async function checkOTP(email: string, otp: string, purpose: "register") {
   const res = await fetch(`${API}/check-otp`, {
     method: "POST",
-    headers: {"Content-Type": "application/json",},
-    body: JSON.stringify({iitk_email: email, otp_code: otp, purpose: purpose,}),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ iitk_email: email, otp_code: otp, purpose: purpose }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Invalid OTP");

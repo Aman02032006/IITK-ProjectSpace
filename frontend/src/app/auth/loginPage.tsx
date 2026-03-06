@@ -12,6 +12,7 @@ import {
   finalizePasswordReset,
 } from "../../lib/authApi";
 import { Playwrite_DK_Uloopet_Guides } from "next/font/google";
+import { useRouter } from "next/navigation";
 
 
 
@@ -35,6 +36,8 @@ const loginPage = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false)
+
+  const router = useRouter();
 
   const showTabs = mode === "login" || mode === "register-step1" || mode === "register-password";
   
@@ -116,7 +119,7 @@ const loginPage = () => {
     try {
       await finalizeRegistration(email, verifiedOtp, password);
       triggerAlert("Account created successfully!", "success");
-      handleModeSwitch("login");
+      window.location.href = "/profilePage";
       setPassword(""); setConfirmPassword("");
     } catch (err) {
       triggerAlert("Registration failed", "error");
