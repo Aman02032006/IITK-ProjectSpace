@@ -3,6 +3,7 @@ import "./Header.css";
 
 interface HeaderProps {
   onEditProfile?: () => void;
+  showEditProfile?: boolean;
 }
 
 const SearchIcon = () => (
@@ -12,7 +13,7 @@ const SearchIcon = () => (
   </svg>
 );
 
-const Header: React.FC<HeaderProps> = ({ onEditProfile }) => {
+const Header: React.FC<HeaderProps> = ({ onEditProfile, showEditProfile = false }) => {
   const [searchValue, setSearchValue] = useState("");
 
   return (
@@ -37,9 +38,11 @@ const Header: React.FC<HeaderProps> = ({ onEditProfile }) => {
       </div>
 
       {/* Edit Profile Button */}
-      <button className="header__edit-btn" onClick={onEditProfile}>
-        Edit Profile
-      </button>
+      {showEditProfile && (
+        <button className="header__edit-btn" onClick={onEditProfile}>
+          Edit Profile
+        </button>
+      )}
     </header>
   );
 };
