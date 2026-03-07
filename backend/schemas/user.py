@@ -12,26 +12,29 @@ class UserBase(BaseModel):
     fullname: str = None
     iitk_email: EmailStr
 
-    @field_validator('iitk_email')
+    @field_validator("iitk_email")
     @classmethod
     def validate_iitk_domain(cls, v: str) -> str:
-        if not v.endswith('@iitk.ac.in'):
-            raise ValueError('Only IITK Emails are allowed during registration.')
+        if not v.endswith("@iitk.ac.in"):
+            raise ValueError("Only IITK Emails are allowed during registration.")
         return v
 
-# OTP Verification
 
+# OTP Verification
 class OTPVerify(BaseModel):
     iitk_email: EmailStr
     otp_code: str
     password: str = Field(min_length=8, max_length=20)
+
 
 class OTPCheck(BaseModel):
     iitk_email: EmailStr
     otp_code: str
     purpose: str
 
+
 # Forgot Password
+
 
 class ForgotPasswordRequest(BaseModel):
     iitk_email: EmailStr
@@ -39,16 +42,19 @@ class ForgotPasswordRequest(BaseModel):
     @field_validator("iitk_email")
     @classmethod
     def validate_iitk_domain(cls, v: str) -> str:
-        if not v.endswith('@iitk.ac.in'):
-            raise ValueError('Only IITK Emails are allowed for Password Resets.')
+        if not v.endswith("@iitk.ac.in"):
+            raise ValueError("Only IITK Emails are allowed for Password Resets.")
         return v
+
 
 class ForgotPasswordVerify(BaseModel):
     iitk_email: EmailStr
     otp_code: str
     new_password: str = Field(min_length=8, max_length=40)
 
+
 # Registeration
+
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=20)
@@ -84,6 +90,7 @@ class UserUpdate(BaseModel):
     domains: Optional[List[str]] = None
 
 
+# what frontend gets for one's own profile
 class UserPublic(UserBase):
     id: uuid.UUID
 
@@ -106,6 +113,30 @@ class UserPublic(UserBase):
     is_active: bool
     is_admin: bool
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# To view someone else's profile
+class UserProfileView(UserBase):
+    id: uuid.UUID
+
+    secondary_email: Optional[EmailStr] = None
+    designation: Designation
+    degree: Degree
+    department: Department
+
+    bio: str = ""
+    profile_picture_url: Optional[str] = None
+
+    skills: List[str] = []
+    domains: List[str] = []
+
+    github: Optional[HttpUrl] = None
+    linkedin: Optional[HttpUrl] = None
+    other_link1: Optional[HttpUrl] = None
+    other_link2: Optional[HttpUrl] = None
 
     class Config:
         from_attributes = True

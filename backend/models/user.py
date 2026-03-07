@@ -21,6 +21,7 @@ class User(SQLModel, table=True):
     designation: Designation = Field(default=Designation.NA)
     degree: Degree = Field(default=Degree.NA)
     department: Department = Field(default=Department.NA)
+    institution: str = Field(default="IIT Kanpur", max_length=255)
 
     # Social Links
     github: Optional[str] = Field(default=None, max_length=255)

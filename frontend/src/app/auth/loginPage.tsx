@@ -115,7 +115,10 @@ const loginPage = () => {
 
   const handleRegister = async () => {
     setIsLoading(true);
-    if (password !== confirmPassword) return triggerAlert("Passwords do not match!", "error");
+    if (password !== confirmPassword) {
+      setIsLoading(false)
+      return triggerAlert("Passwords do not match!", "error");
+    }
     try {
       await finalizeRegistration(email, verifiedOtp, password);
       triggerAlert("Account created successfully!", "success");
@@ -130,7 +133,10 @@ const loginPage = () => {
 
   const handlePasswordReset = async () => {
     setIsLoading(true);
-    if (password !== confirmPassword) return triggerAlert("Passwords do not match!", "error");
+    if (password !== confirmPassword) {
+      setIsLoading(false)
+      return triggerAlert("Passwords do not match!", "error");
+    }
     try {
       await finalizePasswordReset(email, verifiedOtp, password);
       triggerAlert("Password updated successfully!", "success");

@@ -1,32 +1,45 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
+import uuid
 
-from core.database import engine
+from core.database import get_session
+from core.dependencies import get_current_user
 from models.user import User
-from schemas.user import UserPublic
-from core.security import get_current_user
+from schemas.user import UserPublic, UserUpdate, UserProfileView
+from crud.user import update_user, get_user_by_id
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.get("/me")
-def get_my_profile(
+
+# Get the detail of the current user
+@router.get("/me", response_model=UserPublic)
+def get_my_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+# Update the details of the current user
+@router.patch("/me", response_model=UserPublic)
+def edit_my_profile(
+    user_update: UserUpdate,
+    session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    return {
-        "name":        current_user.fullname,
-        "email":       current_user.iitk_email,
-        "role":        current_user.designation.value if current_user.designation else "",
-        "department":  current_user.department.value  if current_user.department  else "",
-        "institution": "Indian Institute of Technology Kanpur",
-        "bio":         current_user.bio,
-        "skills":      current_user.skills   or [],
-        "domains":     current_user.domains  or [],
-        "socialLinks": {
-            "linkedin":   current_user.linkedin,
-            "github":     current_user.github,
-            "other_link1": current_user.other_link1,
-            "other_link2": current_user.other_link2,
-        },
-        "profilePictureUrl": current_user.profile_picture_url,
-        "cards": [],   # wire the Cards model when made
-    }
+    updated_user = update_user(
+        session=session, db_user=current_user, user_update=user_update
+    )
+    return updated_user
+
+
+# Get the detail of some other user
+@router.get("/{user_id}", response_model=UserProfileView)
+def get_user_profile(
+    user_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    user = get_user_by_id(session=session, user_id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    return user

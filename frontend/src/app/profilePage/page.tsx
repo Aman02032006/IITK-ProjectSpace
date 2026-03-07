@@ -97,7 +97,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const visibleCards = profile.cards.filter((c) => c.type === activeTab);
+  const visibleCards = profile?.cards?.filter((c) => c?.type === activeTab) || [];
 
   return (
     <div className="app-shell">
@@ -114,10 +114,10 @@ const ProfilePage: React.FC = () => {
               {/* Avatar */}
               <div className="profile-card__avatar-wrap">
                 <div className="profile-card__avatar">
-                  {profile.profilePictureUrl ? (
+                  {profile.profile_picture_url ? (
                     <img
-                      src={profile.profilePictureUrl}
-                      alt={profile.name}
+                      src={profile.profile_picture_url}
+                      alt={profile.fullname || "User Avatar"}
                       style={{ width: "100%", height: "100%", borderRadius: 12, objectFit: "cover" }}
                     />
                   ) : (
@@ -132,27 +132,27 @@ const ProfilePage: React.FC = () => {
 
               {/* Identity */}
               <div className="profile-card__identity">
-                <h1 className="profile-card__name">{profile.name}</h1>
-                <p className="profile-card__email">{profile.email}</p>
-                <p className="profile-card__role">{profile.role}</p>
+                <h1 className="profile-card__name">{profile.fullname}</h1>
+                <p className="profile-card__email">{profile.iitk_email}</p>
+                <p className="profile-card__desg">{profile.designation}</p>
+                <p className="profile-card__degr">{profile.degree}</p>
                 <p className="profile-card__dept">{profile.department}</p>
-                <p className="profile-card__inst">{profile.institution}</p>
               </div>
 
               {/* Social links — only rendered when user has them saved */}
               <div className="profile-card__links">
-                {profile.socialLinks.linkedin && (
-                  <a href={profile.socialLinks.linkedin} className="profile-card__link" aria-label="LinkedIn" target="_blank" rel="noreferrer">
+                {profile.linkedin && (
+                  <a href={profile.linkedin} className="profile-card__link" aria-label="LinkedIn" target="_blank" rel="noreferrer">
                     <LinkedInIcon /> LinkedIn
                   </a>
                 )}
-                {profile.socialLinks.github && (
-                  <a href={profile.socialLinks.github} className="profile-card__link" aria-label="GitHub" target="_blank" rel="noreferrer">
+                {profile.github && (
+                  <a href={profile.github} className="profile-card__link" aria-label="GitHub" target="_blank" rel="noreferrer">
                     <GitHubIcon /> GitHub
                   </a>
                 )}
-                {profile.socialLinks.other_link1 && (
-                  <a href={profile.socialLinks.other_link1} className="profile-card__link" aria-label="Other link" target="_blank" rel="noreferrer">
+                {profile.other_link1 && (
+                  <a href={profile.other_link1} className="profile-card__link" aria-label="Other link" target="_blank" rel="noreferrer">
                     <ScholarIcon /> Scholar / Other
                   </a>
                 )}
@@ -163,13 +163,13 @@ const ProfilePage: React.FC = () => {
             <div className="skills-bio">
               <div className="skills-bio__skills-row">
                 <span className="skills-bio__label">SKILLS</span>
-                {profile.skills.map((skill, i) => (
+                {profile.skills?.map((skill, i) => (
                   <span key={skill} className={`skills-bio__tag skills-bio__tag--${TAG_COLORS[i % TAG_COLORS.length]}`}>
                     {skill}
                   </span>
                 ))}
               </div>
-              <p className="skills-bio__bio">{profile.bio}</p>
+              <p className="skills-bio__bio">{profile.bio || "No bio added yet."}</p>
             </div>
           </section>
 
@@ -181,7 +181,7 @@ const ProfilePage: React.FC = () => {
               className={`tabs__btn${activeTab === "recruitment" ? " tabs__btn--active" : ""}`}
               onClick={() => setActiveTab("recruitment")}
             >
-              <RecruitIcon /> Recruitment
+              <RecruitIcon /> Recruitments
             </button>
             <button
               role="tab"
@@ -189,9 +189,9 @@ const ProfilePage: React.FC = () => {
               className={`tabs__btn${activeTab === "project" ? " tabs__btn--active" : ""}`}
               onClick={() => setActiveTab("project")}
             >
-              <ProjectIcon /> Project
+              <ProjectIcon /> Projects
             </button>
-          </div>
+          </div> 
 
           {/* Cards */}
           <div className="cards-grid" role="tabpanel">

@@ -71,9 +71,9 @@
 }
 
 .profile-card__avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 14px;
+  width: 150px;
+  height: 150px;
+  border-radius: 15px;
   overflow: hidden;
   border: 2px solid var(--color-lightest);
   background: #1a3a5c;
@@ -95,29 +95,28 @@
 }
 
 .profile-card__name {
-  font-size: 26px;
+  font-size: 36px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 4px;
-  letter-spacing: -0.02em;
+  margin: -7px 0px 0px 0px;
 }
 
 .profile-card__email {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--color-teal);
-  margin: 0 0 8px;
+  margin: 5px 0px -5px 0px;
 }
 
-.profile-card__role,
+.profile-card__desg,
 .profile-card__dept,
-.profile-card__inst {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-secondary);
+.profile-card__degr {
+  margin: -1px 0 -5px 0px;
+  font-size: 18px;
+  color: var(--text-primary);
   line-height: 1.5;
 }
 
-.profile-card__inst {
+.profile-card__dept {
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -200,6 +199,8 @@
 .tabs__btn {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 150px;
   gap: 7px;
   padding: 9px 20px;
   border-radius: 10px;
