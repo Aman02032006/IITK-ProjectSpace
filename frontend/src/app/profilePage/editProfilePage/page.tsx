@@ -1,7 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import "../ProfilePage.css";
 import "./editProfilePage.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
@@ -216,21 +215,21 @@ const EditProfilePage: React.FC = () => {
             <div className="edit-profile-page__card-header">
               <h2 className="edit-profile-page__card-title">Edit Profile</h2>
             </div>
-            <div className="edit-modal__body">
+            <div className="edit-profile-page__body">
               {/* Avatar */}
-              <div className="edit-modal__avatar-section">
-                <div className="edit-modal__avatar-wrap">
+              <div className="edit-profile-page__avatar-section">
+                <div className="edit-profile-page__avatar-wrap">
                   {displayAvatar ? (
-                    <img src={displayAvatar} alt="Profile" className="edit-modal__avatar-img" />
+                    <img src={displayAvatar} alt="Profile" className="edit-profile-page__avatar-img" />
                   ) : (
-                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="edit-modal__avatar-svg">
+                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="edit-profile-page__avatar-svg">
                       <rect width="80" height="80" rx="12" fill="#1a3a5c" />
                       <circle cx="40" cy="28" r="14" fill="#49769F" />
                       <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
                     </svg>
                   )}
                   <button
-                    className="edit-modal__avatar-btn"
+                    className="edit-profile-page__avatar-btn"
                     onClick={() => fileInputRef.current?.click()}
                     aria-label="Change profile picture"
                   >
@@ -244,20 +243,20 @@ const EditProfilePage: React.FC = () => {
                   style={{ display: "none" }}
                   onChange={handleAvatarChange}
                 />
-                <p className="edit-modal__avatar-hint">Click the camera icon to change your photo</p>
+                <p className="edit-profile-page__avatar-hint">Click the camera icon to change your photo</p>
               </div>
 
               {/* Form fields */}
-              <div className="edit-modal__fields">
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label">Full Name</label>
-                  <input className="edit-modal__input" value={form.fullname} onChange={set("fullname")} placeholder="Your full name" />
+              <div className="edit-profile-page__fields">
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label">Full Name</label>
+                  <input className="edit-profile-page__input" value={form.fullname} onChange={set("fullname")} placeholder="Your full name" />
                 </div>
 
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label">Designation</label>
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label">Designation</label>
                   <select 
-                    className="edit-modal__input" 
+                    className="edit-profile-page__input" 
                     value={form.designation} 
                     onChange={set("designation")}
                   >
@@ -272,11 +271,11 @@ const EditProfilePage: React.FC = () => {
                     <option value="Higher Academic Grade Professor">Higher Academic Grade Professor</option>
                   </select></div>
 
-                <div className="edit-modal__row edit-modal__row--half">
+                <div className="edit-profile-page__row edit-profile-page__row--half">
                   <div>
-                    <label className="edit-modal__label">Degree</label>
+                    <label className="edit-profile-page__label">Degree</label>
                     <select 
-                      className="edit-modal__input" 
+                      className="edit-profile-page__input" 
                       value={form.degree} 
                       onChange={set("degree")}
                     >
@@ -300,9 +299,9 @@ const EditProfilePage: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="edit-modal__label">Department</label>
+                    <label className="edit-profile-page__label">Department</label>
                     <select 
-                      className="edit-modal__input" 
+                      className="edit-profile-page__input" 
                       value={form.department} 
                       onChange={set("department")}
                     >
@@ -333,8 +332,8 @@ const EditProfilePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label">Skills</label>
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label">Skills</label>
                   <CreatableSelect
                     isMulti
                     options={seedSkills}
@@ -347,26 +346,26 @@ const EditProfilePage: React.FC = () => {
                   />
                 </div>
 
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label">Bio</label>
-                  <textarea className="edit-modal__textarea" value={form.bio} onChange={set("bio")} rows={3} placeholder="Tell people about yourself…" />
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label">Bio</label>
+                  <textarea className="edit-profile-page__textarea" value={form.bio} onChange={set("bio")} rows={3} placeholder="Tell people about yourself…" />
                 </div>
 
-                <div className="edit-modal__section-title">Social Links</div>
+                <div className="edit-profile-page__section-title">Social Links</div>
 
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label"><LinkedInIcon /> LinkedIn URL</label>
-                  <input className="edit-modal__input" value={form.linkedin} onChange={set("linkedin")} placeholder="https://linkedin.com/in/yourprofile" />
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label"><LinkedInIcon /> LinkedIn URL</label>
+                  <input className="edit-profile-page__input" value={form.linkedin} onChange={set("linkedin")} placeholder="https://linkedin.com/in/yourprofile" />
                 </div>
 
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label"><GitHubIcon /> GitHub URL</label>
-                  <input className="edit-modal__input" value={form.github} onChange={set("github")} placeholder="https://github.com/yourhandle" />
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label"><GitHubIcon /> GitHub URL</label>
+                  <input className="edit-profile-page__input" value={form.github} onChange={set("github")} placeholder="https://github.com/yourhandle" />
                 </div>
 
-                <div className="edit-modal__row">
-                  <label className="edit-modal__label"><ScholarIcon /> Scholar / Other URL</label>
-                  <input className="edit-modal__input" value={form.other_link1} onChange={set("other_link1")} placeholder="https://scholar.google.com/…" />
+                <div className="edit-profile-page__row">
+                  <label className="edit-profile-page__label"><ScholarIcon /> Scholar / Other URL</label>
+                  <input className="edit-profile-page__input" value={form.other_link1} onChange={set("other_link1")} placeholder="https://scholar.google.com/…" />
                 </div>
               </div>
           </div>

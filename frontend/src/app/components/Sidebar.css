@@ -1,16 +1,3 @@
-:root {
-  --color-darkest:   #001D39;
-  --color-dark:      #0A4174;
-  --color-mid:       #49769F;
-  --color-teal:      #4E8EA2;
-  --color-slate:     #6EA2B3;
-  --color-sky:       #7BBDE8;
-  --color-lightest:  #BDD8E9;
-
-  --sidebar-width-collapsed: 60px;
-  --sidebar-width-expanded:  240px;
-}
-
 /* SIDEBAR */
 .sidebar {
   position: relative;

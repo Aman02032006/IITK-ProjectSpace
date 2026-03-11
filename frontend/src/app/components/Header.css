@@ -1,17 +1,3 @@
-:root {
-  --color-darkest:   #001D39;
-  --color-dark:      #0A4174;
-  --color-mid:       #49769F;
-  --color-teal:      #4E8EA2;
-  --color-slate:     #6EA2B3;
-  --color-sky:       #7BBDE8;
-  --color-lightest:  #BDD8E9;
-
-  --header-height: 60px;
-  --header-bg: var(--color-darkest);
-  --header-border: rgba(123, 189, 232, 0.12);
-}
-
 /* HEADER */
 .header {
   position: sticky;
