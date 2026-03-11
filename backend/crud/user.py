@@ -35,7 +35,10 @@ def update_user(session: Session, db_user: User, user_update: UserUpdate) -> Use
     update_data = user_update.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
-        setattr(db_user, key, value)
+        if key in ["linkedin", "github", "other_link1", "other_link2"] and value is not None:
+            setattr(db_user, key, str(value))
+        else:
+            setattr(db_user, key, value)
 
     session.add(db_user)
     session.commit()

@@ -33,7 +33,7 @@
 
 .edit-profile-page__actions {
   width: 100%;
-  max-width: 720px;
+  max-width: 1080px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,7 +80,7 @@
   border: 1px solid var(--border-color);
   border-radius: 16px;
   width: 100%;
-  max-width: 720px;
+  max-width: 1080px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 2px 12px rgba(10, 65, 116, 0.06);
@@ -108,7 +108,7 @@
 .edit-profile-page__card-title {
   margin: 0;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
 }
 

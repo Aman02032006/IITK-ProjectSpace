@@ -4,7 +4,7 @@ class Designation(Enum):
     NA = ""
     UG_STUDENT = "Undergraduate Student"
     PG_STUDENT = "Postgraduate Student"
-    PHD = "Ph.D Student"
+    PHD = "Ph.D Scholar"
     POSTDOC = "Post-Doctoral Researcher"
     ASST_PROF = "Assistant Professor"
     ASSCT_PROF = "Associate Professor"
@@ -53,5 +53,3 @@ class Department(Enum):
     SPASE = "Space, Planetary and Astronomical Sciences and Engineering"
     SDS = "Statistics and Data Science"
     SEE = "Sustainable Energy Engineering"
-
-IEEE_SKILLS = {}

@@ -1,6 +1,3 @@
-// make the form fields for skills as dropdown
-
-
 "use client"
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +6,9 @@ import "./editProfilePage.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { fetchMyProfile, updateMyProfile, UserProfile } from "@/lib/profileApi";
+import CreatableSelect from "react-select/creatable";
+
+import seedSkills from "@/data/seed_skills.json"
 
 /* Icons */
 const LinkedInIcon = () => (
@@ -49,7 +49,7 @@ interface EditFormState {
   github: string;
   other_link1: string;
   bio: string;
-  skills: string;
+  skills: string[];
   profile_picture_url: string;
   avatarPreview: string | null;
 }
@@ -64,7 +64,7 @@ function profileToForm(p: UserProfile): EditFormState {
     github: p.github ?? "",
     other_link1: p.other_link1 ?? "",
     bio: p.bio ?? "",
-    skills: (p.skills ?? []).join(", "),
+    skills: p.skills ?? [],
     profile_picture_url: p.profile_picture_url ?? "",
     avatarPreview: null,
   };
@@ -98,7 +98,7 @@ const EditProfilePage: React.FC = () => {
   }, []);
 
   const set = (key: keyof EditFormState) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setForm((prev) => prev ? { ...prev, [key]: e.target.value } : prev);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,11 +109,34 @@ const EditProfilePage: React.FC = () => {
     setForm((prev) => prev ? { ...prev, avatarPreview: url } : prev);
   };
 
+  const formatUrl = (url: string | undefined): string | null => {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (trimmed === "") return null;
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
   const handleSubmit = async () => {
     if (!profile || !form) return;
     setSaving(true);
     try {
-      // replace everything below with the correct api calls, used this for testing on my device --Vardhan
+      const updateData: Partial<UserProfile> = {
+        fullname: form.fullname || null,
+        designation: form.designation || undefined,
+        degree: form.degree || undefined,
+        department: form.department || undefined,
+        linkedin: formatUrl(form.linkedin),
+        github: formatUrl(form.github),
+        other_link1: formatUrl(form.other_link1),
+        bio: form.bio || undefined,
+        skills: form.skills,
+      };
+
+      await updateMyProfile(updateData);
+
       if (avatarFile) {
         const formData = new FormData();
         formData.append("file", avatarFile);
@@ -125,6 +148,11 @@ const EditProfilePage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSkillsChange = (selectedOptions: any) => {
+    const newSkills = selectedOptions ? selectedOptions.map((opt: any) => opt.value) : [];
+    setForm((prev) => prev ? { ...prev, skills: newSkills } : prev);
   };
 
   /* Loading */
@@ -228,23 +256,95 @@ const EditProfilePage: React.FC = () => {
 
                 <div className="edit-modal__row">
                   <label className="edit-modal__label">Designation</label>
-                  <input className="edit-modal__input" value={form.designation} onChange={set("designation")} placeholder="e.g. PhD Student, Research Associate" />
-                </div>
+                  <select 
+                    className="edit-modal__input" 
+                    value={form.designation} 
+                    onChange={set("designation")}
+                  >
+                    <option value="" disabled>Select your designation</option>
+                    <option value="Undergraduate Student">Undergraduate Student</option>
+                    <option value="Postgraduate Student">Postgraduate Student</option>
+                    <option value="PhD Scholar">PhD Scholar</option>
+                    <option value="Post-Doctoral Researcher">Post-Doctoral Researcher</option>
+                    <option value="Assistant Professor">Assistant Professor</option>
+                    <option value="Associate Professor">Associate Professor</option>
+                    <option value="Professor">Professor</option>
+                    <option value="Higher Academic Grade Professor">Higher Academic Grade Professor</option>
+                  </select></div>
 
                 <div className="edit-modal__row edit-modal__row--half">
                   <div>
                     <label className="edit-modal__label">Degree</label>
-                    <input className="edit-modal__input" value={form.degree} onChange={set("degree")} placeholder="e.g. B.Tech, M.Tech, PhD" />
+                    <select 
+                      className="edit-modal__input" 
+                      value={form.degree} 
+                      onChange={set("degree")}
+                    >
+                      <option value="" disabled>Select degree</option>
+                      <option value="B.Tech">B.Tech</option>
+                      <option value="BS">BS</option>
+                      <option value="M.Tech">M.Tech</option>
+                      <option value="MS">MS</option>
+                      <option value="MS by Research">MS by Research</option>
+                      <option value="B.Tech/M.Tech Dual">B.Tech/M.Tech Dual</option>
+                      <option value="B.Tech/MS Dual">B.Tech/MS Dual</option>
+                      <option value="B.Tech/MBA Dual">B.Tech/MBA Dual</option>
+                      <option value="BS/MS Dual">BS/MS Dual</option>
+                      <option value="BS/M.Tech Dual">BS/M.Tech Dual</option>
+                      <option value="BS/MBA Dual">BS/MBA Dual</option>
+                      <option value="BS/MBA Dual">BS/MBA Dual</option>
+                      <option value="MDes">MDes</option>
+                      <option value="MBA">MBA</option>
+                      <option value="MS/Ph.D Dual">MS/Ph.D Dual</option>
+                      <option value="Ph.D">Ph.D</option>
+                    </select>
                   </div>
                   <div>
                     <label className="edit-modal__label">Department</label>
-                    <input className="edit-modal__input" value={form.department} onChange={set("department")} placeholder="e.g. Computer Science" />
+                    <select 
+                      className="edit-modal__input" 
+                      value={form.department} 
+                      onChange={set("department")}
+                    >
+                      <option value="" disabled>Select department</option>
+                      <option value="Aerospace Engineering">Aerospace Engineering</option>
+                      <option value="Biological Sciences and Bioengineering">Biological Sciences and Bioengineering</option>
+                      <option value="Chemical Engineering">Chemical Engineering</option>
+                      <option value="Chemistry">Chemistry</option>
+                      <option value="Civil Engineering">Civil Engineering</option>
+                      <option value="Cognitive Sciences">Cognitive Sciences</option>
+                      <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                      <option value="Design">Design</option>
+                      <option value="Earth Sciences">Earth Sciences</option>
+                      <option value="Economics">Economics</option>
+                      <option value="Electrical Engineering">Electrical Engineering</option>
+                      <option value="Humanities and Social Sciences">Humanities and Social Sciences</option>
+                      <option value="Intelligent Systems">Intelligent Systems</option>
+                      <option value="Materials Science and Engineering">Materials Science and Engineering</option>
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="Mechanical Engineering">Mechanical Engineering</option>
+                      <option value="Nuclear Engineering and Technology">Nuclear Engineering and Technology</option>
+                      <option value="Management Sciences">Management Sciences</option>
+                      <option value="Management Sciences">Management Sciences</option>
+                      <option value="Space, Planetary and Astronomical Sciences and Engineering">Space, Planetary and Astronomical Sciences and Engineering</option>
+                      <option value="Statistics and Data Science">Statistics and Data Science</option>
+                      <option value="Sustainable Energy Engineering">Sustainable Energy Engineering</option>
+                    </select>
                   </div>
                 </div>
 
                 <div className="edit-modal__row">
-                  <label className="edit-modal__label">Skills <span className="edit-modal__hint-inline">(comma-separated)</span></label>
-                  <input className="edit-modal__input" value={form.skills} onChange={set("skills")} placeholder="e.g. React, Python, Machine Learning" />
+                  <label className="edit-modal__label">Skills</label>
+                  <CreatableSelect
+                    isMulti
+                    options={seedSkills}
+                    // We map the string array back into the {value, label} objects that react-select needs to render
+                    value={form.skills.map((skill) => ({ value: skill, label: skill }))}
+                    onChange={handleSkillsChange}
+                    placeholder="Search or type to create a skill..."
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                  />
                 </div>
 
                 <div className="edit-modal__row">

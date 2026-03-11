@@ -62,6 +62,10 @@ export async function updateMyProfile(updateData: Partial<UserProfile>): Promise
     body: JSON.stringify(updateData),
   });
   if (res.status === 401) throw new Error("Unauthorized");
-  if (!res.ok) throw new Error("Failed to update profile");
+  if (!res.ok) {
+    const errorData = await res.json();
+    console.error("🚨 FastAPI 422 Validation Error:", JSON.stringify(errorData, null, 2));
+    throw new Error(`API Error: ${JSON.stringify(errorData)}`);
+  };
   return res.json();
 }

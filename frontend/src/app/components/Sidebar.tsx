@@ -87,8 +87,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [active, setActive] = useState(defaultActive);
 
   const [expanded, setExpanded] = useState(() => {
-    const stored = localStorage.getItem("sidebar-expanded");
-    return stored !== null ? stored === "true" : defaultExpanded;
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("sidebar-expanded");
+      return stored !== null ? stored === "true" : defaultExpanded;
+    }
+    return defaultExpanded;
   });
 
   const handleClick = (id: string) => {

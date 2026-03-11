@@ -64,7 +64,7 @@ const loginPage = () => {
       if (res.access_token) {
         localStorage.setItem("access_token", res.access_token);
         triggerAlert("Login successful!", "success");
-        // window.location.href = '/dashboard';
+        window.location.href = "/profilePage";
       }
     } catch (err) {
       triggerAlert("Invalid email or password", "error");
