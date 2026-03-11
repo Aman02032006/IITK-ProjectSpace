@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import "./Sidebar.css";
 
 /* Icon components */
@@ -86,6 +89,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [active, setActive] = useState(defaultActive);
 
+  const router = useRouter();
+
   const [expanded, setExpanded] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("sidebar-expanded");
@@ -97,6 +102,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleClick = (id: string) => {
     setActive(id);
     onNavigate?.(id);
+  };
+
+  const onLogout = () => {
+    localStorage.removeItem("access_token");
+    router.push("/auth");
   };
 
   return (
@@ -141,6 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar__bottom">
         <button
           className="sidebar__nav-item sidebar__logout"
+          onClick={onLogout}
           title="Logout"
           aria-label="Logout"
         >

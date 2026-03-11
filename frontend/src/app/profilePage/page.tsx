@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import "./ProfilePage.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
@@ -65,13 +66,14 @@ const ProfilePage: React.FC = () => {
   const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetchMyProfile()
       .then(setProfile)
       .catch((err: Error) => {
         if (err.message === "Unauthorized") {
-          window.location.href = "/login";
+          router.replace("/auth");
         } else {
           setError(err.message);
         }

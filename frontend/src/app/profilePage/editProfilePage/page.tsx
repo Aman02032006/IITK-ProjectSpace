@@ -89,7 +89,7 @@ const EditProfilePage: React.FC = () => {
       })
       .catch((err: Error) => {
         if (err.message === "Unauthorized") {
-          window.location.href = "/login";
+          router.replace("/auth");
         } else {
           setError(err.message);
         }

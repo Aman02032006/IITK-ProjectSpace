@@ -64,7 +64,7 @@ const loginPage = () => {
       if (res.access_token) {
         localStorage.setItem("access_token", res.access_token);
         triggerAlert("Login successful!", "success");
-        window.location.href = "/profilePage";
+        router.replace("/profilePage");
       }
     } catch (err) {
       triggerAlert("Invalid email or password", "error");
@@ -122,7 +122,7 @@ const loginPage = () => {
     try {
       await finalizeRegistration(email, verifiedOtp, password);
       triggerAlert("Account created successfully!", "success");
-      window.location.href = "/profilePage";
+      router.replace("/profilePage");
       setPassword(""); setConfirmPassword("");
     } catch (err) {
       triggerAlert("Registration failed", "error");
