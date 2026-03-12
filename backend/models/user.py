@@ -45,6 +45,16 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+    # Projects the user is a part of
     projects: List["Project"] = Relationship(
         back_populates="team_members", link_model="ProjectTeamLink"
     )
+
+    # Recruitments the user is a part of
+    managed_recruitments: List["Recruitment"] = Relationship(
+        back_populates="recruiters", 
+        link_model="RecruitmentRecruiterLink"
+    )
+    
+    # Applications the user has applied
+    applications: List["Application"] = Relationship(back_populates="applicant")
