@@ -30,6 +30,9 @@ class Application(SQLModel, table=True):
 
     applied_at: datetime = Field(default_factory=datetime.utcnow)
 
+    applicant: "User" = Relationship(back_populates="applications")
+    recruitment: "Recruitment" = Relationship(back_populates="applications")
+
 
 # 3. The Recruitment Base
 class RecruitmentBase(SQLModel):
@@ -68,7 +71,7 @@ class Recruitment(RecruitmentBase, table=True):
         sa_column=Column(
             TSVECTOR,
             Computed(
-                "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(description, '') || ' ' || array_to_string(prerequisites, ' ')) || ' ' || array_to_string(domains, ' '))",
+                "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))",
                 persisted=True,
             ),
         ),

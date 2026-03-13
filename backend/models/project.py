@@ -44,7 +44,7 @@ class Project(ProjectBase, table=True):
         sa_column=Column(
             TSVECTOR,
             Computed(
-                "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(description, '') || ' ' || array_to_string(domains, ' '))",
+                "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(description, ''))",
                 persisted=True,
             ),
         ),
