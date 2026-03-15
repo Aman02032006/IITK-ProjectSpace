@@ -1,37 +1,22 @@
-/* =============================================
-   RECRUITMENT PAGE — recruitmentPage.css
-   Matches IITK ProjectSpace design system
-   ============================================= */
-
-/* ---- CSS Variables (mirrors global theme) ---- */
-:root {
-  --color-darkest: #0b1a2b;
-  --color-dark: #112236;
-  --color-mid: #1a3350;
-  --color-slate: #8aaabb;
-  --color-sky: #7bbde8;
-  --color-teal: #4e8ea2;
-  --color-light-bg: #f4f6f9;
-  --color-card-bg: #ffffff;
-  --color-text-primary: #1a1a2e;
-  --color-text-secondary: #555e6e;
-  --color-text-muted: #8a929e;
-  --color-border: #e4e8ef;
-  --sidebar-width-collapsed: 60px;
-  --sidebar-width-expanded: 220px;
-  --font-montserrat: "Montserrat", sans-serif;
+/* App Shell */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-page);
+  font-family: var(--font-montserrat), sans-serif;
 }
 
-/* ---- Page Shell ---- */
-.recruit-page {
+.app-body {
+  flex: 1;
   display: flex;
-  height: 100vh;
-  background-color: var(--color-light-bg);
-  font-family: var(--font-montserrat);
+  flex-direction: row;
+  min-height: 0;
   overflow: hidden;
 }
 
-/* ---- Main content area ---- */
+/* Main content area */
 .recruit-main {
   flex: 1;
   overflow-y: auto;
@@ -43,16 +28,17 @@
 
 .recruit-main::-webkit-scrollbar { width: 6px; }
 .recruit-main::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--border-color);
   border-radius: 4px;
 }
 
-/* ---- Card ---- */
+/* Card */
 .recruit-card {
   width: 100%;
-  background: var(--color-card-bg);
+  background: var(--bg-card);
   border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 12px rgba(10, 65, 116, 0.06);
   padding: 32px 44px 40px;
   position: relative;
   animation: cardFadeIn 0.35s ease both;
@@ -63,7 +49,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ---- Top Row: recruiters + Apply button ---- */
+/* Top Row: recruiters inline + Apply button */
 .recruit-top-row {
   display: flex;
   align-items: center;
@@ -88,7 +74,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--color-card-bg);
+  border: 2px solid var(--bg-card);
   margin-left: -8px;
   display: flex;
   align-items: center;
@@ -108,19 +94,19 @@
   border-radius: 50%;
 }
 
-.recruit-avatar-stack-item.c1 { background: linear-gradient(135deg, #e67e22, #e74c3c); }
-.recruit-avatar-stack-item.c2 { background: linear-gradient(135deg, #3a7bd5, #5e35b1); }
-.recruit-avatar-stack-item.c3 { background: linear-gradient(135deg, #2ecc9e, #16a085); }
-.recruit-avatar-stack-item.c4 { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
-.recruit-avatar-stack-item.c5 { background: linear-gradient(135deg, #7bbde8, #4e8ea2); }
+.recruit-avatar-stack-item.c1 { background: linear-gradient(135deg, var(--color-dark), var(--color-darkest)); }
+.recruit-avatar-stack-item.c2 { background: linear-gradient(135deg, var(--color-mid), var(--color-dark)); }
+.recruit-avatar-stack-item.c3 { background: linear-gradient(135deg, var(--color-teal), var(--color-mid)); }
+.recruit-avatar-stack-item.c4 { background: linear-gradient(135deg, var(--color-slate), var(--color-teal)); }
+.recruit-avatar-stack-item.c5 { background: linear-gradient(135deg, var(--color-sky), var(--color-slate)); }
 
 .recruit-recruiters-label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
-/* ---- Status Badge ---- */
+/* Status Badge */
 .recruit-status-badge {
   display: inline-flex;
   align-items: center;
@@ -139,9 +125,9 @@
 }
 
 .recruit-status-badge.closed {
-  background-color: rgba(232, 123, 123, 0.12);
-  color: #c0392b;
-  border: 1px solid rgba(232, 123, 123, 0.3);
+  background-color: rgba(165, 61, 42, 0.10);
+  color: #a53d2a;
+  border: 1px solid rgba(165, 61, 42, 0.25);
 }
 
 .recruit-status-dot {
@@ -150,25 +136,26 @@
   border-radius: 50%;
 }
 
-.recruit-status-badge.open  .recruit-status-dot { background-color: #1a9e72; }
-.recruit-status-badge.closed .recruit-status-dot { background-color: #c0392b; }
+.recruit-status-badge.open   .recruit-status-dot { background-color: #1a9e72; }
+.recruit-status-badge.closed .recruit-status-dot { background-color: #a53d2a; }
 
-/* ---- Apply Button ---- */
+/* Apply Button */
 .recruit-apply-btn {
   padding: 9px 26px;
-  background: var(--color-darkest);
+  background: var(--color-dark);
   color: white;
   border: none;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
-  font-family: var(--font-montserrat);
+  font-family: inherit;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 29, 57, 0.25);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .recruit-apply-btn:hover {
+  background: var(--color-darkest);
   transform: translateY(-1px);
   box-shadow: 0 5px 14px rgba(0, 29, 57, 0.3);
 }
@@ -179,16 +166,16 @@
   transform: none;
 }
 
-/* ---- Title ---- */
+/* Title */
 .recruit-title {
   font-size: clamp(1.3rem, 2.5vw, 1.75rem);
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   line-height: 1.3;
   margin-bottom: 16px;
 }
 
-/* ---- Domain Tags ---- */
+/* Domain Tags */
 .recruit-tags {
   display: flex;
   flex-wrap: wrap;
@@ -197,46 +184,43 @@
 }
 
 .recruit-tag {
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: white;
+  color: #fff;
 }
 
-.recruit-tag:nth-child(6n+1) { background-color: #3a7bd5; }
-.recruit-tag:nth-child(6n+2) { background-color: #2ecc9e; }
-.recruit-tag:nth-child(6n+3) { background-color: #9b59b6; }
-.recruit-tag:nth-child(6n+4) { background-color: #e67e22; }
-.recruit-tag:nth-child(6n+5) { background-color: #e74c6a; }
-.recruit-tag:nth-child(6n+6) { background-color: #16a085; }
+.recruit-tag:nth-child(3n+1) { background-color: #2d8a6e; }   /* teal  */
+.recruit-tag:nth-child(3n+2) { background-color: var(--color-teal); }  /* blue  */
+.recruit-tag:nth-child(3n+3) { background-color: #a53d2a; }   /* red   */
 
-/* ---- Section Heading ---- */
+/* Section Heading */
 .recruit-section-heading {
   font-size: 15px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   margin-bottom: 10px;
 }
 
-/* ---- Description ---- */
+/* Description */
 .recruit-description {
   font-size: 13.5px;
   line-height: 1.75;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   margin-bottom: 24px;
   white-space: pre-wrap;
 }
 
-/* ---- Divider ---- */
+/* Divider */
 .recruit-divider {
   border: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--border-color);
   margin: 20px 0;
 }
 
-/* ---- Prerequisites ---- */
+/* Prerequisites */
 .recruit-prereq-tags {
   display: flex;
   flex-wrap: wrap;
@@ -244,20 +228,18 @@
 }
 
 .recruit-prereq-tag {
-  padding: 4px 14px;
+  padding: 5px 14px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  color: white;
+  color: #fff;
 }
 
-.recruit-prereq-tag:nth-child(5n+1) { background-color: #4a90d9; }
-.recruit-prereq-tag:nth-child(5n+2) { background-color: #2ecc9e; }
-.recruit-prereq-tag:nth-child(5n+3) { background-color: #9b59b6; }
-.recruit-prereq-tag:nth-child(5n+4) { background-color: #e67e22; }
-.recruit-prereq-tag:nth-child(5n+5) { background-color: #e74c6a; }
+.recruit-prereq-tag:nth-child(3n+1) { background-color: #2d8a6e; }
+.recruit-prereq-tag:nth-child(3n+2) { background-color: var(--color-teal); }
+.recruit-prereq-tag:nth-child(3n+3) { background-color: #a53d2a; }
 
-/* ---- Eligibility (designations + departments) ---- */
+/* Eligibility */
 .recruit-eligibility-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -272,7 +254,7 @@
 .recruit-eligibility-group-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 8px;
@@ -286,15 +268,15 @@
 
 .recruit-eligibility-chip {
   padding: 4px 12px;
-  background: var(--color-light-bg);
-  border: 1px solid var(--color-border);
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
-/* ---- Recruiters (full chips at bottom) ---- */
+/* Recruiters */
 .recruit-recruiter-list {
   display: flex;
   flex-wrap: wrap;
@@ -306,12 +288,12 @@
   align-items: center;
   gap: 7px;
   padding: 5px 12px 5px 6px;
-  background: var(--color-light-bg);
+  background: var(--color-lightest);
   border-radius: 999px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-color);
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
 
 .recruit-recruiter-avatar {
@@ -335,19 +317,20 @@
   border-radius: 50%;
 }
 
-.recruit-recruiter-avatar.c1 { background: linear-gradient(135deg, #e67e22, #e74c3c); }
-.recruit-recruiter-avatar.c2 { background: linear-gradient(135deg, #3a7bd5, #5e35b1); }
-.recruit-recruiter-avatar.c3 { background: linear-gradient(135deg, #2ecc9e, #16a085); }
-.recruit-recruiter-avatar.c4 { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
-.recruit-recruiter-avatar.c5 { background: linear-gradient(135deg, #7bbde8, #4e8ea2); }
+/* Avatar color variants */
+.recruit-recruiter-avatar.c1 { background: linear-gradient(135deg, var(--color-dark),    var(--color-darkest)); }
+.recruit-recruiter-avatar.c2 { background: linear-gradient(135deg, var(--color-mid),     var(--color-dark)); }
+.recruit-recruiter-avatar.c3 { background: linear-gradient(135deg, var(--color-teal),    var(--color-mid)); }
+.recruit-recruiter-avatar.c4 { background: linear-gradient(135deg, var(--color-slate),   var(--color-teal)); }
+.recruit-recruiter-avatar.c5 { background: linear-gradient(135deg, var(--color-sky),     var(--color-slate)); }
 
-/* ---- Meta footer ---- */
+/* Meta footer */
 .recruit-meta {
   display: flex;
   gap: 18px;
   margin-top: 20px;
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .recruit-meta-item {
@@ -356,8 +339,8 @@
   gap: 5px;
 }
 
-/* ---- Responsive ---- */
+/* Responsive */
 @media (max-width: 700px) {
-  .recruit-main  { padding: 20px 12px; }
-  .recruit-card  { padding: 20px 18px 28px; }
+  .recruit-main { padding: 20px 12px; }
+  .recruit-card { padding: 20px 18px 28px; }
 }

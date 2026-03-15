@@ -2,11 +2,10 @@
 
 import React from "react";
 import "./recruitmentPage.css";
-import Sidebar from "../components/Sidebar"; // adjust path as needed
+import Header from "../components/Header";
+import Sidebar from "../components/Sidebar";
 
-/* =============================================
-   Types — mirrors recruitments.py model
-   ============================================= */
+/* Types — mirrors recruitments.py model */
 export interface Recruiter {
   id: string;
   name: string;
@@ -21,8 +20,8 @@ export interface Recruitment {
 
   domains: string[];
   prerequisites: string[];
-  allowed_designations: string[];   // e.g. ["UG", "PG", "PhD"]
-  allowed_departments: string[];    // e.g. ["CSE", "EE", "MTH"]
+  allowed_designations: string[];
+  allowed_departments: string[];
 
   status: "Open" | "Closed";
 
@@ -36,9 +35,7 @@ export interface Recruitment {
   application_count?: number;
 }
 
-/* =============================================
-   Helpers
-   ============================================= */
+/* Helpers */
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -59,9 +56,7 @@ function formatDate(iso: string): string {
   }
 }
 
-/* =============================================
-   Sub-component: Description
-   ============================================= */
+/* Description */
 const DescriptionBlock: React.FC<{ text: string; format: string }> = ({ text, format }) => {
   if (format === "markdown") {
     const html = text
@@ -73,9 +68,7 @@ const DescriptionBlock: React.FC<{ text: string; format: string }> = ({ text, fo
   return <p className="recruit-description">{text}</p>;
 };
 
-/* =============================================
-   Sub-component: Calendar icon
-   ============================================= */
+/* Icons */
 const CalendarIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -85,9 +78,6 @@ const CalendarIcon = () => (
   </svg>
 );
 
-/* =============================================
-   Sub-component: Users icon
-   ============================================= */
 const UsersIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -97,9 +87,7 @@ const UsersIcon = () => (
   </svg>
 );
 
-/* =============================================
-   Main: RecruitmentPage
-   ============================================= */
+/* RecruitmentPage */
 interface RecruitmentPageProps {
   recruitment: Recruitment;
   onApply?: () => void;
@@ -125,12 +113,14 @@ const RecruitmentPage: React.FC<RecruitmentPageProps> = ({ recruitment, onApply 
   const wasUpdated = updated_at !== created_at;
 
   return (
-    <div className="recruit-page">
-      {/* Sidebar */}
-      <Sidebar defaultActive="home" />
+    <div className="app-shell">
+      <Header showEditProfile={false} />
 
-      {/* Main */}
-      <main className="recruit-main">
+      <div className="app-body">
+        <Sidebar defaultActive="home" />
+
+        {/* Main */}
+        <main className="recruit-main">
         <div className="recruit-card">
 
           {/* Top row: stacked recruiter avatars + status badge + Apply */}
@@ -164,7 +154,7 @@ const RecruitmentPage: React.FC<RecruitmentPageProps> = ({ recruitment, onApply 
                 {status}
               </span>
 
-              {/* Apply button — disabled if closed */}
+              {/* Apply button */}
               <button
                 className="recruit-apply-btn"
                 onClick={onApply}
@@ -206,7 +196,7 @@ const RecruitmentPage: React.FC<RecruitmentPageProps> = ({ recruitment, onApply 
             </>
           )}
 
-          {/* Eligibility: designations + departments side by side */}
+          {/* Eligibility */}
           {(allowed_designations.length > 0 || allowed_departments.length > 0) && (
             <>
               <hr className="recruit-divider" />
@@ -238,7 +228,7 @@ const RecruitmentPage: React.FC<RecruitmentPageProps> = ({ recruitment, onApply 
             </>
           )}
 
-          {/* Recruiters — full name chips */}
+          {/* Recruiters */}
           {recruiters.length > 0 && (
             <>
               <hr className="recruit-divider" />
@@ -283,7 +273,8 @@ const RecruitmentPage: React.FC<RecruitmentPageProps> = ({ recruitment, onApply 
           </div>
 
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

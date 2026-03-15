@@ -3,11 +3,11 @@
 import "./postEditPage.css";
 
 import { useState, useRef } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
+import Header from "../../components/Header";
+import Sidebar from "../../components/Sidebar";
 
 
-import { Project } from "../projectPage/page"; // adjust path as needed
+import { Project } from "../page";
 
 interface Tag {
   id: string;
@@ -30,7 +30,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
     project.description_format === "markdown" ? "Markdown" : "Plain-Text"
   );
 
-  // ── Pre-populate all fields from the project prop ──
+  // Pre-populate all fields from the project prop
   const [title, setTitle]     = useState(project.title);
   const [summary, setSummary] = useState(project.summary);
   const [details, setDetails] = useState(project.description);
@@ -45,12 +45,12 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
       : [{ id: "1", value: "" }]
   );
 
-  // Team members — pre-fill as comma-separated names from the joined data
+  // Team members
   const [teamMembers, setTeamMembers] = useState(
     project.team_members?.map((m) => m.name).join(", ") ?? ""
   );
 
-  // Media: existing URLs shown as pseudo-file entries (display only — user can add new files)
+  // Media: URLs will be shown as pseudo-files
   const [uploadedFiles, setUploadedFiles]       = useState<File[]>([]);
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>(
     project.media_urls ?? []
@@ -58,7 +58,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Tag helpers ──
+  // Tag helpers 
   const addTag = () => {
     const label = prompt("Enter domain tag:");
     if (label?.trim())
@@ -66,7 +66,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
   };
   const removeTag = (id: string) => setTags((prev) => prev.filter((t) => t.id !== id));
 
-  // ── Link helpers ──
+  // Link helpers
   const addLink = () =>
     setLinks((prev) => [...prev, { id: Date.now().toString(), value: "" }]);
   const updateLink = (id: string, value: string) =>
@@ -74,7 +74,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
   const removeLink = (id: string) =>
     setLinks((prev) => prev.filter((l) => l.id !== id));
 
-  // ── File helpers ──
+  // File helpers
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setUploadedFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
@@ -88,7 +88,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
   const removeExistingUrl = (url: string) =>
     setExistingMediaUrls((prev) => prev.filter((u) => u !== url));
 
-  // ── Save ──
+  // Save
   const handleSave = () => {
     const updated: Partial<Project> = {
       title,
@@ -97,7 +97,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
       description_format: activeTab === "Markdown" ? "markdown" : "plain-text",
       domains: tags.map((t) => t.label),
       links: links.map((l) => l.value).filter(Boolean),
-      media_urls: existingMediaUrls, // new file uploads would be handled by your API call
+      media_urls: existingMediaUrls,
     };
     onSave?.(updated);
   };
@@ -116,7 +116,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
 
           <div className="pcf-form-container">
 
-            {/* ── Section 1 ── */}
+            {/* Section 1 */}
             <section className="pcf-card">
               <div className="pcf-card-header">
                 <div>
@@ -205,7 +205,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
               </div>
             </section>
 
-            {/* ── Section 2 ── */}
+            {/* Section 2 */}
             <section className="pcf-card">
               <div className="pcf-card-header">
                 <div>
@@ -316,7 +316,7 @@ export default function postEditPage({ project, onSave }: EditProjectPageProps) 
               </div>
             </section>
 
-            {/* ── Section 3 ── */}
+            {/* Section 3 */}
             <section className="pcf-card">
               <div className="pcf-card-header">
                 <div>

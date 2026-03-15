@@ -2,11 +2,10 @@
 
 import React from "react";
 import "./projectPage.css";
-import Sidebar from "../components/Sidebar"; // adjust path as needed
+import Header from "../components/Header";
+import Sidebar from "../components/Sidebar";
 
-/* =============================================
-   Types — mirrors project.py model
-   ============================================= */
+/* Types */
 export interface TeamMember {
   id: string;
   name: string;
@@ -30,13 +29,11 @@ export interface Project {
   creator_name?: string;
   creator_avatar_url?: string;
 
-  // Populated via ProjectTeamLink join
+  // Populated using ProjectTeamLink join
   team_members?: TeamMember[];
 }
 
-/* =============================================
-   Helpers
-   ============================================= */
+/* Helpers */
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -57,18 +54,14 @@ function formatDate(iso: string): string {
   }
 }
 
-/* =============================================
-   Sub-component: Creator Avatar
-   ============================================= */
+/* Creator Avatar */
 const CreatorAvatar: React.FC<{ name: string; avatarUrl?: string }> = ({ name, avatarUrl }) => (
   <div className="project-creator-avatar">
     {avatarUrl ? <img src={avatarUrl} alt={name} /> : getInitials(name)}
   </div>
 );
 
-/* =============================================
-   Sub-component: Team Member Chip
-   ============================================= */
+/* Team Member Chip */
 const TeamChip: React.FC<{ member: TeamMember; colorIndex: number }> = ({ member, colorIndex }) => (
   <div className="project-team-chip">
     <div className={`project-team-avatar c${(colorIndex % 5) + 1}`}>
@@ -81,9 +74,7 @@ const TeamChip: React.FC<{ member: TeamMember; colorIndex: number }> = ({ member
   </div>
 );
 
-/* =============================================
-   Sub-component: Description
-   ============================================= */
+/* Description */
 const DescriptionBlock: React.FC<{ text: string; format: string }> = ({ text, format }) => {
   if (format === "markdown") {
     const html = text
@@ -95,9 +86,7 @@ const DescriptionBlock: React.FC<{ text: string; format: string }> = ({ text, fo
   return <p className="project-description">{text}</p>;
 };
 
-/* =============================================
-   Sub-component: Calendar icon (inline SVG)
-   ============================================= */
+/* Calendar icon */
 const CalendarIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -107,9 +96,7 @@ const CalendarIcon = () => (
   </svg>
 );
 
-/* =============================================
-   Main: ProjectPage
-   ============================================= */
+/* ProjectPage */
 interface ProjectPageProps {
   project: Project;
 }
@@ -135,12 +122,14 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
   const wasUpdated = updated_at !== created_at;
 
   return (
-    <div className="project-page">
-      {/* Sidebar */}
-      <Sidebar defaultActive="home" />
+    <div className="app-shell">
+      <Header showEditProfile={false} />
 
-      {/* Main */}
-      <main className="project-main">
+      <div className="app-body">
+        <Sidebar defaultActive="home" />
+
+        {/* Main */}
+        <main className="project-main">
         <div className="project-card">
 
           {/* Creator row */}
@@ -154,7 +143,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
           {/* Title */}
           <h1 className="project-title">{title}</h1>
 
-          {/* Summary — short subtitle under title */}
+          {/* Summary */}
           {summary && <p className="project-summary">{summary}</p>}
 
           {/* Domain tags */}
@@ -232,7 +221,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
           </div>
 
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

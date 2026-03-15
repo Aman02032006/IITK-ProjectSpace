@@ -3,9 +3,9 @@
 import "./editRecruitmentPage.css";
 
 import { useState } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import { Recruitment } from "../recruitmentPage/page"; // adjust path as needed
+import Header from "../../components/Header";
+import Sidebar from "../../components/Sidebar";
+import { Recruitment } from "../page";
 
 interface Tag {
   id: string;
@@ -22,7 +22,7 @@ export default function EditRecruitmentPage({ recruitment, onSave }: EditRecruit
     recruitment.description_format === "markdown" ? "Markdown" : "Plain-Text"
   );
 
-  // ── Pre-populate all fields from the recruitment prop ──
+  // Pre-populate all fields from the recruitment prop
   const [title, setTitle]     = useState(recruitment.title);
   const [details, setDetails] = useState(recruitment.description);
   const [status, setStatus]   = useState<"Open" | "Closed">(recruitment.status);
@@ -41,12 +41,12 @@ export default function EditRecruitmentPage({ recruitment, onSave }: EditRecruit
     recruitment.allowed_departments.map((d, i) => ({ id: String(i), label: d }))
   );
 
-  // Recruiters — pre-fill as comma-separated names
+  // Recruiters
   const [fellowRecruiters, setFellowRecruiters] = useState(
     recruitment.recruiters?.map((r) => r.name).join(", ") ?? ""
   );
 
-  // ── Tag helpers ──
+  /* Helpers */
   const makeAdder = (setter: React.Dispatch<React.SetStateAction<Tag[]>>, prompt_text: string) => () => {
     const label = prompt(prompt_text);
     if (label?.trim())
@@ -64,7 +64,6 @@ export default function EditRecruitmentPage({ recruitment, onSave }: EditRecruit
   const addDepartment      = makeAdder(setAllowedDepartments,   "Enter allowed department (e.g. CSE, EE):");
   const removeDepartment   = makeRemover(setAllowedDepartments);
 
-  // ── Save ──
   const handleSave = () => {
     const updated: Partial<Recruitment> = {
       title,
@@ -79,7 +78,6 @@ export default function EditRecruitmentPage({ recruitment, onSave }: EditRecruit
     onSave?.(updated);
   };
 
-  // ── Shared tag block ──
   const TagBlock = ({
     tags, onAdd, onRemove, addLabel,
   }: {
@@ -117,7 +115,7 @@ export default function EditRecruitmentPage({ recruitment, onSave }: EditRecruit
 
           <div className="pcf-form-container">
 
-            {/* ── Section 1: Recruitment Details ── */}
+            {/* Section 1: Recruitment Details */}
             <section className="pcf-card">
               <div className="pcf-card-header">
                 <div>
@@ -221,7 +219,7 @@ export default function EditRecruitmentPage({ recruitment, onSave }: EditRecruit
               </div>
             </section>
 
-            {/* ── Section 2: Specifications and Team ── */}
+            {/* Section 2: Specifications and Team */}
             <section className="pcf-card">
               <div className="pcf-card-header">
                 <div>

@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 import "./homePage.css";
-import Sidebar from "../components/Sidebar"; // adjust path as needed
+import Header from "../components/Header";
+import Sidebar from "../components/Sidebar";
 import { useRouter } from "next/navigation";
 
-/* =============================================
-   Types
-   ============================================= */
+/* Types */
 export interface FeedMember {
   id: string;
   name: string;
@@ -43,9 +42,7 @@ export interface RecruitmentFeedItem {
   team_members: FeedMember[];
 }
 
-/* =============================================
-   Helper: chunk array into pairs
-   ============================================= */
+/* Helper: chunk array into pairs */
 function chunkPairs<T>(arr: T[]): T[][] {
   const rows: T[][] = [];
   for (let i = 0; i < arr.length; i += 2) {
@@ -58,9 +55,7 @@ function getInitials(name: string): string {
   return name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
 }
 
-/* =============================================
-   Team Panel
-   ============================================= */
+/* Team Panel */
 const TeamPanel: React.FC<{ members: FeedMember[] }> = ({ members }) => (
   <div className="feed-team-panel">
     <div className="feed-team-label">Team Members</div>
@@ -77,9 +72,7 @@ const TeamPanel: React.FC<{ members: FeedMember[] }> = ({ members }) => (
   </div>
 );
 
-/* =============================================
-   Action Bar
-   ============================================= */
+/* Action Bar */
 const ActionBar: React.FC = () => {
   const [liked, setLiked] = useState(false);
   return (
@@ -109,9 +102,7 @@ const ActionBar: React.FC = () => {
   );
 };
 
-/* =============================================
-   Post Header
-   ============================================= */
+/* Post Header */
 const PostHeader: React.FC<{
   name: string; otherCount: number; role?: string;
   institution?: string; timeAgo: string; avatarUrl?: string;
@@ -132,9 +123,7 @@ const PostHeader: React.FC<{
   </div>
 );
 
-/* =============================================
-   Project Card
-   ============================================= */
+/* Project Card */
 const ProjectCard: React.FC<{ item: ProjectFeedItem; onClick: () => void }> = ({ item, onClick }) => {
   const hasImage = item.media_urls.length > 0;
   return (
@@ -159,9 +148,7 @@ const ProjectCard: React.FC<{ item: ProjectFeedItem; onClick: () => void }> = ({
   );
 };
 
-/* =============================================
-   Recruitment Card
-   ============================================= */
+/* Recruitment Card */
 const RecruitmentCard: React.FC<{ item: RecruitmentFeedItem; onClick: () => void }> = ({ item, onClick }) => {
   const hasImage = item.media_urls.length > 0;
   const isOpen = item.status === "Open";
@@ -190,14 +177,7 @@ const RecruitmentCard: React.FC<{ item: RecruitmentFeedItem; onClick: () => void
   );
 };
 
-/* =============================================
-   Icons
-   ============================================= */
-const SearchIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
-);
+/* Icons */
 const RecruitIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -209,9 +189,7 @@ const ProjectIcon = () => (
   </svg>
 );
 
-/* =============================================
-   Main: HomePage
-   ============================================= */
+/* Main: HomePage */
 type Tab = "project" | "recruitment";
 
 interface HomePageProps {
@@ -221,59 +199,57 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ projects, recruitments }) => {
   const [activeTab, setActiveTab] = useState<Tab>("project");
-  const [search, setSearch] = useState("");
   const router = useRouter();
 
-  const filtered = <T extends { title: string }>(items: T[]) =>
-    items.filter((i) => i.title.toLowerCase().includes(search.toLowerCase()));
-
-  const projectRows     = chunkPairs(filtered(projects));
-  const recruitmentRows = chunkPairs(filtered(recruitments));
+  const projectRows     = chunkPairs(projects);
+  const recruitmentRows = chunkPairs(recruitments);
 
   return (
-    <div className="home-page">
-      <Sidebar defaultActive="home" />
+    <div className="app-shell">
+      <Header showEditProfile={false} />
 
-      <div className="home-content">
-        {/* Search */}
-        <div className="home-topbar">
-          <div className="home-search-wrap">
-            <SearchIcon />
-            <input className="home-search-input" placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="app-body">
+        <Sidebar defaultActive="home" />
+
+        <main className="home-main">
+          {/* Tabs */}
+          <div className="home-tabs">
+            <button
+              className={`home-tab${activeTab === "recruitment" ? " active" : ""}`}
+              onClick={() => setActiveTab("recruitment")}
+            >
+              <RecruitIcon /> Recruitment
+            </button>
+            <button
+              className={`home-tab${activeTab === "project" ? " active" : ""}`}
+              onClick={() => setActiveTab("project")}
+            >
+              <ProjectIcon /> Project
+            </button>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="home-tabs">
-          <button className={`home-tab${activeTab === "recruitment" ? " active" : ""}`} onClick={() => setActiveTab("recruitment")}>
-            <RecruitIcon /> Recruitment
-          </button>
-          <button className={`home-tab${activeTab === "project" ? " active" : ""}`} onClick={() => setActiveTab("project")}>
-            <ProjectIcon /> Project
-          </button>
-        </div>
-
-        {/* Feed — vertical list of rows, each row has 2 cards */}
-        <div className="home-feed">
-          {activeTab === "project" &&
-            projectRows.map((row, ri) => (
-              <div className="feed-row" key={ri}>
-                {row.map((p) => (
-                  <ProjectCard key={p.id} item={p} onClick={() => router.push(`/projectPage/${p.id}`)} />
-                ))}
-              </div>
-            ))
-          }
-          {activeTab === "recruitment" &&
-            recruitmentRows.map((row, ri) => (
-              <div className="feed-row" key={ri}>
-                {row.map((r) => (
-                  <RecruitmentCard key={r.id} item={r} onClick={() => router.push(`/recruitmentPage/${r.id}`)} />
-                ))}
-              </div>
-            ))
-          }
-        </div>
+          {/* Feed */}
+          <div className="home-feed">
+            {activeTab === "project" &&
+              projectRows.map((row, ri) => (
+                <div className="feed-row" key={ri}>
+                  {row.map((p) => (
+                    <ProjectCard key={p.id} item={p} onClick={() => router.push(`/projectPage/${p.id}`)} />
+                  ))}
+                </div>
+              ))
+            }
+            {activeTab === "recruitment" &&
+              recruitmentRows.map((row, ri) => (
+                <div className="feed-row" key={ri}>
+                  {row.map((r) => (
+                    <RecruitmentCard key={r.id} item={r} onClick={() => router.push(`/recruitmentPage/${r.id}`)} />
+                  ))}
+                </div>
+              ))
+            }
+          </div>
+        </main>
       </div>
     </div>
   );

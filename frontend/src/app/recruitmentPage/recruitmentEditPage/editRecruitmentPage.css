@@ -1,26 +1,21 @@
-/* =============================================
-   editProjectPage.css
-   Combines app shell layout (from ProfilePage.css)
-   and post creation form styles (from postCreationForm.css)
-   ============================================= */
-
-/* ---- App Shell Layout ---- */
+/* App Shell Layout */
 .app-shell {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  font-family: var(--font-montserrat);
-  background: var(--bg-page, #f0f2f5);
+  font-family: var(--font-montserrat), sans-serif;
+  background: var(--bg-page);
 }
 
 .app-body {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
-/* ---- Main scrollable area ---- */
+/* Main scrollable area */
 .pcf-main {
   flex: 1;
   padding: 28px 32px 48px;
@@ -41,7 +36,7 @@
   gap: 24px;
 }
 
-/* ---- Card ---- */
+/* Card */
 .pcf-card {
   background: var(--bg-card);
   border-radius: 16px;
@@ -72,7 +67,7 @@
   letter-spacing: -0.02em;
 }
 
-/* ---- Dropdown ---- */
+/* Dropdown */
 .pcf-dropdown-wrapper {
   position: relative;
 }
@@ -152,7 +147,7 @@
   background: color-mix(in srgb, var(--color-sky) 12%, transparent);
 }
 
-/* ---- Fields ---- */
+/* Fields */
 .pcf-field {
   margin-bottom: 24px;
 }
@@ -178,7 +173,7 @@
   margin-bottom: 10px;
 }
 
-/* ---- Inputs ---- */
+/* Inputs */
 .pcf-input {
   width: 100%;
   padding: 10px 14px;
@@ -219,7 +214,7 @@
   box-shadow: none;
 }
 
-/* ---- Textarea ---- */
+/* Textarea */
 .pcf-textarea {
   width: 100%;
   padding: 12px 14px;
@@ -248,7 +243,7 @@
 .pcf-textarea--short { min-height: 90px; }
 .pcf-textarea--tall  { min-height: 200px; }
 
-/* ---- Tabs ---- */
+/* Tabs */
 .pcf-tabs {
   display: flex;
   border-bottom: 2px solid var(--border-color);
@@ -287,7 +282,7 @@
   margin-top: 0;
 }
 
-/* ---- Tags ---- */
+/* Tags */
 .pcf-tags-row {
   display: flex;
   flex-wrap: wrap;
@@ -324,7 +319,7 @@
   opacity: 1;
 }
 
-/* ---- Add Button ---- */
+/* Add Button */
 .pcf-add-btn {
   display: inline-flex;
   align-items: center;
@@ -354,7 +349,7 @@
   color: var(--color-teal);
 }
 
-/* ---- Upload Zone ---- */
+/* Upload Zone */
 .pcf-upload-zone {
   display: flex;
   flex-direction: column;
@@ -426,7 +421,7 @@
   color: #c0392b;
 }
 
-/* ---- Links ---- */
+/* Links */
 .pcf-link-row {
   display: flex;
   align-items: center;
@@ -469,7 +464,7 @@
   color: #c0392b;
 }
 
-/* ---- Search / @ input ---- */
+/* Search / @ input */
 .pcf-search-input-wrapper {
   display: flex;
   align-items: center;
@@ -499,7 +494,7 @@
   padding: 10px 0;
 }
 
-/* ---- Submit ---- */
+/* Submit */
 .pcf-submit-row {
   display: flex;
   justify-content: flex-end;
@@ -529,7 +524,7 @@
   transform: translateY(0);
 }
 
-/* ---- Responsive ---- */
+/* Responsive */
 @media (max-width: 768px) {
   .pcf-main {
     padding: 16px 16px 40px;
