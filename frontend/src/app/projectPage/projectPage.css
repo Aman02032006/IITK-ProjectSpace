@@ -1,0 +1,308 @@
+/* =============================================
+   PROJECT PAGE — projectPage.css
+   Matches IITK ProjectSpace design system
+   ============================================= */
+
+/* ---- CSS Variables (mirrors global theme) ---- */
+:root {
+  --color-darkest: #0b1a2b;
+  --color-dark: #112236;
+  --color-mid: #1a3350;
+  --color-slate: #8aaabb;
+  --color-sky: #7bbde8;
+  --color-teal: #4e8ea2;
+  --color-light-bg: #f4f6f9;
+  --color-card-bg: #ffffff;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #555e6e;
+  --color-text-muted: #8a929e;
+  --color-border: #e4e8ef;
+  --sidebar-width-collapsed: 60px;
+  --sidebar-width-expanded: 220px;
+  --font-montserrat: "Montserrat", sans-serif;
+}
+
+/* ---- Page Shell ---- */
+.project-page {
+  display: flex;
+  height: 100vh;
+  background-color: var(--color-light-bg);
+  font-family: var(--font-montserrat);
+  overflow: hidden;
+}
+
+/* ---- Main content area (right of sidebar) ---- */
+.project-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 36px;
+  display: flex;
+  justify-content: stretch;
+  align-items: flex-start;
+}
+
+.project-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.project-main::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+/* ---- Card ---- */
+.project-card {
+  width: 100%;
+  background: var(--color-card-bg);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 32px 44px 40px;
+  position: relative;
+  animation: cardFadeIn 0.35s ease both;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Creator Row ---- */
+.project-creator-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.project-creator-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-creator-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-sky), var(--color-teal));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.project-creator-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.project-creator-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ---- Title ---- */
+.project-title {
+  font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+/* ---- Summary (sits just under the title) ---- */
+.project-summary {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+/* ---- Domain Tags ---- */
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.project-tag {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: white;
+}
+
+/* Tag color palette — cycles through a set */
+.project-tag:nth-child(6n+1) { background-color: #3a7bd5; }
+.project-tag:nth-child(6n+2) { background-color: #2ecc9e; }
+.project-tag:nth-child(6n+3) { background-color: #9b59b6; }
+.project-tag:nth-child(6n+4) { background-color: #e67e22; }
+.project-tag:nth-child(6n+5) { background-color: #e74c6a; }
+.project-tag:nth-child(6n+6) { background-color: #16a085; }
+
+/* ---- Section Headings ---- */
+.project-section-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 10px;
+}
+
+/* ---- Description / Details ---- */
+.project-description {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+  white-space: pre-wrap;
+}
+
+/* ---- Media Grid ---- */
+.project-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.project-media-item {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--color-border);
+}
+
+/* Full-width when only one image */
+.project-media-grid.single-media {
+  grid-template-columns: 1fr;
+}
+
+.project-media-grid.single-media .project-media-item {
+  max-height: 340px;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* ---- Divider ---- */
+.project-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 20px 0;
+}
+
+/* ---- Team Members ---- */
+.project-team {
+  margin-bottom: 8px;
+}
+
+.project-team-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.project-team-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 6px;
+  background: var(--color-light-bg);
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.project-team-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.project-team-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.project-team-avatar.c1 { background: linear-gradient(135deg, #3a7bd5, #5e35b1); }
+.project-team-avatar.c2 { background: linear-gradient(135deg, #2ecc9e, #16a085); }
+.project-team-avatar.c3 { background: linear-gradient(135deg, #e67e22, #e74c3c); }
+.project-team-avatar.c4 { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+.project-team-avatar.c5 { background: linear-gradient(135deg, #7bbde8, #4e8ea2); }
+
+/* ---- Links Section ---- */
+.project-links {
+  margin-bottom: 20px;
+}
+
+.project-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-link-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-teal);
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.project-link-item:hover {
+  color: var(--color-sky);
+  text-decoration: underline;
+}
+
+/* ---- Meta footer (dates) ---- */
+.project-meta {
+  display: flex;
+  gap: 18px;
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.project-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 700px) {
+  .project-main {
+    padding: 20px 12px;
+  }
+
+  .project-card {
+    padding: 20px 18px 28px;
+  }
+}
