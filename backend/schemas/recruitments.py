@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class UserSummary(BaseModel):
-    """A tiny schema just to show who is on a team!"""
+    # A tiny schema just to show who is on a team
 
     id: uuid.UUID
     fullname: str
@@ -16,14 +16,14 @@ class UserSummary(BaseModel):
 
 
 class ApplicationCreate(BaseModel):
-    """Schema for a user submitting an application to a recruitment."""
+    # Schema for a user submitting an application to a recruitment
 
     recruitment_id: uuid.UUID
     message: Optional[str] = Field(default=None, max_length=500)
 
 
 class ApplicationUpdate(BaseModel):
-    """Schema for recruiters updating the status of an application."""
+    # Schema for recruiters updating the status of an application
 
     status: str = Field(..., pattern="^(Pending|Accepted|Rejected)$")
 
@@ -37,7 +37,7 @@ class ApplicationUpdate(BaseModel):
 
 
 class ApplicationPublic(BaseModel):
-    """Schema returned when viewing an application."""
+    # Schema returned when viewing an application
 
     id: uuid.UUID
     applicant: UserSummary
@@ -51,7 +51,7 @@ class ApplicationPublic(BaseModel):
 
 
 class RecruitmentBase(BaseModel):
-    """Shared fields for creating and updating a recruitment."""
+    # Shared fields for creating and updating a recruitment
 
     title: str = Field(..., max_length=100)
     description: str
@@ -83,13 +83,13 @@ class RecruitmentBase(BaseModel):
 
 
 class RecruitmentCreate(RecruitmentBase):
-    """Schema for creating a new recruitment post."""
+    # Schema for creating a new recruitment post
 
     pass
 
 
 class RecruitmentUpdate(BaseModel):
-    """Schema for partially updating an existing recruitment."""
+    # Schema for partially updating an existing recruitment
 
     title: Optional[str] = Field(default=None, max_length=100)
     description: Optional[str] = None
@@ -119,7 +119,7 @@ class RecruitmentUpdate(BaseModel):
 
 
 class RecruitmentPublic(RecruitmentBase):
-    """Full recruitment details returned to the frontend."""
+    # Full recruitment details returned to the frontend
 
     id: uuid.UUID
     created_at: datetime
@@ -132,7 +132,7 @@ class RecruitmentPublic(RecruitmentBase):
 
 
 class RecruitmentSummary(BaseModel):
-    """Lightweight recruitment card for list/search views."""
+    # Lightweight recruitment card for list/search views
 
     id: uuid.UUID
     title: str

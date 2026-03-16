@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class UserSummary(BaseModel):
-    """A tiny schema just to show who is on a team!"""
+    # A tiny schema just to show who is on a team
 
     id: uuid.UUID
     fullname: str
@@ -16,7 +16,7 @@ class UserSummary(BaseModel):
 
 
 class ProjectBase(BaseModel):
-    """Shared fields used across create/update/view schemas."""
+    # Shared fields used across create/update/view schemas.
 
     title: str = Field(..., max_length=100)
     summary: str = Field(..., max_length=250)
@@ -36,13 +36,13 @@ class ProjectBase(BaseModel):
 
 
 class ProjectCreate(ProjectBase):
-    """Schema for creating a new project. Creator is inferred from auth token."""
+    # Schema for creating a new project. Creator is inferred from auth token.
 
     pass
 
 
 class ProjectUpdate(BaseModel):
-    """Schema for partially updating an existing project."""
+    # Schema for partially updating an existing project.
 
     title: Optional[str] = Field(default=None, max_length=100)
     summary: Optional[str] = Field(default=None, max_length=250)
@@ -61,7 +61,7 @@ class ProjectUpdate(BaseModel):
 
 
 class ProjectPublic(ProjectBase):
-    """Full project details returned to the frontend."""
+    # Full project details returned to the frontend.
 
     id: uuid.UUID
     created_at: datetime
@@ -73,7 +73,7 @@ class ProjectPublic(ProjectBase):
 
 
 class ProjectSummary(BaseModel):
-    """Lightweight project card for list/search views."""
+    # Lightweight project card for list/search views.
 
     id: uuid.UUID
     title: str
