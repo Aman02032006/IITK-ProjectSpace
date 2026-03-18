@@ -76,6 +76,7 @@ const EditProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<EditFormState | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +122,7 @@ const EditProfilePage: React.FC = () => {
   const handleSubmit = async () => {
     if (!profile || !form) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const updateData: Partial<UserProfile> = {
         fullname: form.fullname || null,
@@ -142,8 +144,8 @@ const EditProfilePage: React.FC = () => {
       }
 
       router.push("/profilePage");
-    } catch (err) {
-      console.error("Failed to save profile:", err);
+    } catch (err: any) {
+      setSaveError(err.message || "Failed to save profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -203,6 +205,11 @@ const EditProfilePage: React.FC = () => {
             >
               ← Go Back
             </button>
+            {saveError && (
+              <p style={{ color: "#a53d2a", fontSize: 13, margin: 0 }}>
+                {saveError}
+              </p>
+            )}
             <button
               className="edit-profile-page__action-btn"
               onClick={handleSubmit}

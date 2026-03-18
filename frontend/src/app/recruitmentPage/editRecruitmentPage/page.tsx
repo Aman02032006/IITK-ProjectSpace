@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
-import { getRecruitment, updateRecruitment } from "@/lib/recruitmentApi";
+import { getRecruitment, updateRecruitment, deleteRecruitment } from "@/lib/recruitmentApi";
+import ConfirmPopUp from "../../components/confirmPopUp";
 
 interface Tag {
   id: string;
@@ -23,6 +24,7 @@ export default function EditRecruitmentPage() {
   const [error, setError]               = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError]   = useState<string | null>(null);
+  const [showConfirm, setShowConfirm]   = useState(false);
 
   // Form states
   const [activeTab, setActiveTab]           = useState<"Markdown" | "Plain-Text">("Markdown");
@@ -83,6 +85,18 @@ export default function EditRecruitmentPage() {
   const removeDesignation  = makeRemover(setAllowedDesignations);
   const addDepartment      = makeAdder(setAllowedDepartments,    "Enter allowed department:");
   const removeDepartment   = makeRemover(setAllowedDepartments);
+
+  const handleDelete = async () => {
+    try {
+      await deleteRecruitment(recruitmentId);
+      router.replace("/homePage");
+    } catch (err: any) {
+      if (err.message === "Unauthorized") { router.replace("/loginPage"); return; }
+      setSubmitError(err.message || "Failed to delete recruitment. Please try again.");
+    } finally {
+      setShowConfirm(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim())   return setSubmitError("Please enter a title.");
@@ -167,7 +181,7 @@ export default function EditRecruitmentPage() {
 
               <div className="pcf-form-container">
 
-                {/* Section 1: Recruitment Details */}
+                {/* Section 1 */}
                 <section className="pcf-card">
                   <div className="pcf-card-header">
                     <div>
@@ -263,7 +277,7 @@ export default function EditRecruitmentPage() {
                   </div>
                 </section>
 
-                {/* Section 2: Specifications and Team */}
+                {/* Section 2 */}
                 <section className="pcf-card">
                   <div className="pcf-card-header">
                     <div>
@@ -317,12 +331,32 @@ export default function EditRecruitmentPage() {
                   </p>
                 )}
 
-                {/* Save */}
-                <div className="pcf-submit-row">
+                {/* Save / Delete */}
+                <div className="pcf-submit-row" style={{ justifyContent: "space-between" }}>
+                  <button
+                    className="pcf-submit-btn"
+                    style={{ background: "#a53d2a" }}
+                    onClick={() => setShowConfirm(true)}
+                    disabled={isSubmitting}
+                  >
+                    Delete Recruitment
+                  </button>
                   <button className="pcf-submit-btn" onClick={handleSave} disabled={isSubmitting}>
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
+
+                {showConfirm && (
+                  <ConfirmPopUp
+                    heading="Delete Recruitment?"
+                    message="This will permanently delete this recruitment and cannot be undone."
+                    confirmLabel="Delete"
+                    cancelLabel="Cancel"
+                    isDestructive={true}
+                    onConfirm={handleDelete}
+                    onCancel={() => setShowConfirm(false)}
+                  />
+                )}
 
               </div>
             </>

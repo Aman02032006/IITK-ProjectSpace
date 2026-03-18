@@ -1,10 +1,14 @@
 "use client"
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import "./ProfilePage.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
-import { fetchMyProfile, UserProfile, CardData } from "@/lib/profileApi";
+import { fetchMyProfile, fetchMyProjects, fetchMyRecruitments, UserProfile } from "@/lib/profileApi";
+import { ProjectPublic } from "@/lib/projectApi";
+import { RecruitmentPublic } from "@/lib/recruitmentApi";
+import ProjectCard from "../components/cards/ProjectsCard";
+import RecruitmentCard from "../components/cards/RecruitmentCard";
 
 /* Icons */
 const LinkedInIcon = () => (
@@ -42,20 +46,6 @@ const ProjectIcon = () => (
   </svg>
 );
 
-const CameraIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    <circle cx="12" cy="13" r="4" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-
 /* Helpers */
 type TabType = "recruitment" | "project";
 const TAG_COLORS = ["teal", "blue", "red"] as const;
@@ -64,8 +54,17 @@ const TAG_COLORS = ["teal", "blue", "red"] as const;
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab]   = useState<TabType>("recruitment");
   const [profile, setProfile]       = useState<UserProfile | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [projects, setProjects]     = useState<ProjectPublic[]>([]);
+  const [recruitments, setRecruitments] = useState<RecruitmentPublic[]>([]);
+
+  const [loading, setLoading]     = useState(true);
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [cardsError, setCardsError] = useState<string | null>(null);
+
+  const [recruitmentsInitialized, setRecruitmentsInitialized] = useState(false);
+  const [projectsInitialized, setProjectsInitialized]         = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -81,7 +80,40 @@ const ProfilePage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  /* Loading */
+  // Loads each tab only on it's visit
+
+  useEffect(() => {
+    if (activeTab === "recruitment" && !recruitmentsInitialized) {
+      setCardsLoading(true);
+      setCardsError(null);
+      fetchMyRecruitments()
+        .then(setRecruitments)
+        .catch((err: Error) => {
+          if (err.message === "Unauthorized") { router.replace("/auth"); return; }
+          setCardsError("Failed to load recruitments.");
+        })
+        .finally(() => {
+          setCardsLoading(false);
+          setRecruitmentsInitialized(true);
+        });
+    }
+
+    if (activeTab === "project" && !projectsInitialized) {
+      setCardsLoading(true);
+      setCardsError(null);
+      fetchMyProjects()
+        .then(setProjects)
+        .catch((err: Error) => {
+          if (err.message === "Unauthorized") { router.replace("/auth"); return; }
+          setCardsError("Failed to load projects.");
+        })
+        .finally(() => {
+          setCardsLoading(false);
+          setProjectsInitialized(true);
+        });
+    }
+  }, [activeTab]);
+
   if (loading) {
     return (
       <div className="app-shell">
@@ -96,7 +128,6 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  /* Error */
   if (error || !profile) {
     return (
       <div className="app-shell">
@@ -111,18 +142,15 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const visibleCards = profile?.cards?.filter((c) => c?.type === activeTab) || [];
-
   return (
     <div className="app-shell">
-      <Header
-        showEditProfile={true}
-      />
+      <Header showEditProfile={true} />
 
       <div className="app-body">
         <Sidebar defaultActive="profile" />
 
         <main className="profile-page">
+
           {/* Profile card */}
           <section className="profile-card" aria-label="User profile">
             <div className="profile-card__top">
@@ -211,28 +239,49 @@ const ProfilePage: React.FC = () => {
 
           {/* Cards */}
           <div className="cards-grid" role="tabpanel">
-            {visibleCards.length === 0 ? (
-              <p style={{ color: "#888", gridColumn: "1 / -1" }}>No {activeTab} posts yet.</p>
-            ) : (
-              visibleCards.map((card: CardData) => (
-                <article key={card.id} className="post-card">
-                  <h2 className="post-card__title">{card.title}</h2>
-                  <div className="post-card__divider" />
-                  <p className="post-card__author">
-                    <strong>{card.author}</strong>, {card.role}
-                  </p>
-                  <div className="post-card__tags">
-                    {card.tags.map((tag) => (
-                      <span key={tag} className="post-card__tag">{tag}</span>
-                    ))}
-                  </div>
-                  <p className="post-card__prereq">
-                    <span className="post-card__prereq-label">Prerequisites: </span>
-                    {card.prerequisites}
-                  </p>
-                </article>
-              ))
+
+            {/* Loading */}
+            {cardsLoading && (
+              <p style={{ color: "#888", gridColumn: "1 / -1" }}>Loading…</p>
             )}
+
+            {/* Error */}
+            {!cardsLoading && cardsError && (
+              <p style={{ color: "#c0392b", gridColumn: "1 / -1" }}>{cardsError}</p>
+            )}
+
+            {/* Recruitment cards */}
+            {!cardsLoading && !cardsError && activeTab === "recruitment" && recruitmentsInitialized && (
+              recruitments.length === 0
+                ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No recruitment posts yet.</p>
+                : recruitments.map((r) => (
+                    <RecruitmentCard
+                      key={r.id}
+                      title={r.title}
+                      recruiter={profile.fullname ?? ""}
+                      designation={profile.designation ?? ""}
+                      fields={r.domains}
+                      prerequisites={r.prerequisites}
+                    />
+                  ))
+            )}
+
+            {/* Project cards */}
+            {!cardsLoading && !cardsError && activeTab === "project" && projectsInitialized && (
+              projects.length === 0
+                ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No project posts yet.</p>
+                : projects.map((p) => (
+                    <ProjectCard
+                      key={p.id}
+                      title={p.title}
+                      author={profile.fullname ?? ""}
+                      designation={profile.designation ?? ""}
+                      fields={p.domains}
+                      description={p.summary}
+                    />
+                  ))
+            )}
+
           </div>
         </main>
       </div>

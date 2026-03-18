@@ -1,4 +1,6 @@
 import { authHeaders } from "@/lib/token";
+import { ProjectPublic } from "./projectApi";
+import { RecruitmentPublic } from "./recruitmentApi";
 
 const API = "http://127.0.0.1:8000";
 
@@ -80,6 +82,7 @@ export async function fetchMyProfile(): Promise<UserProfile> {
   return res.json();
 }
 
+// Updates the user's profile
 export async function updateMyProfile(updateData: Partial<UserProfile>): Promise<UserProfile> {
   const res = await fetch(`${API}/users/me`, {
     method: "PATCH",
@@ -108,5 +111,25 @@ export async function getUserById(userId: string): Promise<UserProfileView> {
   });
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(extractError(await res.json().catch(() => ({})), "User not found"));
+  return res.json();
+}
+
+// fetches the user's projects
+export async function fetchMyProjects(): Promise<ProjectPublic[]> {
+  const res = await fetch(`${API}/users/me/projects`, {
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("Unauthorized");
+  if (!res.ok) throw new Error("Failed to fetch projects");
+  return res.json();
+}
+
+// fetches the recruitments managed by user
+export async function fetchMyRecruitments(): Promise<RecruitmentPublic[]> {
+  const res = await fetch(`${API}/users/me/recruitments`, {
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("Unauthorized");
+  if (!res.ok) throw new Error("Failed to fetch recruitments");
   return res.json();
 }

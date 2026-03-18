@@ -43,3 +43,20 @@ def get_user_profile(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return user
+
+# Get current user's projects
+@router.get("/me/projects", response_model=List[ProjectPublic])
+def get_my_projects(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    return current_user.projects
+
+
+# Get current user's recruitments
+@router.get("/me/recruitments", response_model=List[RecruitmentPublic])
+def get_my_recruitments(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    return current_user.managed_recruitments
