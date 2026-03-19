@@ -7,11 +7,13 @@ import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import { getProject, ProjectPublic } from "@/lib/projectApi";
 import { fetchMyProfile } from "@/lib/profileApi";
+import { getRepresentativeString } from "@/lib/formatTeam";
 
 /* Types */
 export interface TeamMember {
   id: string;
   name: string;
+  designation: string;
   avatar_url?: string;
 }
 
@@ -24,9 +26,6 @@ export interface Project {
   domains: string[];
   links: string[];
   media_urls: string[];
-  creator_id: string;
-  creator_name?: string;
-  creator_avatar_url?: string;
   created_at: string;
   updated_at: string;
   team_members?: TeamMember[];
@@ -63,14 +62,12 @@ function mapToProject(p: ProjectPublic): Project {
     domains: p.domains,
     links: p.links,
     media_urls: p.media_urls,
-    creator_id: p.creator_id,
-    creator_name: p.creator_name,
-    creator_avatar_url: p.creator_avatar_url,
     created_at: p.created_at,
     updated_at: p.updated_at,
     team_members: p.team_members.map((m) => ({
       id: m.id,
       name: m.fullname,
+      designation: m.designation,
       avatar_url: m.profile_picture_url ?? undefined,
     })),
   };
@@ -174,9 +171,9 @@ const ProjectPage: React.FC = () => {
   }, [projectId]);
 
   const isTeamMember = project?.team_members?.some((m) => m.id === currentUserId) ?? false;
-  const creatorDisplayName = project?.creator_name ?? "Unknown";
-  const hasTeam            = project?.team_members && project.team_members.length > 0;
-  const wasUpdated         = project ? project.updated_at !== project.created_at : false;
+  const { displayText, representative} = getRepresentativeString(project?.team_members as any || []);
+  const hasTeam = project?.team_members && project.team_members.length > 0;
+  const wasUpdated = project ? project.updated_at !== project.created_at : false;
 
   return (
     <div className="app-shell">
@@ -208,8 +205,11 @@ const ProjectPage: React.FC = () => {
               {/* Creator row */}
               <div className="project-creator-row">
                 <div className="project-creator-info">
-                  <CreatorAvatar name={creatorDisplayName} avatarUrl={project.creator_avatar_url} />
-                  <div className="project-creator-name">{creatorDisplayName}</div>
+                  <CreatorAvatar 
+                    name={representative?.fullname || "Unknown"}
+                    avatarUrl={representative?.profile_picture_url}
+                  />
+                  <div className="project-creator-name">{displayText}</div>
                 </div>
               </div>
 

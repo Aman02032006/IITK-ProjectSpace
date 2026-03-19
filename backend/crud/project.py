@@ -16,6 +16,10 @@ def create_project(session: Session, project_create: ProjectCreate, creator_id: 
     # Automatically add the creator to the project's team
     add_user_to_project_team(session, project_id=db_project.id, user_id=creator_id)
 
+    for user_id in project_create.team_member_ids:
+        if user_id != creator_id:
+            add_user_to_project_team(session, project_id=db_project.id, user_id=user_id)
+
     return db_project
 
 def get_project_by_id(session: Session, project_id: uuid.UUID) -> Project | None:

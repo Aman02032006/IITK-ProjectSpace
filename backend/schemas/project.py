@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator
 from typing import Optional, List
 import uuid
 from datetime import datetime
+from core.utils import Designation
 
 
 class UserSummary(BaseModel):
@@ -9,6 +10,7 @@ class UserSummary(BaseModel):
 
     id: uuid.UUID
     fullname: str
+    designation: Designation
     profile_picture_url: Optional[str] = None
 
     class Config:
@@ -37,7 +39,7 @@ class ProjectBase(BaseModel):
 
 class ProjectCreate(ProjectBase):
     # Schema for creating a new project. Creator is inferred from auth token.
-
+    team_member_ids: List[uuid.UUID] = []
     pass
 
 
@@ -85,9 +87,7 @@ class ProjectSummary(BaseModel):
     domains: List[str] = []
     created_at: datetime
     
-    creator_id: uuid.UUID
-    creator_name: str
-    creator_avatar_url: Optional[str] = None
+    team_members: List[UserSummary] = []
 
     class Config:
         from_attributes = True

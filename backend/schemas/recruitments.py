@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 import uuid
 from datetime import datetime
+from core.utils import Designation
 
 
 class UserSummary(BaseModel):
@@ -9,6 +10,7 @@ class UserSummary(BaseModel):
 
     id: uuid.UUID
     fullname: str
+    designation: Designation
     profile_picture_url: Optional[str] = None
 
     class Config:
@@ -84,7 +86,7 @@ class RecruitmentBase(BaseModel):
 
 class RecruitmentCreate(RecruitmentBase):
     # Schema for creating a new recruitment post
-
+    recruiter_ids: List[uuid.UUID] = []
     pass
 
 
@@ -126,7 +128,7 @@ class RecruitmentPublic(RecruitmentBase):
     updated_at: datetime
     recruiters: List[UserSummary] = []  # list of recruiter user IDs
     applications: List[ApplicationPublic] = []
-    
+
     creator_id: uuid.UUID
     creator_name: str
     creator_avatar_url: Optional[str] = None
@@ -146,10 +148,8 @@ class RecruitmentSummary(BaseModel):
     allowed_departments: List[str] = []
     status: str
     created_at: datetime
-    
-    creator_id: uuid.UUID
-    creator_name: str
-    creator_avatar_url: Optional[str] = None
+
+    recruiters: List[UserSummary] = []
 
     class Config:
         from_attributes = True

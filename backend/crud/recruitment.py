@@ -9,16 +9,23 @@ from typing import Sequence
 
 def create_recruitment(session: Session, recruitment_create: RecruitmentCreate, creator_id: uuid.UUID) -> Recruitment:
     db_recruitment = Recruitment.model_validate(recruitment_create)
-    db_recruitment.creator_id = creator_id
     
     session.add(db_recruitment)
     session.commit()
     session.refresh(db_recruitment)
 
     # Add the creator as the first recruiter
-    link = RecruitmentRecruiterLink(recruitment_id=db_recruitment.id, user_id=creator_id)
-    session.add(link)
+    creator_link = RecruitmentRecruiterLink(recruitment_id=db_recruitment.id, user_id=creator_id)
+    session.add(creator_link)
+
+    if hasattr(recruitment_create, "recruiter_ids") and recruitment_create.recruiter_ids:
+        for fellow_id in recruitment_create.recruiter_ids:
+            if fellow_id != creator_id:
+                fellow_link = RecruitmentRecruiterLink(recruitment_id=db_recruitment.id, user_id=fellow_id)
+                session.add(fellow_link)
+
     session.commit()
+    session.refresh(db_recruitment)
 
     return db_recruitment
 

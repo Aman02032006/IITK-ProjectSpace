@@ -6,8 +6,11 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import "./postCreationForm.css";
 import { getToken } from "@/lib/token"
-import { createProject } from "@/lib/projectApi";
-import { createRecruitment } from "@/lib/recruitmentApi";
+import { createProject, uploadProjectMedia } from "@/lib/projectApi";
+import { createRecruitment, uploadRecruitmentMedia } from "@/lib/recruitmentApi";
+import { UserSummary } from "@/lib/projectApi";
+
+import skillsData from "@/data/seed_skills.json"
 
 type PostType = "Project" | "Recruitment";
 
@@ -39,21 +42,70 @@ export default function PostCreationForm() {
 
   // Project-only fields
   const [summary, setSummary]         = useState("");
-  const [teamMembers, setTeamMembers] = useState("");
-
+  const [selectedUsers, setSelectedUsers] = useState<UserSummary[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [userSearchResults, setUserSearchResults] = useState<UserSummary[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   // Recruitment-only fields
   const [prerequisites, setPrerequisites]           = useState<Tag[]>([]);
   const [allowedDesignations, setAllowedDesignations] = useState<Tag[]>([]);
   const [allowedDepartments, setAllowedDepartments]   = useState<Tag[]>([]);
-  const [fellowRecruiters, setFellowRecruiters]       = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const SKILLS = skillsData;
+  const DEPARTMENTS = ["AE", "BSBE", "CHE", "CHM", "CE", "CGS", "CSE", "DES", "ES", "ECO", "EE", "HSS", "IS", "MSE", "MTH", "ME", "NET", "DOMS", "PHY", "SPASE", "SDS", "SEE"];
+  const DESIGNATIONS = ["UG_STUDENT", "PG_STUDENT", "PHD", "POSTDOC", "ASST_PROF", "ASSCT_PROF", "PROF", "HAG_PROF"];
 
   useEffect(() => {
   if (!getToken()) {
     router.replace("/auth");
   }
-}, []);
+  }, []);
+
+  useEffect(() => {
+    if (userSearchQuery.trim().length < 2) {
+      setUserSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearchingUsers(true);
+      try {
+        // TODO: Replace this with your actual API call!
+        // Example: const results = await searchUsers(userSearchQuery);
+        
+        // Mock data for testing the UI:
+        const mockResults: UserSummary[] = [
+          { id: "1", fullname: "Aman Srivastava", designation: "UG_STUDENT" },
+          { id: "2", fullname: "Dev Sharma", designation: "UG_STUDENT" },
+        ].filter(u => u.fullname.toLowerCase().includes(userSearchQuery.toLowerCase()));
+        
+        // Filter out users that are already selected
+        const filteredResults = mockResults.filter(
+          (result) => !selectedUsers.some((selected) => selected.id === result.id)
+        );
+        
+        setUserSearchResults(filteredResults);
+      } catch (error) {
+        console.error("Search failed", error);
+      } finally {
+        setIsSearchingUsers(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [userSearchQuery, selectedUsers]);
+
+  const handleSelectUser = (user: UserSummary) => {
+    setSelectedUsers((prev) => [...prev, user]);
+    setUserSearchQuery("");
+    setUserSearchResults([]);
+  };
+
+  const handleRemoveUser = (userId: string) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
+  };
 
   // Helpers
   const handleTypeSelect = (type: PostType) => {
@@ -111,9 +163,7 @@ export default function PostCreationForm() {
       const descriptionFormat = activeTab === "Markdown" ? "markdown" : "plain-text";
       const cleanLinks = links.map((l) => l.value).filter(Boolean);
 
-      // TODO: uploadedFiles need to be uploaded to a CDN first to get URLs.
-      // For now media_urls is sent as empty until file upload is implemented.
-      const media_urls: string[] = [];
+      const selectedIds = selectedUsers.map(u => u.id)
 
       if (postType === "Project") {
         const created = await createProject({
@@ -123,8 +173,14 @@ export default function PostCreationForm() {
           description_format: descriptionFormat,
           domains: tags.map((t) => t.label),
           links: cleanLinks,
-          media_urls,
+          media_urls: [],
+          team_member_ids: selectedIds,
         });
+
+        if (uploadedFiles.length > 0) {
+          await uploadProjectMedia(created.id, uploadedFiles);
+        }
+
         router.push(`/projectPage/${created.id}`);
 
       } else {
@@ -137,9 +193,15 @@ export default function PostCreationForm() {
           allowed_designations: allowedDesignations.map((t) => t.label),
           allowed_departments: allowedDepartments.map((t) => t.label),
           links: cleanLinks,
-          media_urls,
-          status: "Open", // always Open on creation
+          media_urls: [],
+          status: "Open",
+          recruiter_ids: selectedIds,
         });
+
+        if (uploadedFiles.length > 0) {
+          await uploadRecruitmentMedia(created.id, uploadedFiles);
+        }
+        
         router.push(`/recruitmentPage/${created.id}`);
       }
 
@@ -430,30 +492,81 @@ export default function PostCreationForm() {
                 </div>
               )}
 
-              {/* Team Members / Fellow Recruiters */}
+              {/* Team Members / Fellow Recruiters Autocomplete */}
               <div className="pcf-field">
                 <label className="pcf-label">
                   {postType === "Project" ? "Add Team Members" : "Add Fellow Recruiters"}
                   <span className="pcf-label-hint">
-                    (Verification request will be sent to users you add. Only users who verify will be displayed on the{" "}
-                    {postType === "Project" ? "project" : "recruitment"} page.{" "}
-                    {postType === "Project"
-                      ? "Project post will also be added on verified user's profile."
-                      : "Recruitment post will also be added on verified user's profile."})
+                    (Search for users to add them to your post.)
                   </span>
                 </label>
-                <div className="pcf-search-input-wrapper">
-                  <span className="pcf-at-icon">@</span>
-                  <input
-                    className="pcf-input pcf-input--search"
-                    placeholder={postType === "Project" ? "Search for your team members" : "Search for fellow recruiters"}
-                    value={postType === "Project" ? teamMembers : fellowRecruiters}
-                    onChange={(e) =>
-                      postType === "Project"
-                        ? setTeamMembers(e.target.value)
-                        : setFellowRecruiters(e.target.value)
-                    }
-                  />
+
+                {/* Selected User Chips */}
+                {selectedUsers.length > 0 && (
+                  <div className="pcf-tags-row" style={{ marginBottom: "12px" }}>
+                    {selectedUsers.map((user) => (
+                      <span key={user.id} className="pcf-tag" style={{ background: "var(--primary-color)", color: "white" }}>
+                        {user.fullname}
+                        <button 
+                          className="pcf-tag-remove" 
+                          style={{ color: "white" }}
+                          onClick={() => handleRemoveUser(user.id)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search Input & Dropdown */}
+                <div style={{ position: "relative" }}>
+                  <div className="pcf-search-input-wrapper">
+                    <span className="pcf-at-icon">@</span>
+                    <input
+                      className="pcf-input pcf-input--search"
+                      placeholder={postType === "Project" ? "Search for team members..." : "Search for recruiters..."}
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Dropdown Results */}
+                  {userSearchResults.length > 0 && (
+                    <div 
+                      className="pcf-dropdown-menu" 
+                      style={{ 
+                        display: "block", 
+                        position: "absolute", 
+                        top: "100%", 
+                        left: 0, 
+                        width: "100%", 
+                        zIndex: 10,
+                        marginTop: "4px",
+                        maxHeight: "200px",
+                        overflowY: "auto"
+                      }}
+                    >
+                      {userSearchResults.map((user) => (
+                        <button
+                          key={user.id}
+                          className="pcf-dropdown-item"
+                          onClick={() => handleSelectUser(user)}
+                          style={{ textAlign: "left", padding: "10px" }}
+                        >
+                          <strong>{user.fullname}</strong>
+                          <span style={{ display: "block", fontSize: "11px", color: "gray" }}>
+                            {user.designation}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {isSearchingUsers && (
+                    <div style={{ position: "absolute", right: "12px", top: "12px", fontSize: "12px", color: "gray" }}>
+                      Searching...
+                    </div>
+                  )}
                 </div>
               </div>
             </section>

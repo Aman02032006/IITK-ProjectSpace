@@ -7,11 +7,14 @@ import Sidebar from "../components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import { getRecruitment, applyToRecruitment, RecruitmentPublic } from "@/lib/recruitmentApi";
 import { fetchMyProfile } from "@/lib/profileApi";
+import { getRepresentativeString } from "@/lib/formatTeam";
+import { getRouteRegex } from "next/dist/shared/lib/router/utils/route-regex";
 
 /* Types */
 export interface Recruiter {
   id: string;
   name: string;
+  designation: string;
   avatar_url?: string;
 }
 
@@ -68,6 +71,7 @@ function mapToRecruitment(r: RecruitmentPublic): Recruitment {
     recruiters: r.recruiters.map((rec) => ({
       id: rec.id,
       name: rec.fullname,
+      designation: rec.designation,
       avatar_url: rec.profile_picture_url ?? undefined,
     })),
     application_count: r.applications.length,
@@ -177,6 +181,8 @@ const RecruitmentPage: React.FC = () => {
     }
   };
 
+  const { displayText } = getRepresentativeString(recruitment?.recruiters as any || []);
+
   const isRecruiter = recruitment?.recruiters?.some((r) => r.id === currentUserId) ?? false;
   const isOpen     = recruitment?.status === "Open";
   const wasUpdated = recruitment ? recruitment.updated_at !== recruitment.created_at : false;
@@ -219,7 +225,7 @@ const RecruitmentPage: React.FC = () => {
                     ))}
                   </div>
                   <span className="recruit-recruiters-label">
-                    {recruitment.recruiters.map((r) => r.name.split(" ")[0]).join(", ")}
+                    {displayText}
                   </span>
                 </div>
 

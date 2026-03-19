@@ -17,6 +17,7 @@ const extractError = (data: any, fallbackMsg: string): string => {
 export interface UserSummary {
   id: string;
   fullname: string;
+  designation: string;
   profile_picture_url?: string;
 }
 
@@ -28,6 +29,7 @@ export interface ProjectCreate {
   domains: string[];
   links: string[];
   media_urls: string[];
+  team_member_ids: string[];
 }
 
 export interface ProjectUpdate {
@@ -64,10 +66,7 @@ export interface ProjectSummary {
   summary: string;
   domains: string[];
   created_at: string;
-
-  creator_id: string;
-  creator_name: string;
-  creator_avatar_url?: string;
+  team_members: UserSummary[];
 }
 
 // API Functions
@@ -80,6 +79,24 @@ export async function createProject(payload: ProjectCreate): Promise<ProjectPubl
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to create project"));
   return data;
+}
+
+export async function uploadProjectMedia(projectId: string, files: File[]): Promise<void> {
+  // Since our backend accepts one file per request, we loop through them
+  await Promise.all(files.map(async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API}/${projectId}/upload`, {
+      method: "POST",
+      // Notice: Do NOT set "Content-Type" manually here! 
+      // The browser automatically sets it to multipart/form-data with the correct boundary
+      headers: { ...authHeaders() },
+      body: formData,
+    });
+    
+    if (!res.ok) throw new Error("Failed to upload a file");
+  }));
 }
 
 export async function getProject(projectId: string): Promise<ProjectPublic> {

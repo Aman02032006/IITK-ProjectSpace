@@ -1,8 +1,14 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import create_db_and_tables
 from contextlib import asynccontextmanager
 from routers import auth, users, projects, recruitments
+
+os.makedirs("uploads/profilePictures", exist_ok=True)
+os.makedirs("uploads/Projects", exist_ok=True)
+os.makedirs("uploads/Recruitments", exist_ok=True)
 
 
 @asynccontextmanager
@@ -15,10 +21,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="IITK ProjectSpace API", lifespan=lifespan)
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(recruitments.router)
+
 # Allow Frontend (Port 3000) to talk to Backend (Port 8000)
 app.add_middleware(
     CORSMiddleware,

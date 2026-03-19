@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlmodel import Session
 from typing import List
 import uuid
+import os
+import shutil
 
 from core.database import get_session
 from core.dependencies import get_current_user
@@ -135,7 +137,6 @@ def apply_for_recruitment(
             detail="This recruitment is closed.",
         )
 
-    # Security: Ensure the URL matches the JSON payload
     if application_in.recruitment_id != recruitment_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -173,7 +174,6 @@ def update_application(
             detail="Application does not belong to this recruitment.",
         )
 
-    # SECURITY CHECK: Only the recruiters who own the post can change application statuses
     if current_user not in recruitment.recruiters:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -183,3 +183,40 @@ def update_application(
     return update_application_status(
         session=db, db_application=application, status_update=status_update
     )
+
+
+@router.post("/{recruitment_id}/upload", response_model=RecruitmentPublic)
+def upload_recruitment_media(
+    recruitment_id: uuid.UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Uploads a file to a specific recruitment folder."""
+    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
+    if not recruitment:
+        raise HTTPException(status_code=404, detail="Recruitment not found")
+
+    if current_user not in recruitment.recruiters:
+        raise HTTPException(
+            status_code=403, detail="Only managing recruiters can upload media."
+        )
+
+    save_dir = os.path.join("uploads", "Recruitments", str(recruitment_id))
+    os.makedirs(save_dir, exist_ok=True)
+
+    file_path = os.path.join(save_dir, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    url_path = f"/{file_path}".replace("\\", "/")
+
+    updated_media = list(recruitment.media_urls) if recruitment.media_urls else []
+    updated_media.append(url_path)
+    recruitment.media_urls = updated_media
+
+    db.add(recruitment)
+    db.commit()
+    db.refresh(recruitment)
+
+    return recruitment
