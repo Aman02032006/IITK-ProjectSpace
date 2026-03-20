@@ -1,20 +1,74 @@
-import React, { useState } from "react";
+"use client";
+import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import "./Header.css";
 
-interface HeaderProps {
+/* ── Types ── */
+export interface HeaderProps {
   showEditProfile?: boolean;
+  searchTags?: string[];
+  searchQuery?: string;
+  searchSuggestions?: string[];
+  onTagAdd?: (tag: string) => void;
+  onTagRemove?: (tag: string) => void;
+  onSearchQueryChange?: (q: string) => void;
+  onSearchKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
+/* ── Icons ── */
 const SearchIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8" />
     <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
-const Header: React.FC<HeaderProps> = ({ showEditProfile = false }) => {
-  const [searchValue, setSearchValue] = useState("");
+const XSmall = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const XMedium = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+/* ── Component ── */
+const Header: React.FC<HeaderProps> = ({
+  showEditProfile = false,
+  searchTags,
+  searchQuery = "",
+  searchSuggestions = [],
+  onTagAdd,
+  onTagRemove,
+  onSearchQueryChange,
+  onSearchKeyDown,
+}) => {
+  const isSearchMode = searchTags !== undefined;
+  const [localValue, setLocalValue] = useState("");
+  const [showDrop, setShowDrop] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node))
+        setShowDrop(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filteredSuggestions = searchSuggestions.filter(
+    (t) => t.toLowerCase().includes(searchQuery.toLowerCase()) && !(searchTags ?? []).includes(t)
+  );
+
+  const hasTags = (searchTags ?? []).length > 0;
 
   return (
     <header className="header">
@@ -23,21 +77,80 @@ const Header: React.FC<HeaderProps> = ({ showEditProfile = false }) => {
         <img src="/Logo.png" alt="Logo" />
       </div>
 
-      {/* Search Bar */}
-      <div className="header__search-wrapper">
-        <span className="header__search-icon">
-          <SearchIcon />
-        </span>
-        <input
-          type="text"
-          className="header__search"
-          placeholder="Search"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-        />
+      {/* Search */}
+      <div className="header__search-wrapper" ref={wrapperRef}>
+        <span className="header__search-icon"><SearchIcon /></span>
+
+        <div className={`header__search-bar${isSearchMode && hasTags ? " header__search-bar--has-tags" : ""}`}>
+          {/* Tag pills */}
+          {isSearchMode && (searchTags ?? []).map((tag) => (
+            <span key={tag} className="header__tag-pill">
+              {tag}
+              <button className="header__tag-remove"
+                onMouseDown={(e) => { e.preventDefault(); onTagRemove?.(tag); }}
+                aria-label={`Remove ${tag}`}>
+                <XSmall />
+              </button>
+            </span>
+          ))}
+
+          {/* Input */}
+          <input
+            ref={inputRef}
+            type="text"
+            className="header__search-input"
+            placeholder={
+              isSearchMode
+                ? hasTags ? "Add more tags…" : "Search"
+                : "Search"
+            }
+            value={isSearchMode ? searchQuery : localValue}
+            onChange={(e) => {
+              if (isSearchMode) { onSearchQueryChange?.(e.target.value); setShowDrop(true); }
+              else setLocalValue(e.target.value);
+            }}
+            onFocus={() => isSearchMode && setShowDrop(true)}
+            onKeyDown={onSearchKeyDown}
+            autoComplete="off"
+            spellCheck={false}
+          />
+
+          {/* Clear */}
+          {isSearchMode && (hasTags || searchQuery) && (
+            <button className="header__search-clear"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                (searchTags ?? []).forEach((t) => onTagRemove?.(t));
+                onSearchQueryChange?.("");
+                inputRef.current?.focus();
+              }}
+              aria-label="Clear all">
+              <XMedium />
+            </button>
+          )}
+        </div>
+
+        {/* Dropdown */}
+        {isSearchMode && showDrop && filteredSuggestions.length > 0 && (
+          <div className="header__suggestions">
+            <p className="header__suggestions-label">Suggested Tags</p>
+            {filteredSuggestions.map((tag) => (
+              <button key={tag} className="header__suggestions-item"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onTagAdd?.(tag);
+                  onSearchQueryChange?.("");
+                  setShowDrop(false);
+                  inputRef.current?.focus();
+                }}>
+                <span className="header__suggestions-dot" />{tag}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Edit Profile Button */}
+      {/* Edit Profile */}
       {showEditProfile && (
         <Link href="/profilePage/editProfilePage" className="header__edit-btn">
           Edit Profile
