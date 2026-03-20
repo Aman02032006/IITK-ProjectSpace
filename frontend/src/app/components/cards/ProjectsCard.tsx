@@ -1,49 +1,59 @@
-import OverflowTooltip from "@/app/components/cards/OverflowTooltip"
+import React from "react";
+import Link from "next/link";
+import OverflowTooltip from "./OverflowTooltip";
 
-interface ProjectCardProps {
-  title: string
-  author: string
-  designation: string
-  fields: string[]
-  description: string
+interface ProjectsCardProps {
+  id: string;
+  title: string;
+  author: string;
+  designation: string;
+  fields: string[];
+  description: string;
 }
 
-export default function ProjectCard({
-  title,
-  author,
-  designation,
-  fields,
-  description
-}: ProjectCardProps) {
-
+export function ProjectsCard({ id, title, author, designation, fields, description }: ProjectsCardProps) {
   return (
-    <div className="bg-card border border-border rounded-xl px-2 py-2 shadow-sm hover:shadow-md transition w-full max-w-sm">
-
-      <div className="border border-border rounded-md px-4 py-2 mb-2">
-        <OverflowTooltip
-          text={title}
-          className="font-semibold text-lg"
-          lines={2}
+    <Link href={`/projectPage?id=${id}`} className="flex flex-col bg-white border border-gray-200 rounded-xl p-5 shadow-[0_0_10px_rgba(0,0,0,0.1)] w-[400px] h-[260px] overflow-hidden font-['Montserrat'] cursor-pointer hover:shadow-[0_0_15px_rgba(0,0,0,0.15)] transition-shadow duration-200">
+      
+      {/* Project Title */}
+      <div className="mb-3">
+        <OverflowTooltip 
+          text={title} 
+          className="text-lg font-bold text-card-foreground" 
+          lines={2} 
         />
       </div>
 
-      <OverflowTooltip
-        text={`${author}, ${designation}`}
-        className="font-medium mb-2"
-      />
+      {/* Horizontal Line Separator */}
+      <hr className="border-border mb-3" />
 
-      <OverflowTooltip
-        text={fields.join(", ")}
-        className="text-sm text-muted-foreground"
-        lines={2}
-      />
+      {/* Card Details */}
+      <div className="flex flex-col gap-2 flex-grow overflow-hidden">
+        
+        {/* Author, Designation */}
+        <OverflowTooltip 
+          text={`${author}, ${designation}`} 
+          className="text-sm font-semibold text-card-foreground" 
+          lines={1}
+        />
 
-      <OverflowTooltip
-        text={description}
-        className="text-sm text-muted-foreground mt-2"
-        lines={3}
-      />
+        {/* Project Fields */}
+        <OverflowTooltip 
+          text={fields.join(", ")} 
+          className="text-sm text-muted-foreground italic" 
+          lines={1} 
+        />
 
-    </div>
-  )
+        {/* Project Description */}
+        <OverflowTooltip 
+          text={description} 
+          className="text-sm text-muted-foreground italic mt-1" 
+          lines={4} 
+        />
+        
+      </div>
+    </Link>
+  );
 }
+
+export default ProjectsCard;  

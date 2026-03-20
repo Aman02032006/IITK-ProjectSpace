@@ -10,3 +10,5 @@ __pycache__/
 
 .next/
 postgres_data/
+
+backend/uploads/

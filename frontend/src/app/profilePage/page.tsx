@@ -256,7 +256,8 @@ const ProfilePage: React.FC = () => {
                 ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No recruitment posts yet.</p>
                 : recruitments.map((r) => (
                     <RecruitmentCard
-                      key={r.id}
+                      key={(r as any).project_id || (r as any).id}
+                      id={(r as any).project_id || (r as any).id}
                       title={r.title}
                       recruiter={profile.fullname ?? ""}
                       designation={profile.designation ?? ""}
@@ -272,7 +273,8 @@ const ProfilePage: React.FC = () => {
                 ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No project posts yet.</p>
                 : projects.map((p) => (
                     <ProjectCard
-                      key={p.id}
+                      key={(p as any).project_id || (p as any).id}
+                      id={(p as any).project_id || (p as any).id}
                       title={p.title}
                       author={profile.fullname ?? ""}
                       designation={profile.designation ?? ""}

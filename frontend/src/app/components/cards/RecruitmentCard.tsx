@@ -1,6 +1,8 @@
 import OverflowTooltip from "@/app/components/cards/OverflowTooltip"
+import Link from "next/link"
 
 interface RecruitmentCardProps {
+  id: string
   title: string
   recruiter: string
   designation: string
@@ -9,6 +11,7 @@ interface RecruitmentCardProps {
 }
 
 export default function RecruitmentCard({
+  id,
   title,
   recruiter,
   designation,
@@ -17,41 +20,48 @@ export default function RecruitmentCard({
 }: RecruitmentCardProps) {
 
   return (
-    <div className="bg-card border border-border rounded-xl px-2 py-2 shadow-sm hover:shadow-md transition w-full max-w-sm">
+    <Link 
+      href={`/recruitmentPage?id=${id}`} 
+      className="flex flex-col bg-white border border-gray-200 rounded-xl p-5 shadow-[0_0_10px_rgba(0,0,0,0.1)] w-[400px] h-[260px] overflow-hidden font-['Montserrat'] cursor-pointer hover:shadow-[0_0_15px_rgba(0,0,0,0.15)] transition-shadow duration-200"
+    >
 
-      <div className="border border-border rounded-md px-4 py-2 mb-2">
+      {/* Recruitment Title */}
+      <div className="mb-3">
         <OverflowTooltip
           text={title}
-          className="font-semibold text-lg"
+          className="text-lg font-bold text-card-foreground"
           lines={2}
         />
       </div>
 
-      <OverflowTooltip
-        text={`${recruiter}, ${designation}`}
-        className="font-medium mb-3"
-      />
+      {/* Horizontal Line Separator */}
+      <hr className="border-border mb-3" />
 
-      <div className="mb-3">
-        <p className="text-sm font-medium">Project Fields</p>
-
-        <OverflowTooltip
-          text={fields.join(", ")}
-          className="text-sm text-muted-foreground"
-          lines={2}
+      {/* Card Details */}
+      <div className="flex flex-col gap-2 flex-grow overflow-hidden">
+        
+        {/* Recruiter, Designation */}
+        <OverflowTooltip 
+          text={`${recruiter}, ${designation}`} 
+          className="text-sm font-semibold text-card-foreground" 
+          lines={1}
         />
-      </div>
 
-      <div>
-        <p className="text-sm font-medium">Prerequisites</p>
-
-        <OverflowTooltip
-          text={prerequisites.join(", ")}
-          className="text-sm text-muted-foreground"
-          lines={2}
+        {/* Project Fields */}
+        <OverflowTooltip 
+          text={fields.join(", ")} 
+          className="text-sm text-muted-foreground italic" 
+          lines={1} 
         />
-      </div>
 
-    </div>
+        {/* Prerequisites */}
+        <OverflowTooltip 
+          text={`Prerequisites: ${prerequisites.join(", ")}`} 
+          className="text-sm text-muted-foreground italic mt-1" 
+          lines={4} 
+        />
+        
+      </div>
+    </Link>
   )
 }

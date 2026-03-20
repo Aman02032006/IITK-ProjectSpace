@@ -5,7 +5,7 @@ import "./recruitmentPage.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getRecruitment, applyToRecruitment, RecruitmentPublic } from "@/lib/recruitmentApi";
+import { getRecruitment, applyToRecruitment, updateRecruitment, RecruitmentPublic } from "@/lib/recruitmentApi";
 import { fetchMyProfile } from "@/lib/profileApi";
 import { getRepresentativeString } from "@/lib/formatTeam";
 import { getRouteRegex } from "next/dist/shared/lib/router/utils/route-regex";
@@ -33,6 +33,7 @@ export interface Recruitment {
   updated_at: string;
   recruiters: Recruiter[];
   application_count?: number;
+  applications: any[];
 }
 
 /* Helpers */
@@ -44,15 +45,18 @@ function getInitials(name: string): string {
     .join("");
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string | undefined | null): string {
+  if (!iso) return "Unknown Date";
   try {
-    return new Date(iso).toLocaleDateString("en-IN", {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "Unknown Date";
+    return d.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
   } catch {
-    return iso;
+    return "Unknown Date";
   }
 }
 
@@ -79,6 +83,7 @@ function mapToRecruitment(r: RecruitmentPublic): Recruitment {
       avatar_url: getFullUrl(rec.profile_picture_url ?? undefined),
     })),
     application_count: r.applications.length,
+    applications: r.applications || [],
   };
 }
 
@@ -142,6 +147,7 @@ const RecruitmentPage: React.FC = () => {
   const [applying, setApplying]         = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
   const [applyError, setApplyError]     = useState<string | null>(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   useEffect(() => {
     if (!recruitmentId) return;
@@ -185,11 +191,32 @@ const RecruitmentPage: React.FC = () => {
     }
   };
 
+  const handleToggleStatus = async () => {
+    if (!recruitment) return;
+    setTogglingStatus(true);
+    try {
+      const newStatus = recruitment.status === "Open" ? "Closed" : "Open";
+      await updateRecruitment(recruitment.id, { status: newStatus });
+      setRecruitment({ ...recruitment, status: newStatus });
+    } catch (err: any) {
+      alert(err.message || "Failed to update recruitment status.");
+    } finally {
+      setTogglingStatus(false);
+    }
+  };
+
   const { displayText } = getRepresentativeString(recruitment?.recruiters as any || []);
 
   const isRecruiter = recruitment?.recruiters?.some((r) => r.id === currentUserId) ?? false;
   const isOpen     = recruitment?.status === "Open";
   const wasUpdated = recruitment ? recruitment.updated_at !== recruitment.created_at : false;
+  const hasApplied = recruitment?.applications?.some((app: any) => app.applicant_id === currentUserId || app.user_id === currentUserId) ?? false;
+
+  let applyText = "Apply";
+  if (applying) applyText = "Applying...";
+  else if (hasApplied || applySuccess) applyText = "Applied";
+  else if (isRecruiter) applyText = "Cannot Apply";
+  else if (!isOpen) applyText = "Closed";
 
   return (
     <Suspense>
@@ -235,6 +262,16 @@ const RecruitmentPage: React.FC = () => {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  {isRecruiter && (
+                    <button
+                      className="recruit-apply-btn"
+                      onClick={handleToggleStatus}
+                      disabled={togglingStatus}
+                      style={{ background: isOpen ? "#a53d2a" : "#1a9e72" }}
+                    >
+                      {togglingStatus ? "Updating..." : isOpen ? "Close Recruitment" : "Open Recruitment"}
+                    </button>
+                  )}
                   <span className={`recruit-status-badge ${isOpen ? "open" : "closed"}`}>
                     <span className="recruit-status-dot" />
                     {recruitment.status}
@@ -243,9 +280,9 @@ const RecruitmentPage: React.FC = () => {
                   <button
                     className="recruit-apply-btn"
                     onClick={handleApply}
-                    disabled={!isOpen || applying || applySuccess}
+                    disabled={!isOpen || applying || applySuccess || hasApplied || isRecruiter}
                   >
-                    {applying ? "Applying..." : applySuccess ? "Applied!" : "Apply"}
+                    {applyText}
                   </button>
                 </div>
               </div>
@@ -365,6 +402,37 @@ const RecruitmentPage: React.FC = () => {
                   </span>
                 )}
               </div>
+
+              {/* Applications (Only visible to recruiters) */}
+              {isRecruiter && recruitment.applications.length > 0 && (
+                <>
+                  <hr className="recruit-divider" />
+                  <div className="recruit-applications-section" style={{ marginTop: "20px" }}>
+                    <div className="recruit-section-heading">Applications</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
+                      {recruitment.applications.map((app: any) => {
+                        const applicantName = app.user?.fullname || app.user?.name || app.user?.profile?.fullname || app.applicant?.fullname || app.applicant?.name || app.applicant?.profile?.fullname || app.applicant_name || app.applicant_id || app.user_id || "Unknown Applicant";
+                        const applicantDesig = app.user?.designation || app.user?.profile?.designation || app.applicant?.designation || app.applicant?.profile?.designation || app.applicant_designation || app.designation || "Unknown Designation";
+                        const applicantDept = app.user?.department || app.user?.dept || app.user?.profile?.department || app.applicant?.department || app.applicant?.dept || app.applicant?.profile?.department || app.applicant_department || app.department || app.dept || "Unknown Department";
+                        const appliedDate = app.applied_at || app.created_at;
+                        
+                        return (
+                          <div key={app.id} style={{ border: "1px solid var(--border-color)", padding: "16px", borderRadius: "8px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                              <div style={{ display: "flex", flexDirection: "column" }}>
+                                <strong style={{ fontSize: "16px" }}>{applicantName}</strong>
+                                <span style={{ fontSize: "14px", color: "var(--text-muted)" }}>{applicantDesig} - {applicantDept}</span>
+                              </div>
+                              <span style={{ fontWeight: "bold", color: app.status === "Pending" ? "orange" : app.status === "Accepted" ? "green" : "red" }}>{app.status}</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: "14px", color: "var(--text-muted)" }}>Applied At: {formatDate(appliedDate)}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
 
             </div>
           )}
