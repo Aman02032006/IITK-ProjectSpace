@@ -5,11 +5,16 @@ from models.project import Project
 from models.recruitments import Recruitment
 from core.utils import Designation, Degree, Department
 
+<<<<<<< Updated upstream
 # ─────────────────────────────────────────────
 # User Search
 # ─────────────────────────────────────────────
 
 
+=======
+
+# User Search
+>>>>>>> Stashed changes
 def search_users(
     session: Session,
     q: str | None,
@@ -22,10 +27,7 @@ def search_users(
 ) -> Tuple[List[User], int]:
     """
     Search users by full-text query (name + email) and/or
-    enum filters (designation, degree, department).
-
-    Uses the pre-computed TSVector column `search_vector` for full-text search.
-    Enum filters are applied as exact-match WHERE clauses.
+    enum filters (designation, degree, department) using pre-computed TSVector.
     """
     statement = select(User).where(User.is_active == True)
 
@@ -57,19 +59,24 @@ def search_users(
 
     statement = statement.offset(offset).limit(limit)
     results = session.exec(statement).all()
+<<<<<<< Updated upstream
 
     for p in results:
         if p.creator is None:
             p.creator = session.get(User, p.creator_id)
+=======
+>>>>>>> Stashed changes
 
     return results, total
 
 
-# ─────────────────────────────────────────────
 # Project Search
+<<<<<<< Updated upstream
 # ─────────────────────────────────────────────
 
 
+=======
+>>>>>>> Stashed changes
 def search_projects(
     session: Session,
     q: str | None,
@@ -79,9 +86,7 @@ def search_projects(
 ) -> Tuple[List[Project], int]:
     """
     Search projects by full-text query (title + summary + description)
-    and/or domain filter (ARRAY contains check).
-
-    Uses the pre-computed TSVector column `search_vector` for full-text search.
+    and/or domain filter (ARRAY contains check) using pre-computed TSVector.
     """
     statement = select(Project)
 
@@ -117,11 +122,13 @@ def search_projects(
     return results, total
 
 
-# ─────────────────────────────────────────────
 # Recruitment Search
+<<<<<<< Updated upstream
 # ─────────────────────────────────────────────
 
 
+=======
+>>>>>>> Stashed changes
 def search_recruitments(
     session: Session,
     q: str | None,
@@ -133,9 +140,7 @@ def search_recruitments(
 ) -> Tuple[List[Recruitment], int]:
     """
     Search recruitments by full-text query (title + description),
-    domain filter, prerequisite filter and status.
-
-    Uses the pre-computed TSVector column `search_vector` for full-text search.
+    domain filter, prerequisite filter and status using pre-computed TSVector.
     """
     statement = select(Recruitment)
 

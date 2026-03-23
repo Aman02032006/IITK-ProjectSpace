@@ -45,6 +45,8 @@ class Project(ProjectBase, table=True):
     team_members: List["User"] = Relationship(
         back_populates="projects", link_model=ProjectTeamLink
     )
+    
+    comments: List["Comment"] = Relationship(back_populates="project")
 
     search_vector: Optional[str] = Field(
         default=None,

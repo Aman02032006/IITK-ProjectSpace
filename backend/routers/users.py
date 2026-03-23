@@ -49,6 +49,7 @@ def edit_my_profile(
     return update_user(session=session, db_user=current_user, user_update=user_update)
 
 
+<<<<<<< Updated upstream
 # Get the detail of some other user
 @router.get("/{user_id}", response_model=UserProfileView)
 def get_user_profile(
@@ -64,6 +65,8 @@ def get_user_profile(
     return user
 
 
+=======
+>>>>>>> Stashed changes
 @router.post("/me/profile-picture", response_model=UserPublic)
 def upload_profile_picture(
     file: UploadFile = File(...),
@@ -86,9 +89,15 @@ def upload_profile_picture(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+<<<<<<< Updated upstream
     # Convert Windows backslashes to web-safe forward slashes
     url_path = f"/{file_path}".replace("\\", "/")
 
+=======
+    # Build URL that matches the /uploads static mount in main.py
+    url_path = f"/uploads/profilePictures/{filename}"
+    
+>>>>>>> Stashed changes
     # Update the database
     current_user.profile_picture_url = url_path
     db.add(current_user)
@@ -114,3 +123,19 @@ def get_my_recruitments(
     current_user: User = Depends(get_current_user),
 ):
     return current_user.managed_recruitments
+<<<<<<< Updated upstream
+=======
+
+
+# Get the detail of some other user
+@router.get("/{user_id}", response_model=UserProfileView)
+def get_user_profile(
+    user_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    user = get_user_by_id(session=session, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+>>>>>>> Stashed changes

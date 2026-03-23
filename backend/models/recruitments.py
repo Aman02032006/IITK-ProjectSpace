@@ -76,6 +76,8 @@ class Recruitment(RecruitmentBase, table=True):
     )
 
     applications: List[Application] = Relationship(back_populates="recruitment")
+    
+    comments: List["Comment"] = Relationship(back_populates="recruitment")
 
     search_vector: Optional[str] = Field(
         default=None,

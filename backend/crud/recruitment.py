@@ -1,13 +1,19 @@
 from sqlmodel import Session, select, func
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from models.recruitments import Recruitment, Application, RecruitmentRecruiterLink
 from models.user import User
+<<<<<<< Updated upstream
 from schemas.recruitments import (
     RecruitmentCreate,
     RecruitmentUpdate,
     ApplicationCreate,
     ApplicationUpdate,
 )
+=======
+from models.comments import Comment
+from schemas.recruitments import RecruitmentCreate, RecruitmentUpdate, ApplicationCreate, ApplicationUpdate
+>>>>>>> Stashed changes
 from datetime import datetime
 import uuid
 from typing import Sequence
@@ -60,29 +66,59 @@ def create_recruitment(
 
     return db_recruitment
 
+<<<<<<< Updated upstream
 
 def get_recruitment_by_id(
     session: Session, recruitment_id: uuid.UUID
 ) -> Recruitment | None:
     recruitment = session.get(Recruitment, recruitment_id)
+=======
+def get_recruitment_by_id(session: Session, recruitment_id: uuid.UUID) -> Recruitment | None:
+    statement = (
+        select(Recruitment)
+        .where(Recruitment.id == recruitment_id)
+        .options(
+            selectinload(Recruitment.comments).selectinload(Comment.author)
+        )
+    )
+    recruitment = session.exec(statement).first()
+>>>>>>> Stashed changes
     if recruitment and recruitment.creator is None:
         recruitment.creator = session.get(User, recruitment.creator_id)
+    if recruitment:
+        for comment in recruitment.comments:
+            comment.reply_count = session.exec(
+                select(func.count()).select_from(Comment).where(Comment.parent_id == comment.id)
+            ).one()
     return recruitment
 
+<<<<<<< Updated upstream
 
 def get_all_recruitments(
     session: Session, skip: int = 0, limit: int = 10
 ) -> Sequence[Recruitment]:
+=======
+def get_all_recruitments(session: Session, skip: int = 0, limit: int = 10) -> Sequence[Recruitment]:
+>>>>>>> Stashed changes
     statement = (
         select(Recruitment)
         .order_by(Recruitment.created_at.desc())
         .offset(skip)
         .limit(limit)
+<<<<<<< Updated upstream
+=======
+        .options(
+            selectinload(Recruitment.creator),
+            selectinload(Recruitment.comments).selectinload(Comment.author)
+        )
+>>>>>>> Stashed changes
     )
     recruitments = session.exec(statement).all()
-    for r in recruitments:
-        if r.creator is None:
-            r.creator = session.get(User, r.creator_id)
+    for recruitment in recruitments:
+        for comment in recruitment.comments:
+            comment.reply_count = session.exec(
+                select(func.count()).select_from(Comment).where(Comment.parent_id == comment.id)
+            ).one()
     return recruitments
 
 

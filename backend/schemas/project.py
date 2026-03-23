@@ -3,6 +3,7 @@ from typing import Optional, List, Any
 import uuid
 from datetime import datetime
 from core.utils import Designation
+from schemas.comments import CommentPublic
 
 
 class UserSummary(BaseModel):
@@ -70,6 +71,7 @@ class ProjectPublic(ProjectBase):
     updated_at: datetime
     team_members: List[UserSummary] = []
     creator_id: uuid.UUID
+    comments: List[CommentPublic] = []
 
     @computed_field
     @property

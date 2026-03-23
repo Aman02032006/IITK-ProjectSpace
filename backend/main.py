@@ -4,7 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import create_db_and_tables
 from contextlib import asynccontextmanager
+<<<<<<< Updated upstream
 from routers import auth, users, projects, recruitments, notifications, comments, search
+=======
+from routers import auth, users, projects, recruitments, comments, search
+>>>>>>> Stashed changes
 
 os.makedirs("uploads/profilePictures", exist_ok=True)
 os.makedirs("uploads/Projects", exist_ok=True)
@@ -28,10 +32,15 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(recruitments.router)
+<<<<<<< Updated upstream
 app.include_router(notifications.router)
 app.include_router(comments.router)
 app.include_router(search.router)
 
+=======
+app.include_router(comments.router)
+app.include_router(search.router)
+>>>>>>> Stashed changes
 
 # Allow Frontend (Port 3000) to talk to Backend (Port 8000)
 app.add_middleware(

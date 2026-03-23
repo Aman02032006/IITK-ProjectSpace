@@ -1,6 +1,8 @@
 from sqlmodel import Session, select, func
+from sqlalchemy.orm import selectinload
 from models.project import Project, ProjectTeamLink
 from models.user import User
+from models.comments import Comment
 from schemas.project import ProjectCreate, ProjectUpdate
 from datetime import datetime
 import uuid
@@ -40,22 +42,49 @@ def create_project(
 
 
 def get_project_by_id(session: Session, project_id: uuid.UUID) -> Project | None:
-    project = session.get(Project, project_id)
+    statement = (
+        select(Project)
+        .where(Project.id == project_id)
+        .options(
+            selectinload(Project.comments).selectinload(Comment.author)
+        )
+    )
+    project = session.exec(statement).first()
     if project and project.creator is None:
         project.creator = session.get(User, project.creator_id)
+    if project:
+        for comment in project.comments:
+            comment.reply_count = session.exec(
+                select(func.count()).select_from(Comment).where(Comment.parent_id == comment.id)
+            ).one()
     return project
 
+<<<<<<< Updated upstream
 
 def get_all_projects(
     session: Session, skip: int = 0, limit: int = 10
 ) -> Sequence[Project]:
     statement = (
         select(Project).order_by(Project.created_at.desc()).offset(skip).limit(limit)
+=======
+def get_all_projects(session: Session, skip: int = 0, limit: int = 10) -> Sequence[Project]:
+    statement = (
+        select(Project)
+        .order_by(Project.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .options(
+            selectinload(Project.creator),
+            selectinload(Project.comments).selectinload(Comment.author)
+        )
+>>>>>>> Stashed changes
     )
     projects = session.exec(statement).all()
-    for p in projects:
-        if p.creator is None:
-            p.creator = session.get(User, p.creator_id)
+    for project in projects:
+        for comment in project.comments:
+            comment.reply_count = session.exec(
+                select(func.count()).select_from(Comment).where(Comment.parent_id == comment.id)
+            ).one()
     return projects
 
 
