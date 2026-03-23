@@ -159,7 +159,7 @@ export default function EditProjectPage() {
   const handleDelete = async () => {
     try {
       await deleteProject(projectId);
-      router.replace("/homepage");
+      router.replace("/homePage");
     } catch (err: any) {
       if (err.message === "Unauthorized") { router.replace("/auth"); return; }
       setSubmitError(err.message || "Failed to delete project.");
