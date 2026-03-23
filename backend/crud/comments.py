@@ -4,7 +4,7 @@ from typing import Sequence
 import uuid
 
 from models.comments import Comment
-from schemas.comments import CommentCreate, CommentUpdate
+from schemas.comments import CommentCreate
 
 MAX_COMMENT_DEPTH = 5
 
