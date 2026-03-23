@@ -16,6 +16,11 @@ class RecruitmentRecruiterLink(SQLModel, table=True):
     )
 
 
+class RecruitmentPendingLink(SQLModel, table=True):
+    recruitment_id: uuid.UUID = Field(foreign_key="recruitment.id", primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
+
+
 # 2. The Application Table. It links a User and a Recruitment,
 class Application(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -75,8 +80,13 @@ class Recruitment(RecruitmentBase, table=True):
         back_populates="managed_recruitments", link_model=RecruitmentRecruiterLink
     )
 
+    pending_recruiters: List["User"] = Relationship(
+        link_model=RecruitmentPendingLink
+    )
+
+
     applications: List[Application] = Relationship(back_populates="recruitment")
-    
+
     comments: List["Comment"] = Relationship(back_populates="recruitment")
 
     search_vector: Optional[str] = Field(

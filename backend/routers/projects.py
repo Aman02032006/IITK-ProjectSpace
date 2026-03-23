@@ -9,7 +9,7 @@ import shutil
 from core.database import get_session
 from core.dependencies import get_current_user
 from models.user import User
-from models.project import ProjectTeamLink
+from models.project import ProjectTeamLink, ProjectPendingLink
 
 from schemas.project import ProjectCreate, ProjectUpdate, ProjectPublic, ProjectSummary
 from crud.project import (
@@ -21,6 +21,8 @@ from crud.project import (
     delete_project,
     add_user_to_project_team,
 )
+from crud.notification import create_notification
+from core.utils import NotificationType
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -32,9 +34,31 @@ def create_new_project(
     current_user: User = Depends(get_current_user),
 ):
     """Creates a new project and automatically adds the user to the team."""
-    return create_project(
+    member_ids = project_in.team_member_ids or []
+    project_in.team_member_ids = []
+
+    project = create_project(
         session=db, project_create=project_in, creator_id=current_user.id
     )
+
+    if member_ids:
+        for member_id in member_ids:
+            if member_id != current_user.id:
+                db.add(ProjectPendingLink(project_id=project.id, user_id=member_id))
+                create_notification(
+                    session=db,
+                    recipient_id=member_id,
+                    type=NotificationType.VERIFICATION_REQUEST,
+                    title="Project Team Invitation",
+                    message=f"{current_user.fullname} invited you to join their project team.",
+                    link=f"/projects/{project.id}",
+                    sender_id=current_user.id,
+                    related_entity_id=project.id,
+                )
+        db.commit()
+        db.refresh(project)
+    
+    return project
 
 
 @router.get("/", response_model=List[ProjectSummary])
@@ -101,8 +125,8 @@ def delete_existing_project(
 # --- Team member management ---
 
 
-@router.post("/{project_id}/members/{user_id}", response_model=ProjectPublic)
-def add_project_member(
+@router.post("/{project_id}/invites/{user_id}", response_model=ProjectPublic)
+def invite_project_member(
     project_id: uuid.UUID,
     user_id: uuid.UUID,
     db: Session = Depends(get_session),
@@ -116,7 +140,7 @@ def add_project_member(
     if current_user not in project.team_members:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only team members can add members.",
+            detail="Only team members can invite members.",
         )
 
     user = db.get(User, user_id)
@@ -137,9 +161,119 @@ def add_project_member(
             detail="User is already a team member.",
         )
 
-    add_user_to_project_team(session=db, project_id=project_id, user_id=user_id)
+    already_pending = db.exec(
+        select(ProjectPendingLink).where(
+            ProjectPendingLink.project_id == project_id,
+            ProjectPendingLink.user_id == user_id,
+        )
+    ).first()
+    if already_pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already invited.",
+        )
+
+    db.add(ProjectPendingLink(project_id=project_id, user_id=user_id))
+    db.commit()
     db.refresh(project)
     project.creator = db.get(User, project.creator_id)
+
+    create_notification(
+        session=db,
+        recipient_id=user_id,
+        type=NotificationType.VERIFICATION_REQUEST,
+        title="Project Team Invitation",
+        message=f"{current_user.fullname} invited you to join their project team.",
+        link=f"/projects/{project_id}",
+        sender_id=current_user.id,
+        related_entity_id=project_id,
+    )
+
+    return project
+
+
+@router.post("/{project_id}/invites/accept", response_model=ProjectPublic)
+def accept_project_invite(
+    project_id: uuid.UUID,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    project = get_project_by_id(session=db, project_id=project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    pending_link = db.exec(
+        select(ProjectPendingLink).where(
+            ProjectPendingLink.project_id == project_id,
+            ProjectPendingLink.user_id == current_user.id,
+        )
+    ).first()
+    if not pending_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No pending invitation found."
+        )
+
+    db.delete(pending_link)
+    db.add(ProjectTeamLink(project_id=project_id, user_id=current_user.id))
+    db.commit()
+    db.refresh(project)
+    project.creator = db.get(User, project.creator_id)
+
+    create_notification(
+        session=db,
+        recipient_id=project.creator_id,
+        type=NotificationType.VERIFICATION_RESULT,
+        title="Team Invitation Accepted",
+        message=f"{current_user.fullname} accepted your team invitation.",
+        link=f"/projects/{project_id}",
+        sender_id=current_user.id,
+        related_entity_id=project_id,
+    )
+
+    return project
+
+
+@router.post("/{project_id}/invites/reject", response_model=ProjectPublic)
+def reject_project_invite(
+    project_id: uuid.UUID,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    project = get_project_by_id(session=db, project_id=project_id)
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    pending_link = db.exec(
+        select(ProjectPendingLink).where(
+            ProjectPendingLink.project_id == project_id,
+            ProjectPendingLink.user_id == current_user.id,
+        )
+    ).first()
+    if not pending_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No pending invitation found."
+        )
+
+    db.delete(pending_link)
+    db.commit()
+    db.refresh(project)
+    project.creator = db.get(User, project.creator_id)
+
+    create_notification(
+        session=db,
+        recipient_id=project.creator_id,
+        type=NotificationType.VERIFICATION_RESULT,
+        title="Team Invitation Declined",
+        message=f"{current_user.fullname} declined your team invitation.",
+        link=f"/projects/{project_id}",
+        sender_id=current_user.id,
+        related_entity_id=project_id,
+    )
+
     return project
 
 
@@ -181,6 +315,19 @@ def remove_project_member(
     db.commit()
     db.refresh(project)
     project.creator = db.get(User, project.creator_id)
+
+    if current_user.id == user_id:
+        create_notification(
+            session=db,
+            recipient_id=project.creator_id,
+            type=NotificationType.VERIFICATION_RESULT,
+            title="Team Invitation Declined/Left",
+            message=f"{current_user.fullname} has left or declined the team invitation.",
+            link=f"/projects/{project_id}",
+            sender_id=current_user.id,
+            related_entity_id=project_id,
+        )
+
     return project
 
 

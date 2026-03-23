@@ -15,6 +15,11 @@ class ProjectTeamLink(SQLModel, table=True):
     )
 
 
+class ProjectPendingLink(SQLModel, table=True):
+    project_id: uuid.UUID = Field(foreign_key="project.id", primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
+
+
 class ProjectBase(SQLModel):
     title: str = Field(index=True, max_length=100)
     summary: str = Field(max_length=250)
@@ -44,6 +49,10 @@ class Project(ProjectBase, table=True):
 
     team_members: List["User"] = Relationship(
         back_populates="projects", link_model=ProjectTeamLink
+    )
+
+    pending_members: List["User"] = Relationship(
+        link_model=ProjectPendingLink
     )
     
     comments: List["Comment"] = Relationship(back_populates="project")

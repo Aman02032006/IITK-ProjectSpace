@@ -9,7 +9,7 @@ import shutil
 from core.database import get_session
 from core.dependencies import get_current_user
 from models.user import User
-from models.recruitments import RecruitmentRecruiterLink
+from models.recruitments import RecruitmentRecruiterLink, RecruitmentPendingLink
 
 from schemas.recruitments import (
     RecruitmentCreate,
@@ -31,6 +31,8 @@ from crud.recruitment import (
     get_application_by_id,
     update_application_status,
 )
+from crud.notification import create_notification
+from core.utils import NotificationType
 
 router = APIRouter(prefix="/recruitments", tags=["Recruitments"])
 
@@ -42,9 +44,31 @@ def create_new_recruitment(
     current_user: User = Depends(get_current_user),
 ):
     """Creates a new recruitment post and makes the user the lead recruiter."""
-    return create_recruitment(
+    recruiter_ids = recruitment_in.recruiter_ids or []
+    recruitment_in.recruiter_ids = []
+
+    recruitment = create_recruitment(
         session=db, recruitment_create=recruitment_in, creator_id=current_user.id
     )
+
+    if recruiter_ids:
+        for fellow_id in recruiter_ids:
+            if fellow_id != current_user.id:
+                db.add(RecruitmentPendingLink(recruitment_id=recruitment.id, user_id=fellow_id))
+                create_notification(
+                    session=db,
+                    recipient_id=fellow_id,
+                    type=NotificationType.VERIFICATION_REQUEST,
+                    title="Recruiter Invitation",
+                    message=f"{current_user.fullname} invited you to be a recruiter.",
+                    link=f"/recruitments/{recruitment.id}",
+                    sender_id=current_user.id,
+                    related_entity_id=recruitment.id,
+                )
+        db.commit()
+        db.refresh(recruitment)
+
+    return recruitment
 
 
 @router.get("/", response_model=List[RecruitmentSummary])
@@ -117,8 +141,8 @@ def delete_existing_recruitment(
 # Recruiter management
 
 
-@router.post("/{recruitment_id}/recruiters/{user_id}", response_model=RecruitmentPublic)
-def add_recruiter(
+@router.post("/{recruitment_id}/invites/{user_id}", response_model=RecruitmentPublic)
+def invite_recruiter(
     recruitment_id: uuid.UUID,
     user_id: uuid.UUID,
     db: Session = Depends(get_session),
@@ -132,7 +156,7 @@ def add_recruiter(
     if current_user not in recruitment.recruiters:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only managing recruiters can add recruiters.",
+            detail="Only managing recruiters can invite recruiters.",
         )
 
     user = db.get(User, user_id)
@@ -153,11 +177,120 @@ def add_recruiter(
             detail="User is already a recruiter.",
         )
 
-    link = RecruitmentRecruiterLink(recruitment_id=recruitment_id, user_id=user_id)
+    already_pending = db.exec(
+        select(RecruitmentPendingLink).where(
+            RecruitmentPendingLink.recruitment_id == recruitment_id,
+            RecruitmentPendingLink.user_id == user_id,
+        )
+    ).first()
+    if already_pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already invited.",
+        )
+
+    link = RecruitmentPendingLink(recruitment_id=recruitment_id, user_id=user_id)
     db.add(link)
     db.commit()
     db.refresh(recruitment)
     recruitment.creator = db.get(User, recruitment.creator_id)
+
+    create_notification(
+        session=db,
+        recipient_id=user_id,
+        type=NotificationType.VERIFICATION_REQUEST,
+        title="Recruiter Invitation",
+        message=f"{current_user.fullname} invited you to be a recruiter.",
+        link=f"/recruitments/{recruitment_id}",
+        sender_id=current_user.id,
+        related_entity_id=recruitment_id,
+    )
+
+    return recruitment
+
+
+@router.post("/{recruitment_id}/invites/accept", response_model=RecruitmentPublic)
+def accept_recruiter_invite(
+    recruitment_id: uuid.UUID,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
+    if not recruitment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
+
+    pending_link = db.exec(
+        select(RecruitmentPendingLink).where(
+            RecruitmentPendingLink.recruitment_id == recruitment_id,
+            RecruitmentPendingLink.user_id == current_user.id,
+        )
+    ).first()
+    if not pending_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No pending invitation found."
+        )
+
+    db.delete(pending_link)
+    db.add(RecruitmentRecruiterLink(recruitment_id=recruitment_id, user_id=current_user.id))
+    db.commit()
+    db.refresh(recruitment)
+    recruitment.creator = db.get(User, recruitment.creator_id)
+
+    create_notification(
+        session=db,
+        recipient_id=recruitment.creator_id,
+        type=NotificationType.VERIFICATION_RESULT,
+        title="Recruiter Invitation Accepted",
+        message=f"{current_user.fullname} accepted your recruiter invitation.",
+        link=f"/recruitments/{recruitment_id}",
+        sender_id=current_user.id,
+        related_entity_id=recruitment_id,
+    )
+
+    return recruitment
+
+
+@router.post("/{recruitment_id}/invites/reject", response_model=RecruitmentPublic)
+def reject_recruiter_invite(
+    recruitment_id: uuid.UUID,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
+    if not recruitment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
+
+    pending_link = db.exec(
+        select(RecruitmentPendingLink).where(
+            RecruitmentPendingLink.recruitment_id == recruitment_id,
+            RecruitmentPendingLink.user_id == current_user.id,
+        )
+    ).first()
+    if not pending_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No pending invitation found."
+        )
+
+    db.delete(pending_link)
+    db.commit()
+    db.refresh(recruitment)
+    recruitment.creator = db.get(User, recruitment.creator_id)
+
+    create_notification(
+        session=db,
+        recipient_id=recruitment.creator_id,
+        type=NotificationType.VERIFICATION_RESULT,
+        title="Recruiter Invitation Declined",
+        message=f"{current_user.fullname} declined your recruiter invitation.",
+        link=f"/recruitments/{recruitment_id}",
+        sender_id=current_user.id,
+        related_entity_id=recruitment_id,
+    )
+
     return recruitment
 
 
@@ -201,6 +334,19 @@ def remove_recruiter(
     db.commit()
     db.refresh(recruitment)
     recruitment.creator = db.get(User, recruitment.creator_id)
+
+    if current_user.id == user_id:
+        create_notification(
+            session=db,
+            recipient_id=recruitment.creator_id,
+            type=NotificationType.VERIFICATION_RESULT,
+            title="Recruiter Invitation Declined/Left",
+            message=f"{current_user.fullname} has left or declined the recruiter invitation.",
+            link=f"/recruitments/{recruitment_id}",
+            sender_id=current_user.id,
+            related_entity_id=recruitment_id,
+        )
+
     return recruitment
 
 
@@ -235,9 +381,22 @@ def apply_for_recruitment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="URL ID does not match payload ID.",
         )
-    return create_application(
+    application = create_application(
         session=db, app_create=application_in, applicant_id=current_user.id
     )
+
+    create_notification(
+        session=db,
+        recipient_id=recruitment.creator_id,
+        type=NotificationType.NEW_APPLICATION,
+        title="New Recruitment Application",
+        message=f"{current_user.fullname} applied to your recruitment post.",
+        link=f"/recruitments/{recruitment_id}",
+        sender_id=current_user.id,
+        related_entity_id=application.id,
+    )
+
+    return application
 
 
 @router.patch(
@@ -269,9 +428,22 @@ def update_application(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only managing recruiters can update applications.",
         )
-    return update_application_status(
+    updated_app = update_application_status(
         session=db, db_application=application, app_update=status_update
     )
+
+    create_notification(
+        session=db,
+        recipient_id=application.applicant_id,
+        type=NotificationType.APPLICATION_RESULT,
+        title="Application Status Updated",
+        message=f"Your application status was updated to {status_update.status}.",
+        link=f"/recruitments/{recruitment_id}",
+        sender_id=current_user.id,
+        related_entity_id=application.id,
+    )
+
+    return updated_app
 
 
 @router.post("/{recruitment_id}/upload", response_model=RecruitmentPublic)

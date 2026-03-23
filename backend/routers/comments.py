@@ -11,6 +11,8 @@ from schemas.comments import CommentCreate, CommentPublic, CommentRepliesPage
 from crud import comments as comment_crud
 from crud import project as project_crud
 from crud import recruitment as recruitment_crud
+from crud.notification import create_notification
+from core.utils import NotificationType
 
 router = APIRouter(prefix="/comments", tags=["Comments"])
 
@@ -30,14 +32,19 @@ def create_comment(
 ):
     """Post a comment on a project or recruitment.
     Set parent_id to reply to an existing comment (max 5 levels deep)."""
+    project = None
     if comment_in.project_id:
-        if not project_crud.get_project_by_id(session=session, project_id=comment_in.project_id):
+        project = project_crud.get_project_by_id(session=session, project_id=comment_in.project_id)
+        if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
+    recruitment = None
     if comment_in.recruitment_id:
-        if not recruitment_crud.get_recruitment_by_id(session=session, recruitment_id=comment_in.recruitment_id):
+        recruitment = recruitment_crud.get_recruitment_by_id(session=session, recruitment_id=comment_in.recruitment_id)
+        if not recruitment:
             raise HTTPException(status_code=404, detail="Recruitment not found")
 
+    parent = None
     if comment_in.parent_id:
         parent = comment_crud.get_comment_by_id(session=session, comment_id=comment_in.parent_id)
         if not parent:
@@ -47,6 +54,44 @@ def create_comment(
 
     # depth check is inside crud.create_comment
     comment = comment_crud.create_comment(session=session, comment_create=comment_in, author_id=current_user.id)
+
+    if parent:
+        if parent.author_id != current_user.id:
+            link = f"/projects/{comment_in.project_id}" if comment_in.project_id else f"/recruitments/{comment_in.recruitment_id}"
+            create_notification(
+                session=session,
+                recipient_id=parent.author_id,
+                type=NotificationType.COMMENT_REPLY,
+                title="New Reply",
+                message=f"{current_user.fullname} replied to your comment.",
+                link=link,
+                sender_id=current_user.id,
+                related_entity_id=comment.id,
+            )
+    else:
+        if project and project.creator_id != current_user.id:
+            create_notification(
+                session=session,
+                recipient_id=project.creator_id,
+                type=NotificationType.NEW_COMMENT,
+                title="New Comment on Project",
+                message=f"{current_user.fullname} commented on your project.",
+                link=f"/projects/{project.id}",
+                sender_id=current_user.id,
+                related_entity_id=comment.id,
+            )
+        elif recruitment and recruitment.creator_id != current_user.id:
+            create_notification(
+                session=session,
+                recipient_id=recruitment.creator_id,
+                type=NotificationType.NEW_COMMENT,
+                title="New Comment on Recruitment",
+                message=f"{current_user.fullname} commented on your recruitment.",
+                link=f"/recruitments/{recruitment.id}",
+                sender_id=current_user.id,
+                related_entity_id=comment.id,
+            )
+
     return _build_comment_public(comment, session)
 
 

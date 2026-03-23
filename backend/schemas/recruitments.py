@@ -128,6 +128,7 @@ class RecruitmentPublic(RecruitmentBase):
     created_at: datetime
     updated_at: datetime
     recruiters: List[UserSummary] = []
+    pending_recruiters: List[UserSummary] = []
     applications: List[ApplicationPublic] = []
     creator_id: uuid.UUID
     comments: List[CommentPublic] = []
