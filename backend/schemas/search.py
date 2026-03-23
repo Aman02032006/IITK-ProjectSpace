@@ -4,13 +4,14 @@ import uuid
 from datetime import datetime
 from core.utils import Degree, Department, Designation
 
-
 # ─────────────────────────────────────────────
 # User Search
 # ─────────────────────────────────────────────
 
+
 class UserSearchResult(BaseModel):
     """Lightweight user card returned in search results."""
+
     id: uuid.UUID
     fullname: Optional[str] = None  # Optional: user may not have set it yet
     iitk_email: str
@@ -37,8 +38,10 @@ class PaginatedUserResults(BaseModel):
 # Project Search
 # ─────────────────────────────────────────────
 
+
 class ProjectSearchResult(BaseModel):
     """Lightweight project card returned in search results."""
+
     id: uuid.UUID
     title: str
     summary: str
@@ -77,8 +80,10 @@ class PaginatedProjectResults(BaseModel):
 # Recruitment Search
 # ─────────────────────────────────────────────
 
+
 class RecruitmentSearchResult(BaseModel):
     """Lightweight recruitment card returned in search results."""
+
     id: uuid.UUID
     title: str
     domains: List[str] = []

@@ -5,10 +5,10 @@ from models.project import Project
 from models.recruitments import Recruitment
 from core.utils import Designation, Degree, Department
 
-
 # ─────────────────────────────────────────────
 # User Search
 # ─────────────────────────────────────────────
+
 
 def search_users(
     session: Session,
@@ -43,7 +43,6 @@ def search_users(
         statement = statement.where(User.department == department)
     if skill:
         statement = statement.where(User.skills.contains([skill]))
-    
 
     # Total count before pagination
     count_stmt = select(func.count()).select_from(statement.subquery())
@@ -52,15 +51,13 @@ def search_users(
     # Rank by relevance when a text query is present
     if q:
         tsquery = func.plainto_tsquery("english", q)
-        statement = statement.order_by(
-            func.ts_rank(User.search_vector, tsquery).desc()
-        )
+        statement = statement.order_by(func.ts_rank(User.search_vector, tsquery).desc())
     else:
         statement = statement.order_by(User.created_at.desc())
 
     statement = statement.offset(offset).limit(limit)
     results = session.exec(statement).all()
-    
+
     for p in results:
         if p.creator is None:
             p.creator = session.get(User, p.creator_id)
@@ -71,6 +68,7 @@ def search_users(
 # ─────────────────────────────────────────────
 # Project Search
 # ─────────────────────────────────────────────
+
 
 def search_projects(
     session: Session,
@@ -111,7 +109,7 @@ def search_projects(
 
     statement = statement.offset(offset).limit(limit)
     results = session.exec(statement).all()
-    
+
     for r in results:
         if r.creator is None:
             r.creator = session.get(User, r.creator_id)
@@ -122,6 +120,7 @@ def search_projects(
 # ─────────────────────────────────────────────
 # Recruitment Search
 # ─────────────────────────────────────────────
+
 
 def search_recruitments(
     session: Session,

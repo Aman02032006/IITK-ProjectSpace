@@ -11,10 +11,13 @@ conf = ConnectionConfig(
     MAIL_STARTTLS=settings.MAIL_STARTTLS,
     MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
     USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True
+    VALIDATE_CERTS=True,
 )
 
-async def send_otp_email(email_to: EmailStr, otp_code: str, name: str, purpose:str = "register"):
+
+async def send_otp_email(
+    email_to: EmailStr, otp_code: str, name: str, purpose: str = "register"
+):
     if purpose == "reset":
         subject = "IITK ProjectSpace OTP Verification"
         title = "Password Reset Request"
@@ -42,10 +45,10 @@ async def send_otp_email(email_to: EmailStr, otp_code: str, name: str, purpose:s
     """
 
     message = MessageSchema(
-        subject = subject,
-        recipients = [email_to],
-        body = html_content,
-        subtype = MessageType.html
+        subject=subject,
+        recipients=[email_to],
+        body=html_content,
+        subtype=MessageType.html,
     )
 
     fm = FastMail(conf)

@@ -77,23 +77,29 @@ def verify_otp(verify_data: OTPVerify, db: Session = Depends(get_session)):
     ).first()
 
     if not otp_record:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No verification request found.")
-        
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No verification request found.",
+        )
+
     if otp_record.otp_code != verify_data.otp_code:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code.")
-    
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code."
+        )
+
     new_user_data = UserCreate(
         fullname=otp_record.full_name,
         iitk_email=otp_record.email,
-        password=verify_data.password
+        password=verify_data.password,
     )
-    
+
     create_user(session=db, user_create=new_user_data)
 
     db.delete(otp_record)
     db.commit()
 
     return {"message": "Account created successfully!"}
+
 
 @router.post("/check-otp", status_code=status.HTTP_200_OK)
 def check_otp(check_data: OTPCheck, db: Session = Depends(get_session)):
@@ -123,6 +129,7 @@ def check_otp(check_data: OTPCheck, db: Session = Depends(get_session)):
         )
 
     return {"message": "OTP is valid."}
+
 
 # Login Endpoint
 @router.post("/login")

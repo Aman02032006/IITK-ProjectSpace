@@ -34,9 +34,12 @@ class Project(ProjectBase, table=True):
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     creator: Optional["User"] = Relationship(
-    sa_relationship_kwargs={"foreign_keys": "[Project.creator_id]", "lazy": "joined"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[Project.creator_id]",
+            "lazy": "joined",
+        }
     )
 
     team_members: List["User"] = Relationship(

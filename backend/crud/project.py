@@ -6,7 +6,10 @@ from datetime import datetime
 import uuid
 from typing import Sequence
 
-def create_project(session: Session, project_create: ProjectCreate, creator_id: uuid.UUID) -> Project:
+
+def create_project(
+    session: Session, project_create: ProjectCreate, creator_id: uuid.UUID
+) -> Project:
     db_project = Project(
         title=project_create.title,
         summary=project_create.summary,
@@ -35,25 +38,35 @@ def create_project(session: Session, project_create: ProjectCreate, creator_id: 
 
     return db_project
 
+
 def get_project_by_id(session: Session, project_id: uuid.UUID) -> Project | None:
     project = session.get(Project, project_id)
     if project and project.creator is None:
         project.creator = session.get(User, project.creator_id)
     return project
 
-def get_all_projects(session: Session, skip: int = 0, limit: int = 10) -> Sequence[Project]:
-    statement = select(Project).order_by(Project.created_at.desc()).offset(skip).limit(limit)
+
+def get_all_projects(
+    session: Session, skip: int = 0, limit: int = 10
+) -> Sequence[Project]:
+    statement = (
+        select(Project).order_by(Project.created_at.desc()).offset(skip).limit(limit)
+    )
     projects = session.exec(statement).all()
     for p in projects:
         if p.creator is None:
             p.creator = session.get(User, p.creator_id)
     return projects
 
+
 def count_projects(session: Session) -> int:
     statement = select(func.count()).select_from(Project)
     return session.exec(statement).one()
 
-def update_project(session: Session, db_project: Project, project_update: ProjectUpdate) -> Project:
+
+def update_project(
+    session: Session, db_project: Project, project_update: ProjectUpdate
+) -> Project:
     update_data = project_update.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
@@ -69,11 +82,15 @@ def update_project(session: Session, db_project: Project, project_update: Projec
 
     return db_project
 
+
 def delete_project(session: Session, db_project: Project) -> None:
     session.delete(db_project)
     session.commit()
 
-def add_user_to_project_team(session: Session, project_id: uuid.UUID, user_id: uuid.UUID):
+
+def add_user_to_project_team(
+    session: Session, project_id: uuid.UUID, user_id: uuid.UUID
+):
     team_link = ProjectTeamLink(project_id=project_id, user_id=user_id)
     session.add(team_link)
     session.commit()

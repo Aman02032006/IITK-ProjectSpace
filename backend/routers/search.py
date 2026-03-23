@@ -24,7 +24,9 @@ def search_users_endpoint(
     designation: Optional[Designation] = Query(default=None),
     degree: Optional[Degree] = Query(default=None),
     department: Optional[Department] = Query(default=None),
-    skill: Optional[str] = Query(default=None, description="Filter by skill (exact match in array)"),
+    skill: Optional[str] = Query(
+        default=None, description="Filter by skill (exact match in array)"
+    ),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),
@@ -57,8 +59,12 @@ def search_users_endpoint(
 
 @router.get("/projects", response_model=PaginatedProjectResults)
 def search_projects_endpoint(
-    q: Optional[str] = Query(default=None, description="Search by title, summary or description"),
-    domain: Optional[str] = Query(default=None, description="Filter by domain (exact match in array)"),
+    q: Optional[str] = Query(
+        default=None, description="Search by title, summary or description"
+    ),
+    domain: Optional[str] = Query(
+        default=None, description="Filter by domain (exact match in array)"
+    ),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),
@@ -87,10 +93,18 @@ def search_projects_endpoint(
 
 @router.get("/recruitments", response_model=PaginatedRecruitmentResults)
 def search_recruitments_endpoint(
-    q: Optional[str] = Query(default=None, description="Search by title or description"),
-    domain: Optional[str] = Query(default=None, description="Filter by domain (exact match in array)"),
-    prerequisite: Optional[str] = Query(default=None, description="Filter by prerequisite (exact match in array)"),
-    status: Optional[str] = Query(default="Open", description="Filter by status: Open or Closed"),
+    q: Optional[str] = Query(
+        default=None, description="Search by title or description"
+    ),
+    domain: Optional[str] = Query(
+        default=None, description="Filter by domain (exact match in array)"
+    ),
+    prerequisite: Optional[str] = Query(
+        default=None, description="Filter by prerequisite (exact match in array)"
+    ),
+    status: Optional[str] = Query(
+        default="Open", description="Filter by status: Open or Closed"
+    ),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),

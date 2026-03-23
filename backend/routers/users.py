@@ -33,9 +33,7 @@ def search_users(
     pattern = f"%{q}%"
     statement = (
         select(User)
-        .where(
-            (User.fullname.ilike(pattern)) | (User.iitk_email.ilike(pattern))
-        )
+        .where((User.fullname.ilike(pattern)) | (User.iitk_email.ilike(pattern)))
         .where(User.id != current_user.id)
         .limit(limit)
     )
@@ -60,7 +58,9 @@ def get_user_profile(
 ):
     user = get_user_by_id(session=session, user_id=user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return user
 
 
@@ -71,13 +71,13 @@ def upload_profile_picture(
     current_user: User = Depends(get_current_user),
 ):
     """Uploads a profile picture and updates the user's profile_picture_url."""
-    
+
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image.")
 
     extension = file.filename.split(".")[-1]
     filename = f"{current_user.id}_pfp.{extension}"
-    
+
     # Define the save path
     save_dir = os.path.join("uploads", "profilePictures")
     file_path = os.path.join(save_dir, filename)
@@ -88,7 +88,7 @@ def upload_profile_picture(
 
     # Convert Windows backslashes to web-safe forward slashes
     url_path = f"/{file_path}".replace("\\", "/")
-    
+
     # Update the database
     current_user.profile_picture_url = url_path
     db.add(current_user)

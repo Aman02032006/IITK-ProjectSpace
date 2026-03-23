@@ -66,7 +66,9 @@ def read_recruitment(recruitment_id: uuid.UUID, db: Session = Depends(get_sessio
     """Returns the full recruitment post, including all recruiters and applications."""
     recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
     if not recruitment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
     return recruitment
 
 
@@ -80,10 +82,17 @@ def update_existing_recruitment(
     """Updates a post. Only managing recruiters have permission to do this."""
     recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
     if not recruitment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
     if current_user not in recruitment.recruiters:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managing recruiters can edit this post.")
-    return update_recruitment(session=db, db_recruitment=recruitment, recruitment_update=recruitment_update)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managing recruiters can edit this post.",
+        )
+    return update_recruitment(
+        session=db, db_recruitment=recruitment, recruitment_update=recruitment_update
+    )
 
 
 @router.delete("/{recruitment_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -94,13 +103,19 @@ def delete_existing_recruitment(
 ):
     recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
     if not recruitment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
     if current_user not in recruitment.recruiters:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managing recruiters can delete this post.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managing recruiters can delete this post.",
+        )
     delete_recruitment(session=db, db_recruitment=recruitment)
 
 
 # Recruiter management
+
 
 @router.post("/{recruitment_id}/recruiters/{user_id}", response_model=RecruitmentPublic)
 def add_recruiter(
@@ -111,13 +126,20 @@ def add_recruiter(
 ):
     recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
     if not recruitment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
     if current_user not in recruitment.recruiters:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managing recruiters can add recruiters.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managing recruiters can add recruiters.",
+        )
 
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     already = db.exec(
         select(RecruitmentRecruiterLink).where(
@@ -126,7 +148,10 @@ def add_recruiter(
         )
     ).first()
     if already:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a recruiter.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already a recruiter.",
+        )
 
     link = RecruitmentRecruiterLink(recruitment_id=recruitment_id, user_id=user_id)
     db.add(link)
@@ -136,7 +161,9 @@ def add_recruiter(
     return recruitment
 
 
-@router.delete("/{recruitment_id}/recruiters/{user_id}", response_model=RecruitmentPublic)
+@router.delete(
+    "/{recruitment_id}/recruiters/{user_id}", response_model=RecruitmentPublic
+)
 def remove_recruiter(
     recruitment_id: uuid.UUID,
     user_id: uuid.UUID,
@@ -145,11 +172,19 @@ def remove_recruiter(
 ):
     recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
     if not recruitment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
     if current_user not in recruitment.recruiters:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managing recruiters can remove recruiters.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managing recruiters can remove recruiters.",
+        )
     if user_id == recruitment.creator_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove the recruitment creator.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove the recruitment creator.",
+        )
 
     link = db.exec(
         select(RecruitmentRecruiterLink).where(
@@ -158,7 +193,9 @@ def remove_recruiter(
         )
     ).first()
     if not link:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User is not a recruiter.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User is not a recruiter."
+        )
 
     db.delete(link)
     db.commit()
@@ -169,7 +206,12 @@ def remove_recruiter(
 
 # Applications
 
-@router.post("/{recruitment_id}/applications", response_model=ApplicationPublic, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{recruitment_id}/applications",
+    response_model=ApplicationPublic,
+    status_code=status.HTTP_201_CREATED,
+)
 def apply_for_recruitment(
     recruitment_id: uuid.UUID,
     application_in: ApplicationCreate,
@@ -180,15 +222,27 @@ def apply_for_recruitment(
     recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
 
     if not recruitment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
+        )
     if recruitment.status != "Open":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This recruitment is closed.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This recruitment is closed.",
+        )
     if application_in.recruitment_id != recruitment_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="URL ID does not match payload ID.")
-    return create_application(session=db, app_create=application_in, applicant_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="URL ID does not match payload ID.",
+        )
+    return create_application(
+        session=db, app_create=application_in, applicant_id=current_user.id
+    )
 
 
-@router.patch("/{recruitment_id}/applications/{application_id}", response_model=ApplicationPublic)
+@router.patch(
+    "/{recruitment_id}/applications/{application_id}", response_model=ApplicationPublic
+)
 def update_application(
     recruitment_id: uuid.UUID,
     application_id: uuid.UUID,
@@ -201,12 +255,23 @@ def update_application(
     application = get_application_by_id(session=db, application_id=application_id)
 
     if not recruitment or not application:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment or Application not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recruitment or Application not found",
+        )
     if application.recruitment_id != recruitment_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Application does not belong to this recruitment.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application does not belong to this recruitment.",
+        )
     if current_user not in recruitment.recruiters:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managing recruiters can update applications.")
-    return update_application_status(session=db, db_application=application, app_update=status_update)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only managing recruiters can update applications.",
+        )
+    return update_application_status(
+        session=db, db_application=application, app_update=status_update
+    )
 
 
 @router.post("/{recruitment_id}/upload", response_model=RecruitmentPublic)
@@ -222,7 +287,9 @@ def upload_recruitment_media(
         raise HTTPException(status_code=404, detail="Recruitment not found")
 
     if current_user not in recruitment.recruiters:
-        raise HTTPException(status_code=403, detail="Only managing recruiters can upload media.")
+        raise HTTPException(
+            status_code=403, detail="Only managing recruiters can upload media."
+        )
 
     save_dir = os.path.join("uploads", "Recruitments", str(recruitment_id))
     os.makedirs(save_dir, exist_ok=True)
