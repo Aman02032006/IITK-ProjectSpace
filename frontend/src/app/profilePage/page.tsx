@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import "./ProfilePage.css";
@@ -163,151 +164,153 @@ const isOwnProfile = !userId
   }
 
   return (
-    <div className="app-shell">
-      <Header showEditProfile={isOwnProfile} />
+    <Suspense fallback={<div>Loading profile data...</div>}>
+      <div className="app-shell">
+        <Header showEditProfile={isOwnProfile} />
 
-      <div className="app-body">
-        <Sidebar defaultActive="profile" />
+        <div className="app-body">
+          <Sidebar defaultActive="profile" />
 
-        <main className="profile-page">
+          <main className="profile-page">
 
-          {/* Profile card */}
-          <section className="profile-card" aria-label="User profile">
-            <div className="profile-card__top">
+            {/* Profile card */}
+            <section className="profile-card" aria-label="User profile">
+              <div className="profile-card__top">
 
-              {/* Avatar */}
-              <div className="profile-card__avatar-wrap">
-                <div className="profile-card__avatar">
-                  {profile.profile_picture_url ? (
-                    <img
-                      src={profile.profile_picture_url}
-                      alt={profile.fullname || "User Avatar"}
-                      style={{ width: "100%", height: "100%", borderRadius: 12, objectFit: "cover" }}
-                    />
-                  ) : (
-                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="profile-card__avatar-svg">
-                      <rect width="80" height="80" rx="12" fill="#1a3a5c" />
-                      <circle cx="40" cy="28" r="14" fill="#49769F" />
-                      <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
-                    </svg>
+                {/* Avatar */}
+                <div className="profile-card__avatar-wrap">
+                  <div className="profile-card__avatar">
+                    {profile.profile_picture_url ? (
+                      <img
+                        src={profile.profile_picture_url}
+                        alt={profile.fullname || "User Avatar"}
+                        style={{ width: "100%", height: "100%", borderRadius: 12, objectFit: "cover" }}
+                      />
+                    ) : (
+                      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="profile-card__avatar-svg">
+                        <rect width="80" height="80" rx="12" fill="#1a3a5c" />
+                        <circle cx="40" cy="28" r="14" fill="#49769F" />
+                        <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {/* Identity */}
+                <div className="profile-card__identity">
+                  <h1 className="profile-card__name">{profile.fullname}</h1>
+                  <p className="profile-card__email">{profile.iitk_email}</p>
+                  <p className="profile-card__desg">{profile.designation}</p>
+                  <p className="profile-card__degr">{profile.degree}</p>
+                  <p className="profile-card__dept">{profile.department}</p>
+                </div>
+
+                {/* Social links */}
+                <div className="profile-card__links">
+                  {profile.linkedin && (
+                    <a href={profile.linkedin} className="profile-card__link" aria-label="LinkedIn" target="_blank" rel="noreferrer">
+                      <LinkedInIcon /> LinkedIn
+                    </a>
+                  )}
+                  {profile.github && (
+                    <a href={profile.github} className="profile-card__link" aria-label="GitHub" target="_blank" rel="noreferrer">
+                      <GitHubIcon /> GitHub
+                    </a>
+                  )}
+                  {profile.other_link1 && (
+                    <a href={profile.other_link1} className="profile-card__link" aria-label="Other link" target="_blank" rel="noreferrer">
+                      <ScholarIcon /> Scholar / Other
+                    </a>
                   )}
                 </div>
               </div>
 
-              {/* Identity */}
-              <div className="profile-card__identity">
-                <h1 className="profile-card__name">{profile.fullname}</h1>
-                <p className="profile-card__email">{profile.iitk_email}</p>
-                <p className="profile-card__desg">{profile.designation}</p>
-                <p className="profile-card__degr">{profile.degree}</p>
-                <p className="profile-card__dept">{profile.department}</p>
+              {/* Skills + Bio */}
+              <div className="skills-bio">
+                <div className="skills-bio__skills-row">
+                  <span className="skills-bio__label">SKILLS</span>
+                  {profile.skills?.map((skill, i) => (
+                    <span key={skill} className={`skills-bio__tag skills-bio__tag--${TAG_COLORS[i % TAG_COLORS.length]}`}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+                <p className="skills-bio__bio">{profile.bio || "No bio added yet."}</p>
               </div>
+            </section>
 
-              {/* Social links */}
-              <div className="profile-card__links">
-                {profile.linkedin && (
-                  <a href={profile.linkedin} className="profile-card__link" aria-label="LinkedIn" target="_blank" rel="noreferrer">
-                    <LinkedInIcon /> LinkedIn
-                  </a>
-                )}
-                {profile.github && (
-                  <a href={profile.github} className="profile-card__link" aria-label="GitHub" target="_blank" rel="noreferrer">
-                    <GitHubIcon /> GitHub
-                  </a>
-                )}
-                {profile.other_link1 && (
-                  <a href={profile.other_link1} className="profile-card__link" aria-label="Other link" target="_blank" rel="noreferrer">
-                    <ScholarIcon /> Scholar / Other
-                  </a>
-                )}
-              </div>
+            {/* Tabs */}
+            <div className="tabs" role="tablist" aria-label="Content sections">
+              <button
+                role="tab"
+                aria-selected={activeTab === "recruitment"}
+                className={`tabs__btn${activeTab === "recruitment" ? " tabs__btn--active" : ""}`}
+                onClick={() => setActiveTab("recruitment")}
+              >
+                <RecruitIcon /> Recruitments
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === "project"}
+                className={`tabs__btn${activeTab === "project" ? " tabs__btn--active" : ""}`}
+                onClick={() => setActiveTab("project")}
+              >
+                <ProjectIcon /> Projects
+              </button>
             </div>
 
-            {/* Skills + Bio */}
-            <div className="skills-bio">
-              <div className="skills-bio__skills-row">
-                <span className="skills-bio__label">SKILLS</span>
-                {profile.skills?.map((skill, i) => (
-                  <span key={skill} className={`skills-bio__tag skills-bio__tag--${TAG_COLORS[i % TAG_COLORS.length]}`}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-              <p className="skills-bio__bio">{profile.bio || "No bio added yet."}</p>
+            {/* Cards */}
+            <div className="cards-grid" role="tabpanel">
+
+              {/* Loading */}
+              {cardsLoading && (
+                <p style={{ color: "#888", gridColumn: "1 / -1" }}>Loading…</p>
+              )}
+
+              {/* Error */}
+              {!cardsLoading && cardsError && (
+                <p style={{ color: "#c0392b", gridColumn: "1 / -1" }}>{cardsError}</p>
+              )}
+
+              {/* Recruitment cards */}
+              {!cardsLoading && !cardsError && activeTab === "recruitment" && recruitmentsInitialized && (
+                recruitments.length === 0
+                  ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No recruitment posts yet.</p>
+                  : recruitments.map((r) => (
+                      <RecruitmentCard
+                        key={(r as any).project_id || (r as any).id}
+                        id={(r as any).project_id || (r as any).id}
+                        title={r.title}
+                        recruiter={profile.fullname ?? ""}
+                        designation={profile.designation ?? ""}
+                        fields={r.domains}
+                        prerequisites={r.prerequisites}
+                      />
+                    ))
+              )}
+
+              {/* Project cards */}
+              {!cardsLoading && !cardsError && activeTab === "project" && projectsInitialized && (
+                projects.length === 0
+                  ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No project posts yet.</p>
+                  : projects.map((p) => (
+                      <ProjectCard
+                        key={(p as any).project_id || (p as any).id}
+                        id={(p as any).project_id || (p as any).id}
+                        title={p.title}
+                        author={profile.fullname ?? ""}
+                        designation={profile.designation ?? ""}
+                        fields={p.domains}
+                        description={p.summary}
+                      />
+                    ))
+              )}
+
             </div>
-          </section>
-
-          {/* Tabs */}
-          <div className="tabs" role="tablist" aria-label="Content sections">
-            <button
-              role="tab"
-              aria-selected={activeTab === "recruitment"}
-              className={`tabs__btn${activeTab === "recruitment" ? " tabs__btn--active" : ""}`}
-              onClick={() => setActiveTab("recruitment")}
-            >
-              <RecruitIcon /> Recruitments
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "project"}
-              className={`tabs__btn${activeTab === "project" ? " tabs__btn--active" : ""}`}
-              onClick={() => setActiveTab("project")}
-            >
-              <ProjectIcon /> Projects
-            </button>
-          </div>
-
-          {/* Cards */}
-          <div className="cards-grid" role="tabpanel">
-
-            {/* Loading */}
-            {cardsLoading && (
-              <p style={{ color: "#888", gridColumn: "1 / -1" }}>Loading…</p>
-            )}
-
-            {/* Error */}
-            {!cardsLoading && cardsError && (
-              <p style={{ color: "#c0392b", gridColumn: "1 / -1" }}>{cardsError}</p>
-            )}
-
-            {/* Recruitment cards */}
-            {!cardsLoading && !cardsError && activeTab === "recruitment" && recruitmentsInitialized && (
-              recruitments.length === 0
-                ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No recruitment posts yet.</p>
-                : recruitments.map((r) => (
-                    <RecruitmentCard
-                      key={(r as any).project_id || (r as any).id}
-                      id={(r as any).project_id || (r as any).id}
-                      title={r.title}
-                      recruiter={profile.fullname ?? ""}
-                      designation={profile.designation ?? ""}
-                      fields={r.domains}
-                      prerequisites={r.prerequisites}
-                    />
-                  ))
-            )}
-
-            {/* Project cards */}
-            {!cardsLoading && !cardsError && activeTab === "project" && projectsInitialized && (
-              projects.length === 0
-                ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No project posts yet.</p>
-                : projects.map((p) => (
-                    <ProjectCard
-                      key={(p as any).project_id || (p as any).id}
-                      id={(p as any).project_id || (p as any).id}
-                      title={p.title}
-                      author={profile.fullname ?? ""}
-                      designation={profile.designation ?? ""}
-                      fields={p.domains}
-                      description={p.summary}
-                    />
-                  ))
-            )}
-
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 };
 

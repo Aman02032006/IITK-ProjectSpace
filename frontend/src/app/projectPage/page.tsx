@@ -183,7 +183,7 @@ const ProjectPage: React.FC = () => {
   const wasUpdated = project ? project.updated_at !== project.created_at : false;
 
   return (
-    <Suspense>
+    <Suspense fallback={<ProjectSkeleton />}>
     <div className="app-shell">
       <Header
         showEditProfile={false}

@@ -222,7 +222,7 @@ const RecruitmentPage: React.FC = () => {
   else if (!isOpen) applyText = "Closed";
 
   return (
-    <Suspense>
+    <Suspense fallback={<RecruitmentSkeleton />}>
     <div className="app-shell">
       <Header
         showEditProfile={false}

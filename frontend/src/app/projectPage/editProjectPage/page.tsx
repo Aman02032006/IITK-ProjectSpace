@@ -212,7 +212,7 @@ export default function EditProjectPage() {
   };
 
   return (
-    <Suspense>
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="app-shell">
       <Header showEditProfile={false} />
 
