@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
-from typing import Optional
+from typing import Optional, List
 from core.database import get_session
 from core.dependencies import get_current_user
 from core.utils import Designation, Degree, Department
@@ -21,11 +21,14 @@ router = APIRouter(prefix="/search", tags=["Search"])
 @router.get("/users", response_model=PaginatedUserResults)
 def search_users_endpoint(
     q: Optional[str] = Query(default=None, description="Search by name or email"),
-    designation: Optional[Designation] = Query(default=None),
-    degree: Optional[Degree] = Query(default=None),
-    department: Optional[Department] = Query(default=None),
-    skill: Optional[str] = Query(
-        default=None, description="Filter by skill (exact match in array)"
+    designation: Optional[List[Designation]] = Query(default=None),
+    degree: Optional[List[Degree]] = Query(default=None),
+    department: Optional[List[Department]] = Query(default=None),
+    skill: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more skills"
+    ),
+    domain: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more domains"
     ),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
@@ -42,10 +45,11 @@ def search_users_endpoint(
     results, total = search_users(
         session=session,
         q=q,
-        designation=designation,
-        degree=degree,
-        department=department,
-        skill=skill,
+        designations=designation,
+        degrees=degree,
+        departments=department,
+        skills=skill,
+        domains=domain,
         limit=limit,
         offset=offset,
     )
@@ -62,8 +66,11 @@ def search_projects_endpoint(
     q: Optional[str] = Query(
         default=None, description="Search by title, summary or description"
     ),
-    domain: Optional[str] = Query(
-        default=None, description="Filter by domain (exact match in array)"
+    domain: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more domains"
+    ),
+    skill: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more skills"
     ),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
@@ -79,7 +86,8 @@ def search_projects_endpoint(
     results, total = search_projects(
         session=session,
         q=q,
-        domain=domain,
+        domains=domain,
+        skills=skill,
         limit=limit,
         offset=offset,
     )
@@ -96,11 +104,20 @@ def search_recruitments_endpoint(
     q: Optional[str] = Query(
         default=None, description="Search by title or description"
     ),
-    domain: Optional[str] = Query(
-        default=None, description="Filter by domain (exact match in array)"
+    domain: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more domains"
     ),
-    prerequisite: Optional[str] = Query(
-        default=None, description="Filter by prerequisite (exact match in array)"
+    designation: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more allowed designations"
+    ),
+    department: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more allowed departments"
+    ),
+    skill: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more skills"
+    ),
+    prerequisite: Optional[List[str]] = Query(
+        default=None, description="Filter by one or more prerequisites"
     ),
     status: Optional[str] = Query(
         default="Open", description="Filter by status: Open or Closed"
@@ -119,8 +136,11 @@ def search_recruitments_endpoint(
     results, total = search_recruitments(
         session=session,
         q=q,
-        domain=domain,
-        prerequisite=prerequisite,
+        domains=domain,
+        designations=designation,
+        departments=department,
+        skills=skill,
+        prerequisites=prerequisite,
         status=status,
         limit=limit,
         offset=offset,

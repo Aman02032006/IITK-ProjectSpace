@@ -1,6 +1,7 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import "./Header.css";
 
 /* ── Types ── */
@@ -54,11 +55,26 @@ const Header: React.FC<HeaderProps> = ({
   onSearchQueryChange,
   onSearchKeyDown,
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentParams = useSearchParams();
+
   const isSearchMode = searchTags !== undefined;
   const [localValue, setLocalValue] = useState("");
   const [showDrop, setShowDrop] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const submitSearch = useCallback((rawQuery: string) => {
+    const query = rawQuery.trim();
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    const currentTab = currentParams.get("tab");
+    if (currentTab) params.set("tab", currentTab);
+    const target = params.toString() ? `/searchPage?${params.toString()}` : "/searchPage";
+    if (pathname === "/searchPage") router.replace(target);
+    else router.push(target);
+  }, [currentParams, pathname, router]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -68,6 +84,14 @@ const Header: React.FC<HeaderProps> = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (isSearchMode || pathname === "/searchPage") return;
+    const query = localValue.trim();
+    if (!query) return;
+    const timer = setTimeout(() => submitSearch(query), 300);
+    return () => clearTimeout(timer);
+  }, [isSearchMode, pathname, localValue, submitSearch]);
 
   const filteredSuggestions = searchSuggestions.filter(
     (t) => t.toLowerCase().includes(searchQuery.toLowerCase()) && !(searchTags ?? []).includes(t)
@@ -116,6 +140,10 @@ const Header: React.FC<HeaderProps> = ({
             }}
             onFocus={() => isSearchMode && setShowDrop(true)}
             onKeyDown={onSearchKeyDown}
+            onKeyUp={(e) => {
+              if (onSearchKeyDown || e.key !== "Enter") return;
+              submitSearch((isSearchMode ? searchQuery : localValue) ?? "");
+            }}
             autoComplete="off"
             spellCheck={false}
           />

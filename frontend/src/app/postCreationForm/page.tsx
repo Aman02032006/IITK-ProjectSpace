@@ -10,6 +10,7 @@ import { getToken } from "@/lib/token"
 import { createProject, uploadProjectMedia } from "@/lib/projectApi";
 import { createRecruitment, uploadRecruitmentMedia } from "@/lib/recruitmentApi";
 import { UserSummary } from "@/lib/projectApi";
+import { searchUsers } from "@/lib/profileApi";
 import CreatableSelect from "react-select/creatable";
 
 import skillsData from "@/data/seed_skills.json"
@@ -98,20 +99,13 @@ export default function PostCreationForm() {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearchingUsers(true);
       try {
-        // TODO: Replace this with your actual API call!
-        // Example: const results = await searchUsers(userSearchQuery);
-        
-        // Mock data for testing the UI:
-        const mockResults: UserSummary[] = [
-          { id: "1", fullname: "Aman Srivastava", designation: "UG_STUDENT" },
-          { id: "2", fullname: "Dev Sharma", designation: "UG_STUDENT" },
-        ].filter(u => u.fullname.toLowerCase().includes(userSearchQuery.toLowerCase()));
-        
+        const results = await searchUsers(userSearchQuery);
+
         // Filter out users that are already selected
-        const filteredResults = mockResults.filter(
+        const filteredResults = results.filter(
           (result) => !selectedUsers.some((selected) => selected.id === result.id)
         );
-        
+
         setUserSearchResults(filteredResults);
       } catch (error) {
         console.error("Search failed", error);

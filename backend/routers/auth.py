@@ -86,6 +86,14 @@ def verify_otp(verify_data: OTPVerify, db: Session = Depends(get_session)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code."
         )
+        
+    if otp_record.expires_at < datetime.utcnow():
+        db.delete(otp_record)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code has expired. Please request a new one.",
+        )
 
     new_user_data = UserCreate(
         fullname=otp_record.full_name,
@@ -93,8 +101,8 @@ def verify_otp(verify_data: OTPVerify, db: Session = Depends(get_session)):
         password=verify_data.password,
     )
 
-    create_user(session=db, user_create=new_user_data)
-
+    db_user = create_user(session=db, user_create=new_user_data)
+    db_user.is_active = True
     db.delete(otp_record)
     db.commit()
 

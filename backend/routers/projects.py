@@ -27,6 +27,16 @@ from core.utils import NotificationType
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
+def _safe_filename(filename: str) -> str:
+    if not filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+    safe_name = os.path.basename(filename.strip())
+    if not safe_name or safe_name in {".", ".."} or safe_name != filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return safe_name
+
+
+
 @router.post("/", response_model=ProjectPublic, status_code=status.HTTP_201_CREATED)
 def create_new_project(
     project_in: ProjectCreate,
@@ -354,12 +364,13 @@ def upload_project_media(
     os.makedirs(save_dir, exist_ok=True)
 
     # Save the physical file using its original name
-    file_path = os.path.join(save_dir, file.filename)
+    safe_name = _safe_filename(file.filename)
+    file_path = os.path.join(save_dir, safe_name)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     # Format URL to point to our new media serving endpoint
-    url_path = f"/projects/{project_id}/media/{file.filename}"
+    url_path = f"/projects/{project_id}/media/{safe_name}"
 
     # In SQLModel/SQLAlchemy, you must create a new list to trigger the DB update for arrays
     updated_media = list(project.media_urls) if project.media_urls else []
@@ -375,7 +386,8 @@ def upload_project_media(
 
 @router.get("/{project_id}/media/{filename}")
 def get_project_media(project_id: uuid.UUID, filename: str):
-    file_path = os.path.join("uploads", "Projects", str(project_id), filename)
+    safe_name = _safe_filename(filename)
+    file_path = os.path.join("uploads", "Projects", str(project_id), safe_name)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path)

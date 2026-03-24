@@ -57,14 +57,23 @@ def upload_profile_picture(
 ):
     """Uploads a profile picture and updates the user's profile_picture_url."""
 
-    if not file.content_type.startswith("image/"):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required.")
+
+    content_type = file.content_type or ""
+    if not content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image.")
 
-    extension = file.filename.split(".")[-1]
+    safe_name = os.path.basename(file.filename)
+    extension = os.path.splitext(safe_name)[1].lstrip(".").lower()
+    if not extension:
+        raise HTTPException(status_code=400, detail="File extension is required.")
+
     filename = f"{current_user.id}_pfp.{extension}"
 
     # Define the save path
     save_dir = os.path.join("uploads", "profilePictures")
+    os.makedirs(save_dir, exist_ok=True)
     file_path = os.path.join(save_dir, filename)
 
     # Save the physical file

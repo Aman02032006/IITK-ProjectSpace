@@ -37,6 +37,15 @@ from core.utils import NotificationType
 router = APIRouter(prefix="/recruitments", tags=["Recruitments"])
 
 
+def _safe_filename(filename: str) -> str:
+    if not filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+    safe_name = os.path.basename(filename.strip())
+    if not safe_name or safe_name in {".", ".."} or safe_name != filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return safe_name
+
+
 @router.post("/", response_model=RecruitmentPublic, status_code=status.HTTP_201_CREATED)
 def create_new_recruitment(
     recruitment_in: RecruitmentCreate,
@@ -466,7 +475,8 @@ def upload_recruitment_media(
     save_dir = os.path.join("uploads", "Recruitments", str(recruitment_id))
     os.makedirs(save_dir, exist_ok=True)
 
-    file_path = os.path.join(save_dir, file.filename)
+    safe_name = _safe_filename(file.filename)
+    file_path = os.path.join(save_dir, safe_name)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -485,7 +495,8 @@ def upload_recruitment_media(
 
 @router.get("/{recruitment_id}/media/{filename}")
 def get_recruitment_media(recruitment_id: uuid.UUID, filename: str):
-    file_path = os.path.join("uploads", "Recruitments", str(recruitment_id), filename)
+    safe_name = _safe_filename(filename)
+    file_path = os.path.join("uploads", "Recruitments", str(recruitment_id), safe_name)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path)
