@@ -18,10 +18,6 @@ class UserSummary(BaseModel):
 class CommentBase(BaseModel):
     content: str = Field(..., max_length=1000)
 
-class CommentRepliesPage(BaseModel):
-    replies: List[CommentPublic]
-    total: int
-
 
 class CommentCreate(CommentBase):
     project_id: Optional[uuid.UUID] = None
@@ -37,7 +33,12 @@ class CommentPublic(CommentBase):
     author: UserSummary
     created_at: datetime
     updated_at: datetime
-    reply_count: int = 0
+    reply_count: int = Field(default=0)
 
     class Config:
         from_attributes = True
+
+
+class CommentRepliesPage(BaseModel):
+    replies: List[CommentPublic]
+    total: int

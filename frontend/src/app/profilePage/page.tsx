@@ -1,10 +1,11 @@
 "use client"
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import "./ProfilePage.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
-import { fetchMyProfile, fetchMyProjects, fetchMyRecruitments, UserProfile } from "@/lib/profileApi";
+import { fetchMyProfile, fetchMyProjects, fetchMyRecruitments, UserProfile, UserProfileView, getUserById, getUserProjects, getUserRecruitments } from "@/lib/profileApi";
 import { ProjectPublic } from "@/lib/projectApi";
 import { RecruitmentPublic } from "@/lib/recruitmentApi";
 import ProjectCard from "../components/cards/ProjectsCard";
@@ -53,7 +54,7 @@ const TAG_COLORS = ["teal", "blue", "red"] as const;
 /* Profile Page */
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab]   = useState<TabType>("recruitment");
-  const [profile, setProfile]       = useState<UserProfile | null>(null);
+  const [profile, setProfile]       = useState<UserProfile | UserProfileView | null>(null);
   const [projects, setProjects]     = useState<ProjectPublic[]>([]);
   const [recruitments, setRecruitments] = useState<RecruitmentPublic[]>([]);
 
@@ -66,53 +67,72 @@ const ProfilePage: React.FC = () => {
   const [projectsInitialized, setProjectsInitialized]         = useState(false);
 
   const router = useRouter();
+  const searchParam = useSearchParams();
+  const userId = searchParam.get("id");
 
   useEffect(() => {
-    fetchMyProfile()
-      .then(setProfile)
-      .catch((err: Error) => {
-        if (err.message === "Unauthorized") {
-          router.replace("/auth");
-        } else {
-          setError(err.message);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const loadProfile = async () => {
+    try {
+      if (userId) {
+        const data = await getUserById(userId);
+        setProfile(data);
+      } else {
+        const data = await fetchMyProfile();
+        setProfile(data);
+      }
+    } catch (err: any) {
+      if (err.message === "Unauthorized") {
+        router.replace("/auth");
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadProfile();
+}, [userId]);
+
+const isOwnProfile = !userId
 
   // Loads each tab only on it's visit
-
   useEffect(() => {
-    if (activeTab === "recruitment" && !recruitmentsInitialized) {
-      setCardsLoading(true);
-      setCardsError(null);
-      fetchMyRecruitments()
-        .then(setRecruitments)
-        .catch((err: Error) => {
-          if (err.message === "Unauthorized") { router.replace("/auth"); return; }
-          setCardsError("Failed to load recruitments.");
-        })
-        .finally(() => {
-          setCardsLoading(false);
-          setRecruitmentsInitialized(true);
-        });
-    }
+    const loadData = async () => {
+      try {
+        setCardsLoading(true);
+        setCardsError(null);
 
-    if (activeTab === "project" && !projectsInitialized) {
-      setCardsLoading(true);
-      setCardsError(null);
-      fetchMyProjects()
-        .then(setProjects)
-        .catch((err: Error) => {
-          if (err.message === "Unauthorized") { router.replace("/auth"); return; }
-          setCardsError("Failed to load projects.");
-        })
-        .finally(() => {
-          setCardsLoading(false);
+        if (activeTab === "recruitment" && !recruitmentsInitialized) {
+          const data = userId
+            ? await getUserRecruitments(userId)
+            : await fetchMyRecruitments();
+
+          setRecruitments(data);
+          setRecruitmentsInitialized(true);
+        }
+
+        if (activeTab === "project" && !projectsInitialized) {
+          const data = userId
+            ? await getUserProjects(userId)
+            : await fetchMyProjects();
+
+          setProjects(data);
           setProjectsInitialized(true);
-        });
-    }
-  }, [activeTab]);
+        }
+      } catch (err: any) {
+        if (err.message === "Unauthorized") {
+          router.replace("/auth");
+          return;
+        }
+        setCardsError("Failed to load data.");
+      } finally {
+        setCardsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [activeTab, userId]);
 
   if (loading) {
     return (
@@ -144,7 +164,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="app-shell">
-      <Header showEditProfile={true} />
+      <Header showEditProfile={isOwnProfile} />
 
       <div className="app-body">
         <Sidebar defaultActive="profile" />

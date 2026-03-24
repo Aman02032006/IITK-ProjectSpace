@@ -9,6 +9,7 @@ import { getProject, ProjectPublic } from "@/lib/projectApi";
 import { fetchMyProfile } from "@/lib/profileApi";
 import { getRepresentativeString } from "@/lib/formatTeam";
 import ReactMarkdown from "react-markdown";
+import CommentsSection from "../components/commentsSection";
 
 /* Types */
 export interface TeamMember {
@@ -143,6 +144,7 @@ const ProjectPage: React.FC = () => {
 
   const [project, setProject]           = useState<Project | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [creatorId, setCreatorId]         = useState<string | null>(null);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string | null>(null);
 
@@ -159,6 +161,7 @@ const ProjectPage: React.FC = () => {
         ]);
         setProject(mapToProject(raw));
         setCurrentUserId(me.id);
+        setCreatorId(raw.creator_id);
       } catch (err: any) {
         if (err.message === "Unauthorized") { router.replace("/loginPage"); return; }
         if (err.message.includes("not found") || err.message.includes("404")) {
@@ -297,6 +300,15 @@ const ProjectPage: React.FC = () => {
                   </span>
                 )}
               </div>
+
+              {/* Comments */}
+              <hr className="project-divider" />
+              <CommentsSection
+                postId={project.id}
+                postType="project"
+                currentUserId={currentUserId}
+                postCreatorId={creatorId}
+              />
 
             </div>
           )}

@@ -133,3 +133,21 @@ export async function fetchMyRecruitments(): Promise<RecruitmentPublic[]> {
   if (!res.ok) throw new Error("Failed to fetch recruitments");
   return res.json();
 }
+
+export async function getUserProjects(userId: string): Promise<ProjectPublic[]> {
+  const res = await fetch(`${API}/users/${userId}/projects`, {
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("Unauthorized");
+  if (!res.ok) throw new Error("Failed to fetch user projects");
+  return res.json();
+}
+
+export async function getUserRecruitments(userId: string): Promise<RecruitmentPublic[]> {
+  const res = await fetch(`${API}/users/${userId}/recruitments`, {
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("Unauthorized");
+  if (!res.ok) throw new Error("Failed to fetch user recruitments");
+  return res.json();
+}

@@ -10,6 +10,7 @@ import { fetchMyProfile } from "@/lib/profileApi";
 import { getRepresentativeString } from "@/lib/formatTeam";
 import { getRouteRegex } from "next/dist/shared/lib/router/utils/route-regex";
 import ReactMarkdown from "react-markdown";
+import CommentsSection from "../components/commentsSection";
 
 /* Types */
 export interface Recruiter {
@@ -142,6 +143,7 @@ const RecruitmentPage: React.FC = () => {
 
   const [recruitment, setRecruitment]   = useState<Recruitment | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [creatorId, setCreatorId]         = useState<string | null>(null);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string | null>(null);
   const [applying, setApplying]         = useState(false);
@@ -162,6 +164,7 @@ const RecruitmentPage: React.FC = () => {
         ]);
         setRecruitment(mapToRecruitment(raw));
         setCurrentUserId(me.id);
+        setCreatorId(raw.creator_id);
       } catch (err: any) {
         if (err.message === "Unauthorized") { router.replace("/loginPage"); return; }
         if (err.message.includes("not found") || err.message.includes("404")) {
@@ -433,6 +436,15 @@ const RecruitmentPage: React.FC = () => {
                   </div>
                 </>
               )}
+
+              {/* Comments */}
+              <hr className="recruit-divider" />
+              <CommentsSection
+                postId={recruitment.id}
+                postType="recruitment"
+                currentUserId={currentUserId}
+                postCreatorId={creatorId}
+              />
 
             </div>
           )}

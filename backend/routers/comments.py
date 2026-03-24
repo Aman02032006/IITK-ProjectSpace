@@ -19,7 +19,7 @@ router = APIRouter(prefix="/comments", tags=["Comments"])
 
 def _build_comment_public(comment: Comment, session: Session) -> CommentPublic:
     """Attach reply_count to a comment before returning it to the frontend."""
-    result = CommentPublic.model_validate(comment)
+    result = CommentPublic.model_validate(comment, from_attributes=True)
     result.reply_count = comment_crud.count_direct_replies(session, comment.id)
     return result
 
@@ -95,34 +95,6 @@ def create_comment(
     return _build_comment_public(comment, session)
 
 
-@router.get("/{comment_id}/replies", response_model=CommentRepliesPage)
-def get_comment_replies(
-    comment_id: uuid.UUID,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(5, ge=1, le=20),
-    session: Session = Depends(get_session),
-):
-    if not comment_crud.get_comment_by_id(session=session, comment_id=comment_id):
-        raise HTTPException(status_code=404, detail="Comment not found")
-    replies = comment_crud.get_replies_by_comment(session=session, comment_id=comment_id, skip=skip, limit=limit)
-    total = comment_crud.count_direct_replies(session=session, comment_id=comment_id)
-    return CommentRepliesPage(
-        replies=[_build_comment_public(r, session) for r in replies],
-        total=total,
-    )
-
-
-@router.get("/{comment_id}", response_model=CommentPublic)
-def get_comment(
-    comment_id: uuid.UUID,
-    session: Session = Depends(get_session),
-):
-    comment = comment_crud.get_comment_by_id(session=session, comment_id=comment_id)
-    if not comment:
-        raise HTTPException(status_code=404, detail="Comment not found")
-    return _build_comment_public(comment, session)
-
-
 @router.get("/project/{project_id}", response_model=List[CommentPublic])
 def get_project_comments(
     project_id: uuid.UUID,
@@ -150,6 +122,35 @@ def get_recruitment_comments(
         raise HTTPException(status_code=404, detail="Recruitment not found")
     comments = comment_crud.get_comments_by_recruitment(session=session, recruitment_id=recruitment_id, skip=skip, limit=limit)
     return [_build_comment_public(c, session) for c in comments]
+
+
+
+@router.get("/{comment_id}/replies", response_model=CommentRepliesPage)
+def get_comment_replies(
+    comment_id: uuid.UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(5, ge=1, le=20),
+    session: Session = Depends(get_session),
+):
+    if not comment_crud.get_comment_by_id(session=session, comment_id=comment_id):
+        raise HTTPException(status_code=404, detail="Comment not found")
+    replies = comment_crud.get_replies_by_comment(session=session, comment_id=comment_id, skip=skip, limit=limit)
+    total = comment_crud.count_direct_replies(session=session, comment_id=comment_id)
+    return CommentRepliesPage(
+        replies=[_build_comment_public(r, session) for r in replies],
+        total=total,
+    )
+
+
+@router.get("/{comment_id}", response_model=CommentPublic)
+def get_comment(
+    comment_id: uuid.UUID,
+    session: Session = Depends(get_session),
+):
+    comment = comment_crud.get_comment_by_id(session=session, comment_id=comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return _build_comment_public(comment, session)
 
 
 # Delete
