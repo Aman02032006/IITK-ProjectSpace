@@ -155,7 +155,7 @@ export async function deleteProject(projectId: string): Promise<void> {
 }
 
 export async function addProjectMember(projectId: string, userId: string): Promise<ProjectPublic> {
-  const res = await fetch(`${API}/${projectId}/members/${userId}`, {
+  const res = await fetch(`${API}/${projectId}/invites/${userId}`, {
     method: "POST",
     headers: { ...authHeaders() },
   });

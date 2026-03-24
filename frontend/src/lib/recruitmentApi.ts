@@ -186,7 +186,7 @@ export async function deleteRecruitment(recruitmentId: string): Promise<void> {
 }
 
 export async function addRecruiter(recruitmentId: string, userId: string): Promise<RecruitmentPublic> {
-  const res = await fetch(`${API}/${recruitmentId}/recruiters/${userId}`, {
+  const res = await fetch(`${API}/${recruitmentId}/invites/${userId}`, {
     method: "POST",
     headers: { ...authHeaders() },
   });
