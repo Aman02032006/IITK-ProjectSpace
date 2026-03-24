@@ -12,6 +12,8 @@ import { getRouteRegex } from "next/dist/shared/lib/router/utils/route-regex";
 import ReactMarkdown from "react-markdown";
 import CommentsSection from "../components/commentsSection";
 
+export const dynamic = 'force-dynamic';
+
 /* Types */
 export interface Recruiter {
   id: string;

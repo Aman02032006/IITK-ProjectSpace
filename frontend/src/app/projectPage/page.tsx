@@ -11,6 +11,8 @@ import { getRepresentativeString } from "@/lib/formatTeam";
 import ReactMarkdown from "react-markdown";
 import CommentsSection from "../components/commentsSection";
 
+export const dynamic = 'force-dynamic';
+
 /* Types */
 export interface TeamMember {
   id: string;

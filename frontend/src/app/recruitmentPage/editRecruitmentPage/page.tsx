@@ -12,6 +12,8 @@ import { searchUsers } from "@/lib/profileApi";
 import { UserSummary } from "@/lib/projectApi";
 import ConfirmPopUp from "../../components/confirmPopUp";
 
+export const dynamic = 'force-dynamic';
+
 interface Tag {
   id: string;
   label: string;
