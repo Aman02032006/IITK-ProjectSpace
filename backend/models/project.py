@@ -51,10 +51,8 @@ class Project(ProjectBase, table=True):
         back_populates="projects", link_model=ProjectTeamLink
     )
 
-    pending_members: List["User"] = Relationship(
-        link_model=ProjectPendingLink
-    )
-    
+    pending_members: List["User"] = Relationship(link_model=ProjectPendingLink)
+
     comments: List["Comment"] = Relationship(back_populates="project")
 
     search_vector: Optional[str] = Field(

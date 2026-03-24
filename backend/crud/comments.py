@@ -24,7 +24,9 @@ def _get_depth(session: Session, comment_id: uuid.UUID) -> int:
     return depth
 
 
-def create_comment(session: Session, comment_create: CommentCreate, author_id: uuid.UUID) -> Comment:
+def create_comment(
+    session: Session, comment_create: CommentCreate, author_id: uuid.UUID
+) -> Comment:
     if not comment_create.project_id and not comment_create.recruitment_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -109,15 +111,18 @@ def count_direct_replies(session: Session, comment_id: uuid.UUID) -> int:
 
 def count_comments_by_project(session: Session, project_id: uuid.UUID) -> int:
     return session.exec(
-        select(func.count()).select_from(Comment).where(Comment.project_id == project_id)
+        select(func.count())
+        .select_from(Comment)
+        .where(Comment.project_id == project_id)
     ).one()
 
 
 def count_comments_by_recruitment(session: Session, recruitment_id: uuid.UUID) -> int:
     return session.exec(
-        select(func.count()).select_from(Comment).where(Comment.recruitment_id == recruitment_id)
+        select(func.count())
+        .select_from(Comment)
+        .where(Comment.recruitment_id == recruitment_id)
     ).one()
-
 
 
 def delete_comment(session: Session, db_comment: Comment) -> None:

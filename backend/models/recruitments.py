@@ -80,10 +80,7 @@ class Recruitment(RecruitmentBase, table=True):
         back_populates="managed_recruitments", link_model=RecruitmentRecruiterLink
     )
 
-    pending_recruiters: List["User"] = Relationship(
-        link_model=RecruitmentPendingLink
-    )
-
+    pending_recruiters: List["User"] = Relationship(link_model=RecruitmentPendingLink)
 
     applications: List[Application] = Relationship(back_populates="recruitment")
 

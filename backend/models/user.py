@@ -58,7 +58,7 @@ class User(SQLModel, table=True):
 
     # Applications the user has applied
     applications: List["Application"] = Relationship(back_populates="applicant")
-    
+
     comments: List["Comment"] = Relationship(back_populates="author")
 
     search_vector: Optional[str] = Field(

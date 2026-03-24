@@ -82,7 +82,7 @@ def upload_profile_picture(
 
     # Build URL that matches the /uploads static mount in main.py
     url_path = f"/uploads/profilePictures/{filename}"
-    
+
     # Update the database
     current_user.profile_picture_url = url_path
     db.add(current_user)
@@ -119,7 +119,9 @@ def get_user_profile(
 ):
     user = get_user_by_id(session=session, user_id=user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return user
 
 

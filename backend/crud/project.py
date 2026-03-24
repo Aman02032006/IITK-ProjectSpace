@@ -45,9 +45,7 @@ def get_project_by_id(session: Session, project_id: uuid.UUID) -> Project | None
     statement = (
         select(Project)
         .where(Project.id == project_id)
-        .options(
-            selectinload(Project.comments).selectinload(Comment.author)
-        )
+        .options(selectinload(Project.comments).selectinload(Comment.author))
     )
     project = session.exec(statement).first()
     if project and project.creator is None:
@@ -55,11 +53,16 @@ def get_project_by_id(session: Session, project_id: uuid.UUID) -> Project | None
     if project:
         for comment in project.comments:
             comment.reply_count = session.exec(
-                select(func.count()).select_from(Comment).where(Comment.parent_id == comment.id)
+                select(func.count())
+                .select_from(Comment)
+                .where(Comment.parent_id == comment.id)
             ).one()
     return project
 
-def get_all_projects(session: Session, skip: int = 0, limit: int = 10) -> Sequence[Project]:
+
+def get_all_projects(
+    session: Session, skip: int = 0, limit: int = 10
+) -> Sequence[Project]:
     statement = (
         select(Project)
         .order_by(Project.created_at.desc())
@@ -67,14 +70,16 @@ def get_all_projects(session: Session, skip: int = 0, limit: int = 10) -> Sequen
         .limit(limit)
         .options(
             selectinload(Project.creator),
-            selectinload(Project.comments).selectinload(Comment.author)
+            selectinload(Project.comments).selectinload(Comment.author),
         )
     )
     projects = session.exec(statement).all()
     for project in projects:
         for comment in project.comments:
             comment.reply_count = session.exec(
-                select(func.count()).select_from(Comment).where(Comment.parent_id == comment.id)
+                select(func.count())
+                .select_from(Comment)
+                .where(Comment.parent_id == comment.id)
             ).one()
     return projects
 

@@ -205,7 +205,9 @@ def search_recruitments(
 
         if tsquery_raw:
             tsquery = func.to_tsquery("english", tsquery_raw)
-            rank_expr = func.coalesce(func.ts_rank(Recruitment.search_vector, tsquery), 0)
+            rank_expr = func.coalesce(
+                func.ts_rank(Recruitment.search_vector, tsquery), 0
+            )
             statement = statement.where(
                 or_(
                     Recruitment.search_vector.op("@@")(tsquery),

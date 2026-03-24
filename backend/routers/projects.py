@@ -36,7 +36,6 @@ def _safe_filename(filename: str) -> str:
     return safe_name
 
 
-
 @router.post("/", response_model=ProjectPublic, status_code=status.HTTP_201_CREATED)
 def create_new_project(
     project_in: ProjectCreate,
@@ -50,6 +49,8 @@ def create_new_project(
     project = create_project(
         session=db, project_create=project_in, creator_id=current_user.id
     )
+
+    db.add(ProjectTeamLink(project_id=project.id, user_id=current_user.id))
 
     if member_ids:
         for member_id in member_ids:
@@ -65,9 +66,12 @@ def create_new_project(
                     sender_id=current_user.id,
                     related_entity_id=project.id,
                 )
-        db.commit()
-        db.refresh(project)
-    
+
+    db.commit()
+    db.refresh(project)
+
+    project.creator = db.get(User, project.creator_id)
+
     return project
 
 
@@ -299,11 +303,16 @@ def remove_project_member(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
         )
-    if current_user not in project.team_members:
+
+    # FIX 1: Safely check if current user is authorized by comparing IDs
+    team_ids = [member.id for member in project.team_members]
+    if current_user.id not in team_ids:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only team members can remove members.",
         )
+
+    # Your excellent safeguard!
     if user_id == project.creator_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -316,6 +325,7 @@ def remove_project_member(
             ProjectTeamLink.user_id == user_id,
         )
     ).first()
+
     if not link:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User is not a team member."
@@ -324,15 +334,31 @@ def remove_project_member(
     db.delete(link)
     db.commit()
     db.refresh(project)
+
+    # Satisfy Pydantic schema fallback
     project.creator = db.get(User, project.creator_id)
 
+    # FIX 2: Handle both notification scenarios
     if current_user.id == user_id:
+        # Scenario A: User left voluntarily -> Notify the creator
         create_notification(
             session=db,
             recipient_id=project.creator_id,
             type=NotificationType.VERIFICATION_RESULT,
-            title="Team Invitation Declined/Left",
-            message=f"{current_user.fullname} has left or declined the team invitation.",
+            title="Team Member Left",
+            message=f"{current_user.fullname} has voluntarily left the team.",
+            link=f"/projects/{project_id}",
+            sender_id=current_user.id,
+            related_entity_id=project_id,
+        )
+    else:
+        # Scenario B: Creator removed someone -> Notify the removed user
+        create_notification(
+            session=db,
+            recipient_id=user_id,
+            type=NotificationType.VERIFICATION_RESULT,
+            title="Removed from Project",
+            message=f"You have been removed from the project '{project.title}'.",
             link=f"/projects/{project_id}",
             sender_id=current_user.id,
             related_entity_id=project_id,

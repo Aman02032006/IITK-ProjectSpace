@@ -34,30 +34,48 @@ def create_comment(
     Set parent_id to reply to an existing comment (max 5 levels deep)."""
     project = None
     if comment_in.project_id:
-        project = project_crud.get_project_by_id(session=session, project_id=comment_in.project_id)
+        project = project_crud.get_project_by_id(
+            session=session, project_id=comment_in.project_id
+        )
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
     recruitment = None
     if comment_in.recruitment_id:
-        recruitment = recruitment_crud.get_recruitment_by_id(session=session, recruitment_id=comment_in.recruitment_id)
+        recruitment = recruitment_crud.get_recruitment_by_id(
+            session=session, recruitment_id=comment_in.recruitment_id
+        )
         if not recruitment:
             raise HTTPException(status_code=404, detail="Recruitment not found")
 
     parent = None
     if comment_in.parent_id:
-        parent = comment_crud.get_comment_by_id(session=session, comment_id=comment_in.parent_id)
+        parent = comment_crud.get_comment_by_id(
+            session=session, comment_id=comment_in.parent_id
+        )
         if not parent:
             raise HTTPException(status_code=404, detail="Parent comment not found")
-        if parent.project_id != comment_in.project_id or parent.recruitment_id != comment_in.recruitment_id:
-            raise HTTPException(status_code=400, detail="Parent comment does not belong to the same post")
+        if (
+            parent.project_id != comment_in.project_id
+            or parent.recruitment_id != comment_in.recruitment_id
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Parent comment does not belong to the same post",
+            )
 
     # depth check is inside crud.create_comment
-    comment = comment_crud.create_comment(session=session, comment_create=comment_in, author_id=current_user.id)
+    comment = comment_crud.create_comment(
+        session=session, comment_create=comment_in, author_id=current_user.id
+    )
 
     if parent:
         if parent.author_id != current_user.id:
-            link = f"/projects/{comment_in.project_id}" if comment_in.project_id else f"/recruitments/{comment_in.recruitment_id}"
+            link = (
+                f"/projects/{comment_in.project_id}"
+                if comment_in.project_id
+                else f"/recruitments/{comment_in.recruitment_id}"
+            )
             create_notification(
                 session=session,
                 recipient_id=parent.author_id,
@@ -103,10 +121,13 @@ def get_project_comments(
     session: Session = Depends(get_session),
 ):
     """Paginated top-level comments for a project.
-    Each comment includes reply_count so the frontend can show a 'load replies' button."""
+    Each comment includes reply_count so the frontend can show a 'load replies' button.
+    """
     if not project_crud.get_project_by_id(session=session, project_id=project_id):
         raise HTTPException(status_code=404, detail="Project not found")
-    comments = comment_crud.get_comments_by_project(session=session, project_id=project_id, skip=skip, limit=limit)
+    comments = comment_crud.get_comments_by_project(
+        session=session, project_id=project_id, skip=skip, limit=limit
+    )
     return [_build_comment_public(c, session) for c in comments]
 
 
@@ -118,11 +139,14 @@ def get_recruitment_comments(
     session: Session = Depends(get_session),
 ):
     """Paginated top-level comments for a recruitment post."""
-    if not recruitment_crud.get_recruitment_by_id(session=session, recruitment_id=recruitment_id):
+    if not recruitment_crud.get_recruitment_by_id(
+        session=session, recruitment_id=recruitment_id
+    ):
         raise HTTPException(status_code=404, detail="Recruitment not found")
-    comments = comment_crud.get_comments_by_recruitment(session=session, recruitment_id=recruitment_id, skip=skip, limit=limit)
+    comments = comment_crud.get_comments_by_recruitment(
+        session=session, recruitment_id=recruitment_id, skip=skip, limit=limit
+    )
     return [_build_comment_public(c, session) for c in comments]
-
 
 
 @router.get("/{comment_id}/replies", response_model=CommentRepliesPage)
@@ -134,7 +158,9 @@ def get_comment_replies(
 ):
     if not comment_crud.get_comment_by_id(session=session, comment_id=comment_id):
         raise HTTPException(status_code=404, detail="Comment not found")
-    replies = comment_crud.get_replies_by_comment(session=session, comment_id=comment_id, skip=skip, limit=limit)
+    replies = comment_crud.get_replies_by_comment(
+        session=session, comment_id=comment_id, skip=skip, limit=limit
+    )
     total = comment_crud.count_direct_replies(session=session, comment_id=comment_id)
     return CommentRepliesPage(
         replies=[_build_comment_public(r, session) for r in replies],
@@ -168,15 +194,21 @@ def delete_comment(
 
     is_post_creator = False
     if comment.project_id:
-        project = project_crud.get_project_by_id(session=session, project_id=comment.project_id)
+        project = project_crud.get_project_by_id(
+            session=session, project_id=comment.project_id
+        )
         if project and project.creator_id == current_user.id:
             is_post_creator = True
     elif comment.recruitment_id:
-        recruitment = recruitment_crud.get_recruitment_by_id(session=session, recruitment_id=comment.recruitment_id)
+        recruitment = recruitment_crud.get_recruitment_by_id(
+            session=session, recruitment_id=comment.recruitment_id
+        )
         if recruitment and recruitment.creator_id == current_user.id:
             is_post_creator = True
 
     if comment.author_id != current_user.id and not is_post_creator:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this comment"
+        )
 
     comment_crud.delete_comment(session=session, db_comment=comment)

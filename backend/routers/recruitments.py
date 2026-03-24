@@ -60,10 +60,19 @@ def create_new_recruitment(
         session=db, recruitment_create=recruitment_in, creator_id=current_user.id
     )
 
+    # 1. Make the creator an official recruiter immediately!
+    db.add(
+        RecruitmentRecruiterLink(recruitment_id=recruitment.id, user_id=current_user.id)
+    )
+
     if recruiter_ids:
         for fellow_id in recruiter_ids:
             if fellow_id != current_user.id:
-                db.add(RecruitmentPendingLink(recruitment_id=recruitment.id, user_id=fellow_id))
+                db.add(
+                    RecruitmentPendingLink(
+                        recruitment_id=recruitment.id, user_id=fellow_id
+                    )
+                )
                 create_notification(
                     session=db,
                     recipient_id=fellow_id,
@@ -74,8 +83,13 @@ def create_new_recruitment(
                     sender_id=current_user.id,
                     related_entity_id=recruitment.id,
                 )
-        db.commit()
-        db.refresh(recruitment)
+
+    # 2. Move commit outside the IF block so it ALWAYS saves
+    db.commit()
+    db.refresh(recruitment)
+
+    # 3. Satisfy Pydantic schema fallback
+    recruitment.creator = db.get(User, recruitment.creator_id)
 
     return recruitment
 
@@ -118,7 +132,9 @@ def update_existing_recruitment(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
         )
-    if current_user not in recruitment.recruiters:
+
+    recruiter_ids = [r.id for r in recruitment.recruiters]
+    if current_user.id not in recruiter_ids:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only managing recruiters can edit this post.",
@@ -139,7 +155,8 @@ def delete_existing_recruitment(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
         )
-    if current_user not in recruitment.recruiters:
+    recruiter_ids = [r.id for r in recruitment.recruiters]
+    if current_user.id not in recruiter_ids:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only managing recruiters can delete this post.",
@@ -162,7 +179,8 @@ def invite_recruiter(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
         )
-    if current_user not in recruitment.recruiters:
+    recruiter_ids = [r.id for r in recruitment.recruiters]
+    if current_user.id not in recruiter_ids:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only managing recruiters can invite recruiters.",
@@ -242,7 +260,9 @@ def accept_recruiter_invite(
         )
 
     db.delete(pending_link)
-    db.add(RecruitmentRecruiterLink(recruitment_id=recruitment_id, user_id=current_user.id))
+    db.add(
+        RecruitmentRecruiterLink(recruitment_id=recruitment_id, user_id=current_user.id)
+    )
     db.commit()
     db.refresh(recruitment)
     recruitment.creator = db.get(User, recruitment.creator_id)
@@ -317,7 +337,8 @@ def remove_recruiter(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
         )
-    if current_user not in recruitment.recruiters:
+    recruiter_ids = [r.id for r in recruitment.recruiters]
+    if current_user.id not in recruiter_ids:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only managing recruiters can remove recruiters.",
@@ -351,6 +372,17 @@ def remove_recruiter(
             type=NotificationType.VERIFICATION_RESULT,
             title="Recruiter Invitation Declined/Left",
             message=f"{current_user.fullname} has left or declined the recruiter invitation.",
+            link=f"/recruitments/{recruitment_id}",
+            sender_id=current_user.id,
+            related_entity_id=recruitment_id,
+        )
+    else:
+        create_notification(
+            session=db,
+            recipient_id=user_id,
+            type=NotificationType.VERIFICATION_RESULT,
+            title="Removed from Recruitment Team",
+            message=f"You have been removed from the recruitment team for '{recruitment.title}'.",
             link=f"/recruitments/{recruitment_id}",
             sender_id=current_user.id,
             related_entity_id=recruitment_id,
@@ -467,7 +499,8 @@ def upload_recruitment_media(
     if not recruitment:
         raise HTTPException(status_code=404, detail="Recruitment not found")
 
-    if current_user not in recruitment.recruiters:
+    recruiter_ids = [r.id for r in recruitment.recruiters]
+    if current_user.id not in recruiter_ids:
         raise HTTPException(
             status_code=403, detail="Only managing recruiters can upload media."
         )

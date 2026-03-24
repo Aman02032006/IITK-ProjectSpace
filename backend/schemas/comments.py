@@ -7,6 +7,7 @@ from datetime import datetime
 # A schema just to show who wrote the comment
 class UserSummary(BaseModel):
     """Who wrote the comment."""
+
     id: uuid.UUID
     fullname: str
     profile_picture_url: Optional[str] = None
