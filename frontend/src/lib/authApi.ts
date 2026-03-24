@@ -1,6 +1,7 @@
 import { saveToken, removeToken } from "@/lib/token";
 
-const API = "http://127.0.0.1:8000/auth";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API = `${BASE_URL}/auth`;
 
 const extractError = (data: any, fallbackMsg: string) => {
   if (!data || !data.detail) return fallbackMsg;

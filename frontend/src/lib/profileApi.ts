@@ -2,7 +2,8 @@ import { authHeaders } from "@/lib/token";
 import { ProjectPublic } from "./projectApi";
 import { RecruitmentPublic } from "./recruitmentApi";
 
-const API = "http://127.0.0.1:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API = BASE_URL;
 
 const extractError = (data: any, fallbackMsg: string): string => {
   if (!data || !data.detail) return fallbackMsg;

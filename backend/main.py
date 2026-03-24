@@ -20,6 +20,12 @@ async def lifespan(app: FastAPI):
     yield
 
 
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://13.60.171.224:3000",
+]
+
 app = FastAPI(title="IITK ProjectSpace API", lifespan=lifespan)
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -36,7 +42,7 @@ app.include_router(search.router)
 # Allow Frontend (Port 3000) to talk to Backend (Port 8000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
