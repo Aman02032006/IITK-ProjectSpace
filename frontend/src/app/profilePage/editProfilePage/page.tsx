@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef , Suspense} from "react";
 import { useRouter } from "next/navigation";
 import "./editProfilePage.css";
 import Header from "../../components/Header";
@@ -189,197 +189,199 @@ const EditProfilePage: React.FC = () => {
   const displayAvatar = form.avatarPreview ?? form.profile_picture_url;
 
   return (
-    <div className="app-shell">
-      <Header showEditProfile={false} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="app-shell">
+        <Header showEditProfile={false} />
 
-      <div className="app-body">
-        <Sidebar defaultActive="profile" />
+        <div className="app-body">
+          <Sidebar defaultActive="profile" />
 
-        <main className="edit-profile-page">
-          {/* Top action bar */}
-          <div className="edit-profile-page__actions">
-            <button
-              className="edit-profile-page__action-btn"
-              onClick={() => router.push("/profilePage")}
-              disabled={saving}
-            >
-              ← Go Back
-            </button>
-            {saveError && (
-              <p style={{ color: "#a53d2a", fontSize: 13, margin: 0 }}>
-                {saveError}
-              </p>
-            )}
-            <button
-              className="edit-profile-page__action-btn"
-              onClick={handleSubmit}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
-          <div className="edit-profile-page__card">
-            <div className="edit-profile-page__card-header">
-              <h2 className="edit-profile-page__card-title">Edit Profile</h2>
+          <main className="edit-profile-page">
+            {/* Top action bar */}
+            <div className="edit-profile-page__actions">
+              <button
+                className="edit-profile-page__action-btn"
+                onClick={() => router.push("/profilePage")}
+                disabled={saving}
+              >
+                ← Go Back
+              </button>
+              {saveError && (
+                <p style={{ color: "#a53d2a", fontSize: 13, margin: 0 }}>
+                  {saveError}
+                </p>
+              )}
+              <button
+                className="edit-profile-page__action-btn"
+                onClick={handleSubmit}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : "Save Changes"}
+              </button>
             </div>
-            <div className="edit-profile-page__body">
-              {/* Avatar */}
-              <div className="edit-profile-page__avatar-section">
-                <div className="edit-profile-page__avatar-wrap">
-                  {displayAvatar ? (
-                    <img src={displayAvatar} alt="Profile" className="edit-profile-page__avatar-img" />
-                  ) : (
-                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="edit-profile-page__avatar-svg">
-                      <rect width="80" height="80" rx="12" fill="#1a3a5c" />
-                      <circle cx="40" cy="28" r="14" fill="#49769F" />
-                      <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
-                    </svg>
-                  )}
-                  <button
-                    className="edit-profile-page__avatar-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-label="Change profile picture"
-                  >
-                    <CameraIcon />
-                  </button>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleAvatarChange}
-                />
-                <p className="edit-profile-page__avatar-hint">Click the camera icon to change your photo</p>
+            <div className="edit-profile-page__card">
+              <div className="edit-profile-page__card-header">
+                <h2 className="edit-profile-page__card-title">Edit Profile</h2>
               </div>
-
-              {/* Form fields */}
-              <div className="edit-profile-page__fields">
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label">Full Name</label>
-                  <input className="edit-profile-page__input" value={form.fullname} onChange={set("fullname")} placeholder="Your full name" />
-                </div>
-
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label">Designation</label>
-                  <select 
-                    className="edit-profile-page__input" 
-                    value={form.designation} 
-                    onChange={set("designation")}
-                  >
-                    <option value="" disabled>Select your designation</option>
-                    <option value="Undergraduate Student">Undergraduate Student</option>
-                    <option value="Postgraduate Student">Postgraduate Student</option>
-                    <option value="PhD Scholar">PhD Scholar</option>
-                    <option value="Post-Doctoral Researcher">Post-Doctoral Researcher</option>
-                    <option value="Assistant Professor">Assistant Professor</option>
-                    <option value="Associate Professor">Associate Professor</option>
-                    <option value="Professor">Professor</option>
-                    <option value="Higher Academic Grade Professor">Higher Academic Grade Professor</option>
-                  </select></div>
-
-                <div className="edit-profile-page__row edit-profile-page__row--half">
-                  <div>
-                    <label className="edit-profile-page__label">Degree</label>
-                    <select 
-                      className="edit-profile-page__input" 
-                      value={form.degree} 
-                      onChange={set("degree")}
+              <div className="edit-profile-page__body">
+                {/* Avatar */}
+                <div className="edit-profile-page__avatar-section">
+                  <div className="edit-profile-page__avatar-wrap">
+                    {displayAvatar ? (
+                      <img src={displayAvatar} alt="Profile" className="edit-profile-page__avatar-img" />
+                    ) : (
+                      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="edit-profile-page__avatar-svg">
+                        <rect width="80" height="80" rx="12" fill="#1a3a5c" />
+                        <circle cx="40" cy="28" r="14" fill="#49769F" />
+                        <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
+                      </svg>
+                    )}
+                    <button
+                      className="edit-profile-page__avatar-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                      aria-label="Change profile picture"
                     >
-                      <option value="" disabled>Select degree</option>
-                      <option value="B.Tech">B.Tech</option>
-                      <option value="BS">BS</option>
-                      <option value="M.Tech">M.Tech</option>
-                      <option value="MS">MS</option>
-                      <option value="MS by Research">MS by Research</option>
-                      <option value="B.Tech/M.Tech Dual">B.Tech/M.Tech Dual</option>
-                      <option value="B.Tech/MS Dual">B.Tech/MS Dual</option>
-                      <option value="B.Tech/MBA Dual">B.Tech/MBA Dual</option>
-                      <option value="BS/MS Dual">BS/MS Dual</option>
-                      <option value="BS/M.Tech Dual">BS/M.Tech Dual</option>
-                      <option value="BS/MBA Dual">BS/MBA Dual</option>
-                      <option value="BS/MBA Dual">BS/MBA Dual</option>
-                      <option value="MDes">MDes</option>
-                      <option value="MBA">MBA</option>
-                      <option value="MS/Ph.D Dual">MS/Ph.D Dual</option>
-                      <option value="Ph.D">Ph.D</option>
-                    </select>
+                      <CameraIcon />
+                    </button>
                   </div>
-                  <div>
-                    <label className="edit-profile-page__label">Department</label>
-                    <select 
-                      className="edit-profile-page__input" 
-                      value={form.department} 
-                      onChange={set("department")}
-                    >
-                      <option value="" disabled>Select department</option>
-                      <option value="Aerospace Engineering">Aerospace Engineering</option>
-                      <option value="Biological Sciences and Bioengineering">Biological Sciences and Bioengineering</option>
-                      <option value="Chemical Engineering">Chemical Engineering</option>
-                      <option value="Chemistry">Chemistry</option>
-                      <option value="Civil Engineering">Civil Engineering</option>
-                      <option value="Cognitive Sciences">Cognitive Sciences</option>
-                      <option value="Computer Science and Engineering">Computer Science and Engineering</option>
-                      <option value="Design">Design</option>
-                      <option value="Earth Sciences">Earth Sciences</option>
-                      <option value="Economics">Economics</option>
-                      <option value="Electrical Engineering">Electrical Engineering</option>
-                      <option value="Humanities and Social Sciences">Humanities and Social Sciences</option>
-                      <option value="Intelligent Systems">Intelligent Systems</option>
-                      <option value="Materials Science and Engineering">Materials Science and Engineering</option>
-                      <option value="Mathematics">Mathematics</option>
-                      <option value="Mechanical Engineering">Mechanical Engineering</option>
-                      <option value="Nuclear Engineering and Technology">Nuclear Engineering and Technology</option>
-                      <option value="Management Sciences">Management Sciences</option>
-                      <option value="Management Sciences">Management Sciences</option>
-                      <option value="Space, Planetary and Astronomical Sciences and Engineering">Space, Planetary and Astronomical Sciences and Engineering</option>
-                      <option value="Statistics and Data Science">Statistics and Data Science</option>
-                      <option value="Sustainable Energy Engineering">Sustainable Energy Engineering</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label">Skills</label>
-                  <CreatableSelect
-                    isMulti
-                    options={seedSkills}
-                    // We map the string array back into the {value, label} objects that react-select needs to render
-                    value={form.skills.map((skill) => ({ value: skill, label: skill }))}
-                    onChange={handleSkillsChange}
-                    placeholder="Search or type to create a skill..."
-                    className="react-select-container"
-                    classNamePrefix="react-select"
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleAvatarChange}
                   />
+                  <p className="edit-profile-page__avatar-hint">Click the camera icon to change your photo</p>
                 </div>
 
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label">Bio</label>
-                  <textarea className="edit-profile-page__textarea" value={form.bio} onChange={set("bio")} rows={3} placeholder="Tell people about yourself…" />
-                </div>
+                {/* Form fields */}
+                <div className="edit-profile-page__fields">
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label">Full Name</label>
+                    <input className="edit-profile-page__input" value={form.fullname} onChange={set("fullname")} placeholder="Your full name" />
+                  </div>
 
-                <div className="edit-profile-page__section-title">Social Links</div>
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label">Designation</label>
+                    <select 
+                      className="edit-profile-page__input" 
+                      value={form.designation} 
+                      onChange={set("designation")}
+                    >
+                      <option value="" disabled>Select your designation</option>
+                      <option value="Undergraduate Student">Undergraduate Student</option>
+                      <option value="Postgraduate Student">Postgraduate Student</option>
+                      <option value="PhD Scholar">PhD Scholar</option>
+                      <option value="Post-Doctoral Researcher">Post-Doctoral Researcher</option>
+                      <option value="Assistant Professor">Assistant Professor</option>
+                      <option value="Associate Professor">Associate Professor</option>
+                      <option value="Professor">Professor</option>
+                      <option value="Higher Academic Grade Professor">Higher Academic Grade Professor</option>
+                    </select></div>
 
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label"><LinkedInIcon /> LinkedIn URL</label>
-                  <input className="edit-profile-page__input" value={form.linkedin} onChange={set("linkedin")} placeholder="https://linkedin.com/in/yourprofile" />
-                </div>
+                  <div className="edit-profile-page__row edit-profile-page__row--half">
+                    <div>
+                      <label className="edit-profile-page__label">Degree</label>
+                      <select 
+                        className="edit-profile-page__input" 
+                        value={form.degree} 
+                        onChange={set("degree")}
+                      >
+                        <option value="" disabled>Select degree</option>
+                        <option value="B.Tech">B.Tech</option>
+                        <option value="BS">BS</option>
+                        <option value="M.Tech">M.Tech</option>
+                        <option value="MS">MS</option>
+                        <option value="MS by Research">MS by Research</option>
+                        <option value="B.Tech/M.Tech Dual">B.Tech/M.Tech Dual</option>
+                        <option value="B.Tech/MS Dual">B.Tech/MS Dual</option>
+                        <option value="B.Tech/MBA Dual">B.Tech/MBA Dual</option>
+                        <option value="BS/MS Dual">BS/MS Dual</option>
+                        <option value="BS/M.Tech Dual">BS/M.Tech Dual</option>
+                        <option value="BS/MBA Dual">BS/MBA Dual</option>
+                        <option value="BS/MBA Dual">BS/MBA Dual</option>
+                        <option value="MDes">MDes</option>
+                        <option value="MBA">MBA</option>
+                        <option value="MS/Ph.D Dual">MS/Ph.D Dual</option>
+                        <option value="Ph.D">Ph.D</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="edit-profile-page__label">Department</label>
+                      <select 
+                        className="edit-profile-page__input" 
+                        value={form.department} 
+                        onChange={set("department")}
+                      >
+                        <option value="" disabled>Select department</option>
+                        <option value="Aerospace Engineering">Aerospace Engineering</option>
+                        <option value="Biological Sciences and Bioengineering">Biological Sciences and Bioengineering</option>
+                        <option value="Chemical Engineering">Chemical Engineering</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Cognitive Sciences">Cognitive Sciences</option>
+                        <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                        <option value="Design">Design</option>
+                        <option value="Earth Sciences">Earth Sciences</option>
+                        <option value="Economics">Economics</option>
+                        <option value="Electrical Engineering">Electrical Engineering</option>
+                        <option value="Humanities and Social Sciences">Humanities and Social Sciences</option>
+                        <option value="Intelligent Systems">Intelligent Systems</option>
+                        <option value="Materials Science and Engineering">Materials Science and Engineering</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Nuclear Engineering and Technology">Nuclear Engineering and Technology</option>
+                        <option value="Management Sciences">Management Sciences</option>
+                        <option value="Management Sciences">Management Sciences</option>
+                        <option value="Space, Planetary and Astronomical Sciences and Engineering">Space, Planetary and Astronomical Sciences and Engineering</option>
+                        <option value="Statistics and Data Science">Statistics and Data Science</option>
+                        <option value="Sustainable Energy Engineering">Sustainable Energy Engineering</option>
+                      </select>
+                    </div>
+                  </div>
 
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label"><GitHubIcon /> GitHub URL</label>
-                  <input className="edit-profile-page__input" value={form.github} onChange={set("github")} placeholder="https://github.com/yourhandle" />
-                </div>
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label">Skills</label>
+                    <CreatableSelect
+                      isMulti
+                      options={seedSkills}
+                      // We map the string array back into the {value, label} objects that react-select needs to render
+                      value={form.skills.map((skill) => ({ value: skill, label: skill }))}
+                      onChange={handleSkillsChange}
+                      placeholder="Search or type to create a skill..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
+                  </div>
 
-                <div className="edit-profile-page__row">
-                  <label className="edit-profile-page__label"><ScholarIcon /> Scholar / Other URL</label>
-                  <input className="edit-profile-page__input" value={form.other_link1} onChange={set("other_link1")} placeholder="https://scholar.google.com/…" />
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label">Bio</label>
+                    <textarea className="edit-profile-page__textarea" value={form.bio} onChange={set("bio")} rows={3} placeholder="Tell people about yourself…" />
+                  </div>
+
+                  <div className="edit-profile-page__section-title">Social Links</div>
+
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label"><LinkedInIcon /> LinkedIn URL</label>
+                    <input className="edit-profile-page__input" value={form.linkedin} onChange={set("linkedin")} placeholder="https://linkedin.com/in/yourprofile" />
+                  </div>
+
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label"><GitHubIcon /> GitHub URL</label>
+                    <input className="edit-profile-page__input" value={form.github} onChange={set("github")} placeholder="https://github.com/yourhandle" />
+                  </div>
+
+                  <div className="edit-profile-page__row">
+                    <label className="edit-profile-page__label"><ScholarIcon /> Scholar / Other URL</label>
+                    <input className="edit-profile-page__input" value={form.other_link1} onChange={set("other_link1")} placeholder="https://scholar.google.com/…" />
+                  </div>
                 </div>
-              </div>
-          </div>
-          </div>
-        </main>
+            </div>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 };
 
