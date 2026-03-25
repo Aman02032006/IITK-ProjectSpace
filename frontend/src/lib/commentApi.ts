@@ -3,6 +3,12 @@ import { authHeaders } from "@/lib/token";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/comments`;
 
+const toAbsoluteUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${BASE_URL}${url}`;
+};
+
 type ApiErrorData = {
   detail?: string | Array<{ msg?: string }>;
 } | null;
@@ -44,6 +50,14 @@ export interface CommentCreate {
   parent_id?: string | null;
 }
 
+const normalizeComment = (comment: Comment): Comment => ({
+  ...comment,
+  author: {
+    ...comment.author,
+    profile_picture_url: toAbsoluteUrl(comment.author.profile_picture_url),
+  },
+});
+
 // API Functions
 
 export async function getProjectComments(
@@ -57,7 +71,7 @@ export async function getProjectComments(
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch comments"));
-  return data;
+  return (data as Comment[]).map(normalizeComment);
 }
 
 export async function getRecruitmentComments(
@@ -71,7 +85,7 @@ export async function getRecruitmentComments(
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch comments"));
-  return data;
+  return (data as Comment[]).map(normalizeComment);
 }
 
 export async function getCommentReplies(
@@ -85,7 +99,11 @@ export async function getCommentReplies(
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch replies"));
-  return data;
+  const page = data as CommentRepliesPage;
+  return {
+    ...page,
+    replies: page.replies.map(normalizeComment),
+  };
 }
 
 export async function createComment(payload: CommentCreate): Promise<Comment> {
@@ -96,7 +114,7 @@ export async function createComment(payload: CommentCreate): Promise<Comment> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to post comment"));
-  return data;
+  return normalizeComment(data as Comment);
 }
 
 export async function deleteComment(commentId: string): Promise<void> {

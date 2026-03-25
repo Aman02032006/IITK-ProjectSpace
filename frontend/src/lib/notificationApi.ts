@@ -3,6 +3,12 @@ import { authHeaders } from "@/lib/token";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/notifications`;
 
+const toAbsoluteUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${BASE_URL}${url}`;
+};
+
 type ApiErrorData = {
   detail?: string | Array<{ msg?: string }>;
 } | null;
@@ -37,6 +43,11 @@ export interface PaginatedNotifications {
   results: NotificationRead[];
 }
 
+const normalizeNotification = (notification: NotificationRead): NotificationRead => ({
+  ...notification,
+  sender_avatar: toAbsoluteUrl(notification.sender_avatar),
+});
+
 export async function getNotifications(limit = 20, offset = 0): Promise<PaginatedNotifications> {
   const res = await fetch(`${API}/?limit=${limit}&offset=${offset}`, {
     headers: { ...authHeaders() },
@@ -48,7 +59,11 @@ export async function getNotifications(limit = 20, offset = 0): Promise<Paginate
     throw new Error(extractError(data, "Failed to fetch notifications"));
   }
 
-  return data;
+  const page = data as PaginatedNotifications;
+  return {
+    ...page,
+    results: page.results.map(normalizeNotification),
+  };
 }
 
 export async function markNotificationRead(notificationId: string): Promise<void> {
