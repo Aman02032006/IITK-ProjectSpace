@@ -74,6 +74,8 @@ class ProjectPublic(ProjectBase):
     creator_id: uuid.UUID
     comments: List[CommentPublic] = []
 
+    creator: Optional[Any] = Field(default=None, exclude=True)
+
     @computed_field
     @property
     def creator_name(self) -> str:
@@ -105,6 +107,8 @@ class ProjectSummary(BaseModel):
     team_members: List[UserSummary] = []
     media_urls: List[str] = []
     creator_id: uuid.UUID
+
+    creator: Optional[Any] = Field(default=None, exclude=True)
 
     @computed_field
     @property
