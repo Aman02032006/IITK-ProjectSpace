@@ -603,11 +603,10 @@ export default function PostCreationForm() {
                 {selectedUsers.length > 0 && (
                   <div className="pcf-tags-row" style={{ marginBottom: "12px" }}>
                     {selectedUsers.map((user) => (
-                      <span key={user.id} className="pcf-tag" style={{ background: "var(--primary-color)", color: "white" }}>
+                      <span key={user.id} className="pcf-tag pcf-tag--member">
                         {user.fullname}
                         <button 
-                          className="pcf-tag-remove" 
-                          style={{ color: "white" }}
+                          className="pcf-tag-remove pcf-tag-remove--member"
                           onClick={() => handleRemoveUser(user.id)}
                         >
                           ×
@@ -689,3 +688,4 @@ export default function PostCreationForm() {
     </div>
   );
 }
+

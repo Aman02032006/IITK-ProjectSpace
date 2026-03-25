@@ -385,6 +385,12 @@
   border: 1px solid color-mix(in srgb, var(--color-sky) 40%, transparent);
 }
 
+.pcf-tag--member {
+  background: var(--color-dark);
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--color-dark) 65%, transparent);
+}
+
 .pcf-tag-remove {
   background: none;
   border: none;
@@ -399,6 +405,14 @@
 
 .pcf-tag-remove:hover {
   opacity: 1;
+}
+
+.pcf-tag-remove--member {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pcf-tag-remove--member:hover {
+  color: #ffffff;
 }
 
 /* Add Button */

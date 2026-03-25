@@ -142,7 +142,7 @@
 }
 
 /* LABELS */
-label {
+.auth-card label {
   font-size: clamp(0.9rem, 3vw, 1rem);
   font-weight: 500;
   margin: 0 auto 6px auto;
@@ -151,7 +151,7 @@ label {
 }
 
 /* INPUTS */
-input {
+.auth-card input {
   width: 90%;
   padding: 10px 15px;
   border-radius: clamp(7px, 2vw, 10px);
@@ -165,13 +165,13 @@ input {
   margin-left: auto;
 }
 
-input[type = "password"] {
+.auth-card input[type = "password"] {
   font-family: Verdana, sans-serif;
   font-size: 1rem;
   letter-spacing: 1px;
 }
 
-input[type = "password"]::placeholder {
+.auth-card input[type = "password"]::placeholder {
   font-family: var(--font-montserrat);
   font-size: 0.95rem;
   letter-spacing: normal;

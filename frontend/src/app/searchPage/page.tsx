@@ -384,6 +384,133 @@ const SearchPageContent: React.FC = () => {
     setter((prev) => prev.filter((item) => item !== value));
   };
 
+  const selectedChips: Array<React.ReactNode> = [];
+  if (activeTab === "user") {
+    designations.forEach((item) => {
+      selectedChips.push(
+        <span key={`designation-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedDesignations)}
+            aria-label={`Remove designation ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+    degrees.forEach((item) => {
+      selectedChips.push(
+        <span key={`degree-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedDegrees)}
+            aria-label={`Remove degree ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+    departments.forEach((item) => {
+      selectedChips.push(
+        <span key={`department-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedDepartments)}
+            aria-label={`Remove department ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+    skills.forEach((item) => {
+      selectedChips.push(
+        <span key={`skill-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedSkills)}
+            aria-label={`Remove skill ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+  }
+
+  if (activeTab === "recruitment") {
+    designations.forEach((item) => {
+      selectedChips.push(
+        <span key={`designation-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedDesignations)}
+            aria-label={`Remove designation ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+    departments.forEach((item) => {
+      selectedChips.push(
+        <span key={`department-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedDepartments)}
+            aria-label={`Remove department ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+    skills.forEach((item) => {
+      selectedChips.push(
+        <span key={`skill-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedSkills)}
+            aria-label={`Remove skill ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+    prerequisites.forEach((item) => {
+      selectedChips.push(
+        <span key={`prerequisite-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedPrerequisites)}
+            aria-label={`Remove prerequisite ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+  }
+
+  if (activeTab === "project") {
+    domains.forEach((item) => {
+      selectedChips.push(
+        <span key={`domain-${item}`} className="search-chip">
+          {item}
+          <button
+            onClick={() => removeItem(item, setSelectedDomains)}
+            aria-label={`Remove domain ${item}`}
+          >
+            x
+          </button>
+        </span>
+      );
+    });
+  }
+
   return (
     <div className="app-shell">
       <Header
@@ -547,7 +674,7 @@ const SearchPageContent: React.FC = () => {
               )}
 
               {activeTab === "project" && (
-                <label className="search-filter">
+                <label className="search-filter search-filter--project">
                   <span>Domain</span>
                   <select
                     value={domainPicker}
@@ -568,150 +695,8 @@ const SearchPageContent: React.FC = () => {
             </div>
 
             <div className="search-selected">
-              {activeTab === "user" && (
-                <>
-                  {designations.length > 0 && (
-                    <div className="search-selected-line">
-                      {designations.map((item) => (
-                        <span key={`designation-${item}`} className="search-chip">
-                          Designation: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedDesignations)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {degrees.length > 0 && (
-                    <div className="search-selected-line">
-                      {degrees.map((item) => (
-                        <span key={`degree-${item}`} className="search-chip">
-                          Degree: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedDegrees)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {departments.length > 0 && (
-                    <div className="search-selected-line">
-                      {departments.map((item) => (
-                        <span key={`department-${item}`} className="search-chip">
-                          Department: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedDepartments)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {skills.length > 0 && (
-                    <div className="search-selected-line">
-                      {skills.map((item) => (
-                        <span key={`skill-${item}`} className="search-chip">
-                          Skill: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedSkills)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {activeTab === "recruitment" && (
-                <>
-                  {designations.length > 0 && (
-                    <div className="search-selected-line">
-                      {designations.map((item) => (
-                        <span key={`designation-${item}`} className="search-chip">
-                          Designation: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedDesignations)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {departments.length > 0 && (
-                    <div className="search-selected-line">
-                      {departments.map((item) => (
-                        <span key={`department-${item}`} className="search-chip">
-                          Department: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedDepartments)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {skills.length > 0 && (
-                    <div className="search-selected-line">
-                      {skills.map((item) => (
-                        <span key={`skill-${item}`} className="search-chip">
-                          Skill: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedSkills)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {prerequisites.length > 0 && (
-                    <div className="search-selected-line">
-                      {prerequisites.map((item) => (
-                        <span key={`prerequisite-${item}`} className="search-chip">
-                          Prerequisite: {item}
-                          <button
-                            onClick={() => removeItem(item, setSelectedPrerequisites)}
-                            aria-label={`Remove ${item}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {activeTab === "project" && domains.length > 0 && (
-                <div className="search-selected-line">
-                  {domains.map((item) => (
-                    <span key={`domain-${item}`} className="search-chip">
-                      Domain: {item}
-                      <button
-                        onClick={() => removeItem(item, setSelectedDomains)}
-                        aria-label={`Remove ${item}`}
-                      >
-                        x
-                      </button>
-                    </span>
-                  ))}
-                </div>
+              {selectedChips.length > 0 && (
+                <div className="search-selected-line">{selectedChips}</div>
               )}
             </div>
           </div>
