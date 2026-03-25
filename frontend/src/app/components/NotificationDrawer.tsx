@@ -8,6 +8,17 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/notificationApi";
+import {
+  acceptProjectInvite,
+  getProject,
+  rejectProjectInvite,
+} from "@/lib/projectApi";
+import {
+  acceptRecruiterInvite,
+  getRecruitment,
+  rejectRecruiterInvite,
+} from "@/lib/recruitmentApi";
+import { fetchMyProfile } from "@/lib/profileApi";
 import "./NotificationDrawer.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -17,6 +28,27 @@ interface NotificationDrawerProps {
   open: boolean;
   onClose: () => void;
   onUnreadCountChange?: (count: number) => void;
+}
+
+type InviteEntityType = "project" | "recruitment";
+
+interface InviteTarget {
+  entityType: InviteEntityType;
+  entityId: string;
+}
+
+const UUID_PATTERN =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
+
+function sanitizeUuidCandidate(value: string): string {
+  return value.trim().replace(/^['"`]+|['"`]+$/g, "");
+}
+
+function extractValidUuid(value?: string | null): string | null {
+  if (!value) return null;
+  const cleaned = sanitizeUuidCandidate(value);
+  const match = cleaned.match(UUID_PATTERN)?.[0] ?? null;
+  return match;
 }
 
 function getRelativeTime(iso: string): string {
@@ -57,6 +89,13 @@ function getActionLabel(type: string): string {
   }
 }
 
+function shouldShowPrimaryAction(notification: NotificationRead, hasInviteTarget: boolean): boolean {
+  if (hasInviteTarget) return false;
+  if (notification.type === "APPLICATION_RESULT") return false;
+  if (notification.type === "VERIFICATION_RESULT") return false;
+  return true;
+}
+
 function resolveClientLink(link: string): string | null {
   if (!link) return null;
   if (link.startsWith("http://") || link.startsWith("https://")) return link;
@@ -68,6 +107,57 @@ function resolveClientLink(link: string): string | null {
   if (recruitmentMatch?.[1]) return `/recruitmentPage?id=${recruitmentMatch[1]}`;
 
   return link;
+}
+
+function getInviteTarget(notification: NotificationRead | null): InviteTarget | null {
+  if (!notification || notification.type !== "VERIFICATION_REQUEST") return null;
+
+  const relatedId = extractValidUuid(notification.related_entity_id);
+
+  const projectMatch = notification.link.match(/^\/projects\/([^/?#]+)/);
+  if (projectMatch?.[1]) {
+    const linkId = extractValidUuid(projectMatch[1]);
+    const entityId = relatedId ?? linkId;
+    if (!entityId) return null;
+    return {
+      entityType: "project",
+      entityId,
+    };
+  }
+
+  const recruitmentMatch = notification.link.match(/^\/recruitments\/([^/?#]+)/);
+  if (recruitmentMatch?.[1]) {
+    const linkId = extractValidUuid(recruitmentMatch[1]);
+    const entityId = relatedId ?? linkId;
+    if (!entityId) return null;
+    return {
+      entityType: "recruitment",
+      entityId,
+    };
+  }
+
+  const normalizedLink = notification.link ?? "";
+  if (normalizedLink.includes("/project")) {
+    const uuidFromLink = extractValidUuid(normalizedLink);
+    if (uuidFromLink) {
+      return {
+        entityType: "project",
+        entityId: relatedId ?? uuidFromLink,
+      };
+    }
+  }
+
+  if (normalizedLink.includes("/recruitment")) {
+    const uuidFromLink = extractValidUuid(normalizedLink);
+    if (uuidFromLink) {
+      return {
+        entityType: "recruitment",
+        entityId: relatedId ?? uuidFromLink,
+      };
+    }
+  }
+
+  return null;
 }
 
 function withAbsoluteAvatar(url?: string | null): string | undefined {
@@ -123,11 +213,34 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [markAllLoading, setMarkAllLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [inviteActionLoading, setInviteActionLoading] = useState<"accept" | "reject" | null>(null);
+  const [inviteActionError, setInviteActionError] = useState<string | null>(null);
+  const [handledInvites, setHandledInvites] = useState<
+    Record<string, "accepted" | "rejected" | "resolved">
+  >({});
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [inviteStatusByNotification, setInviteStatusByNotification] = useState<
+    Record<string, "pending" | "resolved">
+  >({});
+  const [inviteStatusLoading, setInviteStatusLoading] = useState(false);
 
   const selectedNotification = useMemo(
     () => notifications.find((item) => item.id === selectedId) ?? null,
     [notifications, selectedId]
   );
+  const selectedInviteTarget = useMemo(
+    () => getInviteTarget(selectedNotification),
+    [selectedNotification]
+  );
+  const selectedInviteHandledState = selectedNotification
+    ? handledInvites[selectedNotification.id]
+    : undefined;
+  const showPrimaryAction = selectedNotification
+    ? shouldShowPrimaryAction(selectedNotification, !!selectedInviteTarget)
+    : false;
+  const selectedInviteStatus = selectedNotification
+    ? inviteStatusByNotification[selectedNotification.id]
+    : undefined;
 
   const syncUnread = useCallback(
     (count: number) => {
@@ -178,6 +291,75 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
+
+  useEffect(() => {
+    setInviteActionLoading(null);
+    setInviteActionError(null);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!open || currentUserId) return;
+
+    const loadCurrentUser = async () => {
+      try {
+        const me = await fetchMyProfile();
+        setCurrentUserId(me.id);
+      } catch {
+        // Silent: invite controls will fallback to optimistic behavior if needed.
+      }
+    };
+
+    void loadCurrentUser();
+  }, [open, currentUserId]);
+
+  useEffect(() => {
+    if (!open || !selectedNotification || !selectedInviteTarget || !currentUserId) return;
+    if (selectedInviteHandledState) return;
+
+    const existing = inviteStatusByNotification[selectedNotification.id];
+    if (existing) return;
+
+    const resolveInviteStatus = async () => {
+      setInviteStatusLoading(true);
+      try {
+        let isPending = false;
+        if (selectedInviteTarget.entityType === "project") {
+          const project = await getProject(selectedInviteTarget.entityId);
+          isPending = (project.pending_members ?? []).some((member) => member.id === currentUserId);
+        } else {
+          const recruitment = await getRecruitment(selectedInviteTarget.entityId);
+          isPending = (recruitment.pending_recruiters ?? []).some(
+            (member) => member.id === currentUserId
+          );
+        }
+
+        setInviteStatusByNotification((prev) => ({
+          ...prev,
+          [selectedNotification.id]: isPending ? "pending" : "resolved",
+        }));
+
+        if (!isPending) {
+          setHandledInvites((prev) => ({
+            ...prev,
+            [selectedNotification.id]: "resolved",
+          }));
+        }
+      } catch {
+        // Keep current UI if status check fails.
+      } finally {
+        setInviteStatusLoading(false);
+      }
+    };
+
+    void resolveInviteStatus();
+  }, [
+    open,
+    selectedNotification,
+    selectedInviteTarget,
+    currentUserId,
+    selectedInviteHandledState,
+    inviteStatusByNotification,
+  ]);
 
   const markSelectedRead = async (notification: NotificationRead) => {
     if (notification.is_read) return;
@@ -234,6 +416,59 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
     onClose();
   };
 
+  const onRespondToInvite = async (decision: "accept" | "reject") => {
+    if (!selectedNotification || !selectedInviteTarget || inviteActionLoading) return;
+    if (selectedInviteHandledState) return;
+
+    setInviteActionLoading(decision);
+    setInviteActionError(null);
+    try {
+      if (selectedInviteTarget.entityType === "project") {
+        if (decision === "accept") {
+          await acceptProjectInvite(selectedInviteTarget.entityId);
+        } else {
+          await rejectProjectInvite(selectedInviteTarget.entityId);
+        }
+      } else if (decision === "accept") {
+        await acceptRecruiterInvite(selectedInviteTarget.entityId);
+      } else {
+        await rejectRecruiterInvite(selectedInviteTarget.entityId);
+      }
+
+      setHandledInvites((prev) => ({
+        ...prev,
+        [selectedNotification.id]: decision === "accept" ? "accepted" : "rejected",
+      }));
+      setInviteStatusByNotification((prev) => ({
+        ...prev,
+        [selectedNotification.id]: "resolved",
+      }));
+      await markNotificationRead(selectedNotification.id);
+      await loadNotifications();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Could not update invitation.";
+
+      if (message.toLowerCase().includes("no pending invitation found")) {
+        setHandledInvites((prev) => ({
+          ...prev,
+          [selectedNotification.id]: "resolved",
+        }));
+        setInviteStatusByNotification((prev) => ({
+          ...prev,
+          [selectedNotification.id]: "resolved",
+        }));
+        setInviteActionError(null);
+        await markNotificationRead(selectedNotification.id).catch(() => undefined);
+        await loadNotifications();
+      } else {
+        setInviteActionError(message);
+      }
+    } finally {
+      setInviteActionLoading(null);
+    }
+  };
+
   const closeDetail = () => setSelectedId(null);
 
   return (
@@ -285,9 +520,55 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
               <span className="notif-detail__time">{getRelativeTime(selectedNotification.created_at)}</span>
             </div>
 
+            {selectedInviteHandledState && (
+              <p className="notif-detail__action-state notif-detail__action-state--success">
+                {selectedInviteHandledState === "accepted" && "Invitation accepted."}
+                {selectedInviteHandledState === "rejected" && "Invitation rejected."}
+                {selectedInviteHandledState === "resolved" && "Invitation already handled."}
+              </p>
+            )}
+            {!selectedInviteHandledState && selectedInviteTarget && inviteStatusLoading && (
+              <p className="notif-detail__action-state">Checking invitation status...</p>
+            )}
+            {inviteActionError && (
+              <p className="notif-detail__action-state notif-detail__action-state--error">
+                {inviteActionError}
+                {selectedInviteTarget && (
+                  <>
+                    {" "}
+                    [target={selectedInviteTarget.entityType}:{selectedInviteTarget.entityId}]
+                  </>
+                )}
+              </p>
+            )}
+
             <div className="notif-detail__actions">
-              <button className="notif-detail__btn notif-detail__btn--primary" onClick={onOpenTarget}>
-                {getActionLabel(selectedNotification.type)}
+              {selectedInviteTarget &&
+              !selectedInviteHandledState &&
+              selectedInviteStatus !== "resolved" ? (
+                <>
+                  <button
+                    className="notif-detail__btn notif-detail__btn--primary"
+                    onClick={() => void onRespondToInvite("accept")}
+                    disabled={!!inviteActionLoading || inviteStatusLoading}
+                  >
+                    {inviteActionLoading === "accept" ? "Accepting..." : "Accept"}
+                  </button>
+                  <button
+                    className="notif-detail__btn notif-detail__btn--danger"
+                    onClick={() => void onRespondToInvite("reject")}
+                    disabled={!!inviteActionLoading || inviteStatusLoading}
+                  >
+                    {inviteActionLoading === "reject" ? "Rejecting..." : "Reject"}
+                  </button>
+                </>
+              ) : showPrimaryAction ? (
+                <button className="notif-detail__btn notif-detail__btn--primary" onClick={onOpenTarget}>
+                  {getActionLabel(selectedNotification.type)}
+                </button>
+              ) : null}
+              <button className="notif-detail__btn" onClick={onOpenTarget}>
+                Open Page
               </button>
               <button className="notif-detail__btn" onClick={closeDetail}>
                 Close Card

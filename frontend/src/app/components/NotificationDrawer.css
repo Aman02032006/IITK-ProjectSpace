@@ -370,6 +370,20 @@
   gap: 8px;
 }
 
+.notif-detail__action-state {
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.notif-detail__action-state--success {
+  color: #1c7657;
+}
+
+.notif-detail__action-state--error {
+  color: #a23a3a;
+}
+
 .notif-detail__btn {
   border: 1px solid #bfcfdf;
   background: #ffffff;
@@ -381,6 +395,11 @@
   cursor: pointer;
   font-family: inherit;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.notif-detail__btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
 }
 
 .notif-detail__btn:hover {
@@ -398,6 +417,18 @@
 .notif-detail__btn--primary:hover {
   background: #0a2e4f;
   border-color: #0a2e4f;
+  color: #ffffff;
+}
+
+.notif-detail__btn--danger {
+  background: #9f2f2f;
+  border-color: #9f2f2f;
+  color: #ffffff;
+}
+
+.notif-detail__btn--danger:hover:not(:disabled) {
+  background: #852626;
+  border-color: #852626;
   color: #ffffff;
 }
 

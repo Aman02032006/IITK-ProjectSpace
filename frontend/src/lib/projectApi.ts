@@ -2,6 +2,8 @@ import { authHeaders } from "@/lib/token";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/projects`;
+const UUID_PATTERN =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
 type ApiErrorData = {
   detail?: string | Array<{ msg?: string }>;
@@ -16,6 +18,15 @@ const extractError = (data: ApiErrorData, fallbackMsg: string): string => {
     return msg;
   }
   return fallbackMsg;
+};
+
+const normalizeUuid = (rawId: string, fieldLabel: string): string => {
+  const cleaned = rawId.trim().replace(/^['"`]+|['"`]+$/g, "");
+  const match = cleaned.match(UUID_PATTERN)?.[0];
+  if (!match) {
+    throw new Error(`Invalid ${fieldLabel}: ${rawId}`);
+  }
+  return match;
 };
 
 // Types
@@ -59,6 +70,7 @@ export interface ProjectPublic {
   created_at: string;
   updated_at: string;
   team_members: UserSummary[];
+  pending_members: UserSummary[];
 
   creator_id: string;
   creator_name: string;
@@ -159,7 +171,7 @@ export async function deleteProject(projectId: string): Promise<void> {
 }
 
 export async function addProjectMember(projectId: string, userId: string): Promise<ProjectPublic> {
-  const res = await fetch(`${API}/${projectId}/invites/${userId}`, {
+  const res = await fetch(`${API}/${projectId}/invites/users/${userId}`, {
     method: "POST",
     headers: { ...authHeaders() },
   });
@@ -175,5 +187,37 @@ export async function removeProjectMember(projectId: string, userId: string): Pr
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to remove member"));
+  return data;
+}
+
+export async function acceptProjectInvite(projectId: string): Promise<ProjectPublic> {
+  const normalizedId = normalizeUuid(projectId, "project_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/accept`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to accept project invitation")} [url=${url}]`
+    );
+  }
+  return data;
+}
+
+export async function rejectProjectInvite(projectId: string): Promise<ProjectPublic> {
+  const normalizedId = normalizeUuid(projectId, "project_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/reject`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to reject project invitation")} [url=${url}]`
+    );
+  }
   return data;
 }

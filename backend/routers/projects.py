@@ -5,6 +5,7 @@ from typing import List
 import uuid
 import os
 import shutil
+import re
 
 from core.database import get_session
 from core.dependencies import get_current_user
@@ -28,6 +29,22 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 
 def _is_team_member(project, user_id: uuid.UUID) -> bool:
     return any(member.id == user_id for member in project.team_members)
+
+
+def _coerce_uuid(raw_value: str, field_name: str) -> uuid.UUID:
+    cleaned = raw_value.strip().strip("'\"`")
+    match = re.search(
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        cleaned,
+    )
+    candidate = match.group(0) if match else cleaned
+    try:
+        return uuid.UUID(candidate)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid {field_name}",
+        )
 
 
 def _safe_filename(filename: str) -> str:
@@ -140,7 +157,7 @@ def delete_existing_project(
 # --- Team member management ---
 
 
-@router.post("/{project_id}/invites/{user_id}", response_model=ProjectPublic)
+@router.post("/{project_id}/invites/users/{user_id}", response_model=ProjectPublic)
 def invite_project_member(
     project_id: uuid.UUID,
     user_id: uuid.UUID,
@@ -209,11 +226,12 @@ def invite_project_member(
 
 @router.post("/{project_id}/invites/accept", response_model=ProjectPublic)
 def accept_project_invite(
-    project_id: uuid.UUID,
+    project_id: str,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    project = get_project_by_id(session=db, project_id=project_id)
+    project_uuid = _coerce_uuid(project_id, "project_id")
+    project = get_project_by_id(session=db, project_id=project_uuid)
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -221,7 +239,7 @@ def accept_project_invite(
 
     pending_link = db.exec(
         select(ProjectPendingLink).where(
-            ProjectPendingLink.project_id == project_id,
+            ProjectPendingLink.project_id == project_uuid,
             ProjectPendingLink.user_id == current_user.id,
         )
     ).first()
@@ -231,7 +249,7 @@ def accept_project_invite(
         )
 
     db.delete(pending_link)
-    db.add(ProjectTeamLink(project_id=project_id, user_id=current_user.id))
+    db.add(ProjectTeamLink(project_id=project_uuid, user_id=current_user.id))
     db.commit()
     db.refresh(project)
     project.creator = db.get(User, project.creator_id)
@@ -242,9 +260,9 @@ def accept_project_invite(
         type=NotificationType.VERIFICATION_RESULT,
         title="Team Invitation Accepted",
         message=f"{current_user.fullname} accepted your team invitation.",
-        link=f"/projects/{project_id}",
+        link=f"/projects/{project_uuid}",
         sender_id=current_user.id,
-        related_entity_id=project_id,
+        related_entity_id=project_uuid,
     )
 
     return project
@@ -252,11 +270,12 @@ def accept_project_invite(
 
 @router.post("/{project_id}/invites/reject", response_model=ProjectPublic)
 def reject_project_invite(
-    project_id: uuid.UUID,
+    project_id: str,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    project = get_project_by_id(session=db, project_id=project_id)
+    project_uuid = _coerce_uuid(project_id, "project_id")
+    project = get_project_by_id(session=db, project_id=project_uuid)
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -264,7 +283,7 @@ def reject_project_invite(
 
     pending_link = db.exec(
         select(ProjectPendingLink).where(
-            ProjectPendingLink.project_id == project_id,
+            ProjectPendingLink.project_id == project_uuid,
             ProjectPendingLink.user_id == current_user.id,
         )
     ).first()
@@ -284,9 +303,9 @@ def reject_project_invite(
         type=NotificationType.VERIFICATION_RESULT,
         title="Team Invitation Declined",
         message=f"{current_user.fullname} declined your team invitation.",
-        link=f"/projects/{project_id}",
+        link=f"/projects/{project_uuid}",
         sender_id=current_user.id,
-        related_entity_id=project_id,
+        related_entity_id=project_uuid,
     )
 
     return project

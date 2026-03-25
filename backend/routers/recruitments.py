@@ -5,6 +5,7 @@ from typing import List
 import uuid
 import os
 import shutil
+import re
 
 from core.database import get_session
 from core.dependencies import get_current_user
@@ -44,6 +45,22 @@ def _safe_filename(filename: str) -> str:
     if not safe_name or safe_name in {".", ".."} or safe_name != filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
     return safe_name
+
+
+def _coerce_uuid(raw_value: str, field_name: str) -> uuid.UUID:
+    cleaned = raw_value.strip().strip("'\"`")
+    match = re.search(
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        cleaned,
+    )
+    candidate = match.group(0) if match else cleaned
+    try:
+        return uuid.UUID(candidate)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid {field_name}",
+        )
 
 
 @router.post("/", response_model=RecruitmentPublic, status_code=status.HTTP_201_CREATED)
@@ -162,7 +179,7 @@ def delete_existing_recruitment(
 # Recruiter management
 
 
-@router.post("/{recruitment_id}/invites/{user_id}", response_model=RecruitmentPublic)
+@router.post("/{recruitment_id}/invites/users/{user_id}", response_model=RecruitmentPublic)
 def invite_recruiter(
     recruitment_id: uuid.UUID,
     user_id: uuid.UUID,
@@ -233,11 +250,12 @@ def invite_recruiter(
 
 @router.post("/{recruitment_id}/invites/accept", response_model=RecruitmentPublic)
 def accept_recruiter_invite(
-    recruitment_id: uuid.UUID,
+    recruitment_id: str,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
+    recruitment_uuid = _coerce_uuid(recruitment_id, "recruitment_id")
+    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_uuid)
     if not recruitment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
@@ -245,7 +263,7 @@ def accept_recruiter_invite(
 
     pending_link = db.exec(
         select(RecruitmentPendingLink).where(
-            RecruitmentPendingLink.recruitment_id == recruitment_id,
+            RecruitmentPendingLink.recruitment_id == recruitment_uuid,
             RecruitmentPendingLink.user_id == current_user.id,
         )
     ).first()
@@ -256,7 +274,7 @@ def accept_recruiter_invite(
 
     db.delete(pending_link)
     db.add(
-        RecruitmentRecruiterLink(recruitment_id=recruitment_id, user_id=current_user.id)
+        RecruitmentRecruiterLink(recruitment_id=recruitment_uuid, user_id=current_user.id)
     )
     db.commit()
     db.refresh(recruitment)
@@ -268,9 +286,9 @@ def accept_recruiter_invite(
         type=NotificationType.VERIFICATION_RESULT,
         title="Recruiter Invitation Accepted",
         message=f"{current_user.fullname} accepted your recruiter invitation.",
-        link=f"/recruitments/{recruitment_id}",
+        link=f"/recruitments/{recruitment_uuid}",
         sender_id=current_user.id,
-        related_entity_id=recruitment_id,
+        related_entity_id=recruitment_uuid,
     )
 
     return recruitment
@@ -278,11 +296,12 @@ def accept_recruiter_invite(
 
 @router.post("/{recruitment_id}/invites/reject", response_model=RecruitmentPublic)
 def reject_recruiter_invite(
-    recruitment_id: uuid.UUID,
+    recruitment_id: str,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_id)
+    recruitment_uuid = _coerce_uuid(recruitment_id, "recruitment_id")
+    recruitment = get_recruitment_by_id(session=db, recruitment_id=recruitment_uuid)
     if not recruitment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment not found"
@@ -290,7 +309,7 @@ def reject_recruiter_invite(
 
     pending_link = db.exec(
         select(RecruitmentPendingLink).where(
-            RecruitmentPendingLink.recruitment_id == recruitment_id,
+            RecruitmentPendingLink.recruitment_id == recruitment_uuid,
             RecruitmentPendingLink.user_id == current_user.id,
         )
     ).first()
@@ -310,9 +329,9 @@ def reject_recruiter_invite(
         type=NotificationType.VERIFICATION_RESULT,
         title="Recruiter Invitation Declined",
         message=f"{current_user.fullname} declined your recruiter invitation.",
-        link=f"/recruitments/{recruitment_id}",
+        link=f"/recruitments/{recruitment_uuid}",
         sender_id=current_user.id,
-        related_entity_id=recruitment_id,
+        related_entity_id=recruitment_uuid,
     )
 
     return recruitment

@@ -2,6 +2,8 @@ import { authHeaders } from "@/lib/token";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/recruitments`;
+const UUID_PATTERN =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
 type ApiErrorData = {
   detail?: string | Array<{ msg?: string }>;
@@ -16,6 +18,15 @@ const extractError = (data: ApiErrorData, fallbackMsg: string): string => {
     return msg;
   }
   return fallbackMsg;
+};
+
+const normalizeUuid = (rawId: string, fieldLabel: string): string => {
+  const cleaned = rawId.trim().replace(/^['"`]+|['"`]+$/g, "");
+  const match = cleaned.match(UUID_PATTERN)?.[0];
+  if (!match) {
+    throw new Error(`Invalid ${fieldLabel}: ${rawId}`);
+  }
+  return match;
 };
 
 // Types
@@ -78,6 +89,7 @@ export interface RecruitmentPublic {
   created_at: string;
   updated_at: string;
   recruiters: UserSummary[];
+  pending_recruiters: UserSummary[];
   applications: ApplicationPublic[];
 
   creator_id: string;
@@ -191,7 +203,7 @@ export async function deleteRecruitment(recruitmentId: string): Promise<void> {
 }
 
 export async function addRecruiter(recruitmentId: string, userId: string): Promise<RecruitmentPublic> {
-  const res = await fetch(`${API}/${recruitmentId}/invites/${userId}`, {
+  const res = await fetch(`${API}/${recruitmentId}/invites/users/${userId}`, {
     method: "POST",
     headers: { ...authHeaders() },
   });
@@ -207,6 +219,38 @@ export async function removeRecruiter(recruitmentId: string, userId: string): Pr
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to remove recruiter"));
+  return data;
+}
+
+export async function acceptRecruiterInvite(recruitmentId: string): Promise<RecruitmentPublic> {
+  const normalizedId = normalizeUuid(recruitmentId, "recruitment_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/accept`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to accept recruiter invitation")} [url=${url}]`
+    );
+  }
+  return data;
+}
+
+export async function rejectRecruiterInvite(recruitmentId: string): Promise<RecruitmentPublic> {
+  const normalizedId = normalizeUuid(recruitmentId, "recruitment_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/reject`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to reject recruiter invitation")} [url=${url}]`
+    );
+  }
   return data;
 }
 
