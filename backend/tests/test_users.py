@@ -82,3 +82,41 @@ def test_upload_profile_picture(auth_client):
     assert data["profile_picture_url"] is not None
     assert data["profile_picture_url"].startswith("/uploads/profilePictures/")
     assert data["profile_picture_url"].endswith(".jpg")
+
+
+def test_edit_profile(auth_client, session):
+    update_data = {
+        "bio": "I love writing automated tests.",
+        "github": "https://github.com/gracehopper",
+        "skills": ["Python", "FastAPI", "Testing"]
+    }
+
+    response = auth_client.patch("/users/me", json=update_data)
+
+    assert response.status_code == 200
+    data = response.json()
+    print(data) # debugging
+    assert data["bio"] == "I love writing automated tests."
+    assert data["github"] == "https://github.com/gracehopper"
+    assert "Python" in data["skills"]
+
+def test_search_users(auth_client, session):
+    user1 = User(fullname="Alan Turing", iitk_email="alan@iitk.ac.in", hashed_password="x", is_active=True,
+                 secondary_email=None)
+    user2 = User(fullname="Ada Lovelace", iitk_email="ada@iitk.ac.in", hashed_password="x", is_active=True,
+                 secondary_email=None)
+    session.add_all([user1, user2])
+    session.commit()
+
+    response = auth_client.get("/users/search?q=Alan")
+
+    assert response.status_code == 200
+    results = response.json()
+    
+    assert len(results) == 1
+    assert results[0]["fullname"] == "Alan Turing"
+
+    # Test searching by email snippet
+    response_email = auth_client.get("/users/search?q=ada@")
+    assert response_email.status_code == 200
+    assert response_email.json()[0]["fullname"] == "Ada Lovelace"
