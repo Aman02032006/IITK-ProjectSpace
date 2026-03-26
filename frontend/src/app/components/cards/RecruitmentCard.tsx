@@ -5,7 +5,6 @@ interface RecruitmentCardProps {
   id: string
   title: string
   recruiter: string
-  designation: string
   fields: string[]
   prerequisites: string[]
 }
@@ -14,7 +13,6 @@ export default function RecruitmentCard({
   id,
   title,
   recruiter,
-  designation,
   fields,
   prerequisites
 }: RecruitmentCardProps) {
@@ -41,9 +39,9 @@ export default function RecruitmentCard({
       <div className="flex flex-col gap-2 flex-grow overflow-hidden">
         
         {/* Recruiter, Designation */}
-        <OverflowTooltip 
-          text={`${recruiter}, ${designation}`} 
-          className="text-sm font-semibold text-card-foreground" 
+        <OverflowTooltip
+          text={recruiter}
+          className="text-sm font-semibold text-card-foreground"
           lines={1}
         />
 

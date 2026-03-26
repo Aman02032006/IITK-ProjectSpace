@@ -1,4 +1,12 @@
 from enum import Enum
+from datetime import datetime, timezone, timedelta
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def now() -> datetime:
+    """Return the current time in IST as a naive datetime."""
+    return datetime.now(IST).replace(tzinfo=None)
 
 
 class NotificationType(str, Enum):

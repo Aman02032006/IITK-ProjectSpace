@@ -525,12 +525,33 @@ const SearchPageContent: React.FC = () => {
         <Sidebar defaultActive="search" />
 
         <main className="search-page">
+
+          <div className="search-tabs" role="tablist">
+            {([
+              { key: "recruitment" as TabType, label: "Recruitments", icon: <RecruitIcon /> },
+              { key: "project" as TabType, label: "Projects", icon: <ProjectIcon /> },
+              { key: "user" as TabType, label: "Users", icon: <UserIcon /> },
+            ]).map(({ key, label, icon }) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={activeTab === key}
+                className={`search-tabs__btn${activeTab === key ? " search-tabs__btn--active" : ""}`}
+                onClick={() => setActiveTab(key)}
+              >
+                {icon} {label}
+                {activeTab === key && (trimmedQuery || hasActiveFilters) && (
+                  <span className="search-tabs__count">({total})</span>
+                )}
+              </button>
+            ))}
+          </div>
+
           <div className="search-filters">
             <div className="search-filter-row">
               {activeTab === "user" && (
                 <>
                   <label className="search-filter">
-                    <span>Designation</span>
                     <select
                       value={designationPicker}
                       onChange={(e) => {
@@ -547,7 +568,6 @@ const SearchPageContent: React.FC = () => {
                     </select>
                   </label>
                   <label className="search-filter">
-                    <span>Degree</span>
                     <select
                       value={degreePicker}
                       onChange={(e) => {
@@ -564,7 +584,6 @@ const SearchPageContent: React.FC = () => {
                     </select>
                   </label>
                   <label className="search-filter">
-                    <span>Department</span>
                     <select
                       value={departmentPicker}
                       onChange={(e) => {
@@ -581,7 +600,6 @@ const SearchPageContent: React.FC = () => {
                     </select>
                   </label>
                   <label className="search-filter">
-                    <span>Skill</span>
                     <select
                       value={skillPicker}
                       onChange={(e) => {
@@ -603,7 +621,6 @@ const SearchPageContent: React.FC = () => {
               {activeTab === "recruitment" && (
                 <>
                   <label className="search-filter">
-                    <span>Designation</span>
                     <select
                       value={designationPicker}
                       onChange={(e) => {
@@ -620,7 +637,6 @@ const SearchPageContent: React.FC = () => {
                     </select>
                   </label>
                   <label className="search-filter">
-                    <span>Department</span>
                     <select
                       value={departmentPicker}
                       onChange={(e) => {
@@ -637,7 +653,6 @@ const SearchPageContent: React.FC = () => {
                     </select>
                   </label>
                   <label className="search-filter">
-                    <span>Skill</span>
                     <select
                       value={skillPicker}
                       onChange={(e) => {
@@ -654,7 +669,6 @@ const SearchPageContent: React.FC = () => {
                     </select>
                   </label>
                   <label className="search-filter">
-                    <span>Prerequisite</span>
                     <select
                       value={prerequisitePicker}
                       onChange={(e) => {
@@ -675,7 +689,6 @@ const SearchPageContent: React.FC = () => {
 
               {activeTab === "project" && (
                 <label className="search-filter search-filter--project">
-                  <span>Domain</span>
                   <select
                     value={domainPicker}
                     onChange={(e) => {
@@ -701,27 +714,6 @@ const SearchPageContent: React.FC = () => {
             </div>
           </div>
 
-          <div className="search-tabs" role="tablist">
-            {([
-              { key: "recruitment" as TabType, label: "Recruitments", icon: <RecruitIcon /> },
-              { key: "project" as TabType, label: "Projects", icon: <ProjectIcon /> },
-              { key: "user" as TabType, label: "Users", icon: <UserIcon /> },
-            ]).map(({ key, label, icon }) => (
-              <button
-                key={key}
-                role="tab"
-                aria-selected={activeTab === key}
-                className={`search-tabs__btn${activeTab === key ? " search-tabs__btn--active" : ""}`}
-                onClick={() => setActiveTab(key)}
-              >
-                {icon} {label}
-                {activeTab === key && (trimmedQuery || hasActiveFilters) && (
-                  <span className="search-tabs__count">({total})</span>
-                )}
-              </button>
-            ))}
-          </div>
-
           <div className="cards-grid" role="tabpanel">
             {!trimmedQuery && !hasActiveFilters ? (
               <div className="search-empty">
@@ -744,8 +736,11 @@ const SearchPageContent: React.FC = () => {
                     key={r.id}
                     id={r.id}
                     title={r.title}
-                    recruiter={r.creator_name || "Unknown Recruiter"}
-                    designation={r.status === "Open" ? "Open Recruitment" : "Closed Recruitment"}
+                    recruiter={
+                      r.recruiters.length > 1
+                        ? `${r.creator_name || "Unknown"} and ${r.recruiters.length - 1} other${r.recruiters.length - 1 > 1 ? "s" : ""}`
+                        : r.creator_name || "Unknown Recruiter"
+                    }
                     fields={r.domains}
                     prerequisites={r.prerequisites}
                   />
@@ -762,8 +757,11 @@ const SearchPageContent: React.FC = () => {
                     key={p.id}
                     id={p.id}
                     title={p.title}
-                    author={p.creator_name || "Unknown Author"}
-                    designation="Project Lead"
+                    author={
+                      p.member_count > 1
+                        ? `${p.creator_name || "Unknown"} and ${p.member_count - 1} other${p.member_count - 1 > 1 ? "s" : ""}`
+                        : p.creator_name || "Unknown Author"
+                    }
                     fields={p.domains}
                     description={p.summary}
                   />

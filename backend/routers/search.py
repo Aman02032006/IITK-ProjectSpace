@@ -95,7 +95,20 @@ def search_projects_endpoint(
         total=total,
         offset=offset,
         limit=limit,
-        results=[ProjectSearchResult.model_validate(p) for p in results],
+        results=[
+            ProjectSearchResult(
+                id=p.id,
+                title=p.title,
+                summary=p.summary,
+                domains=p.domains or [],
+                creator_id=p.creator_id,
+                created_at=p.created_at,
+                creator_name=p.creator.fullname or "" if p.creator else "",
+                creator_avatar_url=p.creator.profile_picture_url if p.creator else None,
+                member_count=len(p.team_members) if p.team_members else 0,
+            )
+            for p in results
+        ],
     )
 
 
@@ -149,5 +162,21 @@ def search_recruitments_endpoint(
         total=total,
         offset=offset,
         limit=limit,
-        results=[RecruitmentSearchResult.model_validate(r) for r in results],
+        results=[
+            RecruitmentSearchResult(
+                id=r.id,
+                title=r.title,
+                domains=r.domains or [],
+                prerequisites=r.prerequisites or [],
+                allowed_designations=r.allowed_designations or [],
+                allowed_departments=r.allowed_departments or [],
+                status=r.status,
+                created_at=r.created_at,
+                recruiters=r.recruiters or [],
+                creator_id=r.creator_id,
+                creator_name=r.creator.fullname or "" if r.creator else "",
+                creator_avatar_url=r.creator.profile_picture_url if r.creator else None,
+            )
+            for r in results
+        ],
     )

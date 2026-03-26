@@ -271,4 +271,8 @@ def search_recruitments(
     statement = statement.offset(offset).limit(limit)
     results = session.exec(statement).all()
 
+    for r in results:
+        if r.creator is None:
+            r.creator = session.get(User, r.creator_id)
+
     return results, total

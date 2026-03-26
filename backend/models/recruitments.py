@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
+from core.utils import now
 from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
 from sqlalchemy import String, Column, Computed, Index
 
@@ -33,7 +34,7 @@ class Application(SQLModel, table=True):
     )
     status: str = Field(default="Pending")  # Could be Pending, Accepted, Rejected
 
-    applied_at: datetime = Field(default_factory=datetime.utcnow)
+    applied_at: datetime = Field(default_factory=now)
 
     applicant: "User" = Relationship(back_populates="applications")
     recruitment: "Recruitment" = Relationship(back_populates="applications")
@@ -73,8 +74,8 @@ class Recruitment(RecruitmentBase, table=True):
         }
     )
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now)
 
     recruiters: List["User"] = Relationship(
         back_populates="managed_recruitments", link_model=RecruitmentRecruiterLink

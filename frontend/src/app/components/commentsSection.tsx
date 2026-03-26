@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import "./commentsSection.css";
+import ConfirmPopUp from "./confirmPopUp";
 import {
   Comment,
   getProjectComments,
@@ -142,6 +143,7 @@ const CommentItem: React.FC<{
   const [replySkip, setReplySkip]             = useState(0);
   const [totalReplies, setTotalReplies]       = useState(comment.reply_count);
   const [deleting, setDeleting]               = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const REPLY_PAGE = 5;
 
@@ -170,7 +172,6 @@ const CommentItem: React.FC<{
   };
 
   const handleDelete = async () => {
-    if (!confirm("Delete this comment?")) return;
     setDeleting(true);
     try {
       await deleteComment(comment.id);
@@ -178,6 +179,8 @@ const CommentItem: React.FC<{
     } catch (error: unknown) {
       alert(getErrorMessage(error, "Failed to delete."));
       setDeleting(false);
+    } finally {
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -222,7 +225,7 @@ const CommentItem: React.FC<{
           {canDelete && (
             <button
               className="cs-comment-delete"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={deleting}
               title="Delete comment"
             >
@@ -307,6 +310,18 @@ const CommentItem: React.FC<{
         )}
 
       </div>
+
+      {showDeleteConfirm && (
+        <ConfirmPopUp
+          heading="Delete Comment?"
+          message="This will permanently delete this comment and all its replies."
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          isDestructive={true}
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
     </div>
   );
 };

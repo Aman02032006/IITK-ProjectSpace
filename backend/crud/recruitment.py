@@ -11,6 +11,7 @@ from schemas.recruitments import (
     ApplicationUpdate,
 )
 from datetime import datetime
+from core.utils import now
 import uuid
 from typing import Sequence
 
@@ -125,7 +126,7 @@ def update_recruitment(
     for key, value in update_data.items():
         setattr(db_recruitment, key, value)
 
-    db_recruitment.updated_at = datetime.utcnow()
+    db_recruitment.updated_at = now()
 
     session.add(db_recruitment)
     session.commit()

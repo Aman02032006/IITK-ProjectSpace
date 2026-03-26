@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 import uuid
+from core.utils import now
 
 
 class Comment(SQLModel, table=True):
@@ -20,8 +21,8 @@ class Comment(SQLModel, table=True):
         default=None, foreign_key="comment.id", ondelete="CASCADE"
     )
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now)
 
     # Relationships
     project: Optional["Project"] = Relationship(back_populates="comments")
@@ -42,5 +43,6 @@ class Comment(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Comment.parent_id == Comment.id",
             "lazy": "select",
+            "passive_deletes": True,
         },
     )

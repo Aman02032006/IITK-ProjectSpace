@@ -5,7 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 import uuid
 
-from core.utils import Degree, Department, Designation
+from core.utils import Degree, Department, Designation, now
 from models.project import ProjectTeamLink
 from models.recruitments import RecruitmentRecruiterLink
 
@@ -43,8 +43,8 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=False)
 
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now)
 
     # Projects the user is a part of
     projects: List["Project"] = Relationship(

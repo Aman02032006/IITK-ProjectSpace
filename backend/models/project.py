@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Column, Relationship
+from core.utils import now
 from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
 from sqlalchemy import String, Column, Computed, Index
 
@@ -37,8 +38,8 @@ class Project(ProjectBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     creator_id: uuid.UUID = Field(foreign_key="user.id", ondelete="CASCADE")
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now)
 
     creator: Optional["User"] = Relationship(
         sa_relationship_kwargs={

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, computed_field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Any
 import uuid
 from datetime import datetime
@@ -48,22 +48,9 @@ class ProjectSearchResult(BaseModel):
     domains: List[str] = []
     creator_id: uuid.UUID
     created_at: datetime
-
-    @computed_field
-    @property
-    def creator_name(self) -> str:
-        creator = getattr(self, "creator", None)
-        if creator is not None:
-            return creator.fullname or ""
-        return ""
-
-    @computed_field
-    @property
-    def creator_avatar_url(self) -> Optional[str]:
-        creator = getattr(self, "creator", None)
-        if creator is not None:
-            return creator.profile_picture_url
-        return None
+    creator_name: str = ""
+    creator_avatar_url: Optional[str] = None
+    member_count: int = 0
 
     class Config:
         from_attributes = True
@@ -94,22 +81,8 @@ class RecruitmentSearchResult(BaseModel):
     created_at: datetime
     recruiters: List[uuid.UUID] = []  # list of recruiter user IDs
     creator_id: uuid.UUID
-
-    @computed_field
-    @property
-    def creator_name(self) -> str:
-        creator = getattr(self, "creator", None)
-        if creator is not None:
-            return creator.fullname or ""
-        return ""
-
-    @computed_field
-    @property
-    def creator_avatar_url(self) -> Optional[str]:
-        creator = getattr(self, "creator", None)
-        if creator is not None:
-            return creator.profile_picture_url
-        return None
+    creator_name: str = ""
+    creator_avatar_url: Optional[str] = None
 
     @field_validator("recruiters", mode="before")
     @classmethod

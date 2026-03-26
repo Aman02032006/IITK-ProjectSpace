@@ -5,6 +5,7 @@ from models.user import User
 from models.comments import Comment
 from schemas.project import ProjectCreate, ProjectUpdate
 from datetime import datetime
+from core.utils import now
 import uuid
 from typing import Sequence
 
@@ -97,7 +98,7 @@ def update_project(
     for key, value in update_data.items():
         setattr(db_project, key, value)
 
-    db_project.updated_at = datetime.utcnow()
+    db_project.updated_at = now()
 
     session.add(db_project)
     session.commit()

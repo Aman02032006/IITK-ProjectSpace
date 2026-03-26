@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
+from core.utils import now
 import secrets
 
 from core.database import engine
@@ -57,7 +58,7 @@ async def request_otp(request_data: UserBase, db: Session = Depends(get_session)
         full_name=request_data.fullname.strip(),
         otp_code=otp_code,
         purpose="register",
-        expires_at=datetime.utcnow() + timedelta(minutes=10),
+        expires_at=now() + timedelta(minutes=10),
     )
     db.add(new_otp)
     db.commit()
@@ -92,7 +93,7 @@ def verify_otp(verify_data: OTPVerify, db: Session = Depends(get_session)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code."
         )
 
-    if otp_record.expires_at < datetime.utcnow():
+    if otp_record.expires_at < now():
         db.delete(otp_record)
         db.commit()
         raise HTTPException(
@@ -133,7 +134,7 @@ def check_otp(check_data: OTPCheck, db: Session = Depends(get_session)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code."
         )
 
-    if otp_record.expires_at < datetime.utcnow():
+    if otp_record.expires_at < now():
         db.delete(otp_record)
         db.commit()
         raise HTTPException(
@@ -193,7 +194,7 @@ async def forgot_password(
         full_name=db_user.fullname,
         otp_code=otp_code,
         purpose="reset",
-        expires_at=datetime.utcnow() + timedelta(minutes=10),
+        expires_at=now() + timedelta(minutes=10),
     )
     db.add(new_otp)
     db.commit()
@@ -231,7 +232,7 @@ def reset_password(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code."
         )
 
-    if otp_record.expires_at < datetime.utcnow():
+    if otp_record.expires_at < now():
         db.delete(otp_record)
         db.commit()
         raise HTTPException(

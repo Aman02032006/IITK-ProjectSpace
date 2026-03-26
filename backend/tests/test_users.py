@@ -1,5 +1,6 @@
 import io
 from datetime import datetime, timedelta
+from core.utils import now
 from unittest.mock import patch
 from sqlmodel import select
 from models.otp import OTPVerification
@@ -33,7 +34,7 @@ def test_verify_otp_success(client, session):
         full_name="Test User",
         otp_code="123456",
         purpose="register",
-        expires_at=datetime.utcnow() + timedelta(minutes=10)
+        expires_at=now() + timedelta(minutes=10)
     )
     session.add(fake_otp)
     session.commit()

@@ -47,6 +47,7 @@ export interface SearchProjectResult {
   created_at: string;
   creator_name: string;
   creator_avatar_url?: string | null;
+  member_count: number;
 }
 
 export interface SearchRecruitmentResult {
