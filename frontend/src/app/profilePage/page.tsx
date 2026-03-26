@@ -1,10 +1,18 @@
 "use client"
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import "./ProfilePage.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
-import { fetchMyProfile, UserProfile, CardData } from "@/lib/profileApi";
+import { fetchMyProfile, fetchMyProjects, fetchMyRecruitments, UserProfile, UserProfileView, getUserById, getUserProjects, getUserRecruitments } from "@/lib/profileApi";
+import { ProjectPublic } from "@/lib/projectApi";
+import { RecruitmentPublic } from "@/lib/recruitmentApi";
+import ProjectCard from "../components/cards/ProjectsCard";
+import RecruitmentCard from "../components/cards/RecruitmentCard";
+
+export const dynamic = 'force-dynamic';
 
 /* Icons */
 const LinkedInIcon = () => (
@@ -42,46 +50,96 @@ const ProjectIcon = () => (
   </svg>
 );
 
-const CameraIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    <circle cx="12" cy="13" r="4" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-
 /* Helpers */
 type TabType = "recruitment" | "project";
 const TAG_COLORS = ["teal", "blue", "red"] as const;
 
+const getErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error && error.message ? error.message : fallback;
+
 /* Profile Page */
-const ProfilePage: React.FC = () => {
+const ProfilePageContent: React.FC = () => {
   const [activeTab, setActiveTab]   = useState<TabType>("recruitment");
-  const [profile, setProfile]       = useState<UserProfile | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [profile, setProfile]       = useState<UserProfile | UserProfileView | null>(null);
+  const [projects, setProjects]     = useState<ProjectPublic[]>([]);
+  const [recruitments, setRecruitments] = useState<RecruitmentPublic[]>([]);
+
+  const [loading, setLoading]     = useState(true);
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [cardsError, setCardsError] = useState<string | null>(null);
+
+  const [recruitmentsInitialized, setRecruitmentsInitialized] = useState(false);
+  const [projectsInitialized, setProjectsInitialized]         = useState(false);
+
   const router = useRouter();
+  const searchParam = useSearchParams();
+  const userId = searchParam.get("id");
 
   useEffect(() => {
-    fetchMyProfile()
-      .then(setProfile)
-      .catch((err: Error) => {
-        if (err.message === "Unauthorized") {
-          router.replace("/auth");
-        } else {
-          setError(err.message);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const loadProfile = async () => {
+    try {
+      if (userId) {
+        const data = await getUserById(userId);
+        setProfile(data);
+      } else {
+        const data = await fetchMyProfile();
+        setProfile(data);
+      }
+    } catch (error: unknown) {
+      if (getErrorMessage(error, "") === "Unauthorized") {
+        router.replace("/auth");
+      } else {
+        setError(getErrorMessage(error, "Failed to load profile."));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  /* Loading */
+  loadProfile();
+}, [userId]);
+
+const isOwnProfile = !userId
+
+  // Loads each tab only on it's visit
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setCardsLoading(true);
+        setCardsError(null);
+
+        if (activeTab === "recruitment" && !recruitmentsInitialized) {
+          const data = userId
+            ? await getUserRecruitments(userId)
+            : await fetchMyRecruitments();
+
+          setRecruitments(data);
+          setRecruitmentsInitialized(true);
+        }
+
+        if (activeTab === "project" && !projectsInitialized) {
+          const data = userId
+            ? await getUserProjects(userId)
+            : await fetchMyProjects();
+
+          setProjects(data);
+          setProjectsInitialized(true);
+        }
+      } catch (error: unknown) {
+        if (getErrorMessage(error, "") === "Unauthorized") {
+          router.replace("/auth");
+          return;
+        }
+        setCardsError("Failed to load data.");
+      } finally {
+        setCardsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [activeTab, userId]);
+
   if (loading) {
     return (
       <div className="app-shell">
@@ -96,7 +154,6 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  /* Error */
   if (error || !profile) {
     return (
       <div className="app-shell">
@@ -111,133 +168,159 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const visibleCards = profile?.cards?.filter((c) => c?.type === activeTab) || [];
-
   return (
-    <div className="app-shell">
-      <Header
-        showEditProfile={true}
-      />
+      <div className="app-shell">
+        <Header showEditProfile={isOwnProfile} />
 
-      <div className="app-body">
-        <Sidebar defaultActive="profile" />
+        <div className="app-body">
+          <Sidebar defaultActive="profile" />
 
-        <main className="profile-page">
-          {/* Profile card */}
-          <section className="profile-card" aria-label="User profile">
-            <div className="profile-card__top">
+          <main className="profile-page">
 
-              {/* Avatar */}
-              <div className="profile-card__avatar-wrap">
-                <div className="profile-card__avatar">
-                  {profile.profile_picture_url ? (
-                    <img
-                      src={profile.profile_picture_url}
-                      alt={profile.fullname || "User Avatar"}
-                      style={{ width: "100%", height: "100%", borderRadius: 12, objectFit: "cover" }}
-                    />
-                  ) : (
-                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="profile-card__avatar-svg">
-                      <rect width="80" height="80" rx="12" fill="#1a3a5c" />
-                      <circle cx="40" cy="28" r="14" fill="#49769F" />
-                      <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
-                    </svg>
+            {/* Profile card */}
+            <section className="profile-card" aria-label="User profile">
+              <div className="profile-card__top">
+
+                {/* Avatar */}
+                <div className="profile-card__avatar-wrap">
+                  <div className="profile-card__avatar">
+                    {profile.profile_picture_url ? (
+                      <img
+                        src={profile.profile_picture_url}
+                        alt={profile.fullname || "User Avatar"}
+                        style={{ width: "100%", height: "100%", borderRadius: 12, objectFit: "cover" }}
+                      />
+                    ) : (
+                      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="profile-card__avatar-svg">
+                        <rect width="80" height="80" rx="12" fill="#1a3a5c" />
+                        <circle cx="40" cy="28" r="14" fill="#49769F" />
+                        <ellipse cx="40" cy="68" rx="24" ry="18" fill="#49769F" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {/* Identity */}
+                <div className="profile-card__identity">
+                  <h1 className="profile-card__name">{profile.fullname}</h1>
+                  <p className="profile-card__email">{profile.iitk_email}</p>
+                  <p className="profile-card__desg">{profile.designation}</p>
+                  <p className="profile-card__degr">{profile.degree}</p>
+                  <p className="profile-card__dept">{profile.department}</p>
+                </div>
+
+                {/* Social links */}
+                <div className="profile-card__links">
+                  {profile.linkedin && (
+                    <a href={profile.linkedin} className="profile-card__link" aria-label="LinkedIn" target="_blank" rel="noreferrer">
+                      <LinkedInIcon /> LinkedIn
+                    </a>
+                  )}
+                  {profile.github && (
+                    <a href={profile.github} className="profile-card__link" aria-label="GitHub" target="_blank" rel="noreferrer">
+                      <GitHubIcon /> GitHub
+                    </a>
+                  )}
+                  {profile.other_link1 && (
+                    <a href={profile.other_link1} className="profile-card__link" aria-label="Other link" target="_blank" rel="noreferrer">
+                      <ScholarIcon /> Scholar / Other
+                    </a>
                   )}
                 </div>
               </div>
 
-              {/* Identity */}
-              <div className="profile-card__identity">
-                <h1 className="profile-card__name">{profile.fullname}</h1>
-                <p className="profile-card__email">{profile.iitk_email}</p>
-                <p className="profile-card__desg">{profile.designation}</p>
-                <p className="profile-card__degr">{profile.degree}</p>
-                <p className="profile-card__dept">{profile.department}</p>
+              {/* Skills + Bio */}
+              <div className="skills-bio">
+                <div className="skills-bio__skills-row">
+                  <span className="skills-bio__label">SKILLS</span>
+                  {profile.skills?.map((skill, i) => (
+                    <span key={skill} className={`skills-bio__tag skills-bio__tag--${TAG_COLORS[i % TAG_COLORS.length]}`}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+                <p className="skills-bio__bio">{profile.bio || "No bio added yet."}</p>
               </div>
+            </section>
 
-              {/* Social links */}
-              <div className="profile-card__links">
-                {profile.linkedin && (
-                  <a href={profile.linkedin} className="profile-card__link" aria-label="LinkedIn" target="_blank" rel="noreferrer">
-                    <LinkedInIcon /> LinkedIn
-                  </a>
-                )}
-                {profile.github && (
-                  <a href={profile.github} className="profile-card__link" aria-label="GitHub" target="_blank" rel="noreferrer">
-                    <GitHubIcon /> GitHub
-                  </a>
-                )}
-                {profile.other_link1 && (
-                  <a href={profile.other_link1} className="profile-card__link" aria-label="Other link" target="_blank" rel="noreferrer">
-                    <ScholarIcon /> Scholar / Other
-                  </a>
-                )}
-              </div>
+            {/* Tabs */}
+            <div className="tabs" role="tablist" aria-label="Content sections">
+              <button
+                role="tab"
+                aria-selected={activeTab === "recruitment"}
+                className={`tabs__btn${activeTab === "recruitment" ? " tabs__btn--active" : ""}`}
+                onClick={() => setActiveTab("recruitment")}
+              >
+                <RecruitIcon /> Recruitments
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === "project"}
+                className={`tabs__btn${activeTab === "project" ? " tabs__btn--active" : ""}`}
+                onClick={() => setActiveTab("project")}
+              >
+                <ProjectIcon /> Projects
+              </button>
             </div>
 
-            {/* Skills + Bio */}
-            <div className="skills-bio">
-              <div className="skills-bio__skills-row">
-                <span className="skills-bio__label">SKILLS</span>
-                {profile.skills?.map((skill, i) => (
-                  <span key={skill} className={`skills-bio__tag skills-bio__tag--${TAG_COLORS[i % TAG_COLORS.length]}`}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-              <p className="skills-bio__bio">{profile.bio || "No bio added yet."}</p>
+            {/* Cards */}
+            <div className="cards-grid" role="tabpanel">
+
+              {/* Loading */}
+              {cardsLoading && (
+                <p style={{ color: "#888", gridColumn: "1 / -1" }}>Loading…</p>
+              )}
+
+              {/* Error */}
+              {!cardsLoading && cardsError && (
+                <p style={{ color: "#c0392b", gridColumn: "1 / -1" }}>{cardsError}</p>
+              )}
+
+              {/* Recruitment cards */}
+              {!cardsLoading && !cardsError && activeTab === "recruitment" && recruitmentsInitialized && (
+                recruitments.length === 0
+                  ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No recruitment posts yet.</p>
+                  : recruitments.map((r) => (
+                      <RecruitmentCard
+                        key={r.id}
+                        id={r.id}
+                        title={r.title}
+                        recruiter={profile.fullname ?? ""}
+                        designation={profile.designation ?? ""}
+                        fields={r.domains}
+                        prerequisites={r.prerequisites}
+                      />
+                    ))
+              )}
+
+              {/* Project cards */}
+              {!cardsLoading && !cardsError && activeTab === "project" && projectsInitialized && (
+                projects.length === 0
+                  ? <p style={{ color: "#888", gridColumn: "1 / -1" }}>No project posts yet.</p>
+                  : projects.map((p) => (
+                      <ProjectCard
+                        key={p.id}
+                        id={p.id}
+                        title={p.title}
+                        author={profile.fullname ?? ""}
+                        designation={profile.designation ?? ""}
+                        fields={p.domains}
+                        description={p.summary}
+                      />
+                    ))
+              )}
+
             </div>
-          </section>
-
-          {/* Tabs */}
-          <div className="tabs" role="tablist" aria-label="Content sections">
-            <button
-              role="tab"
-              aria-selected={activeTab === "recruitment"}
-              className={`tabs__btn${activeTab === "recruitment" ? " tabs__btn--active" : ""}`}
-              onClick={() => setActiveTab("recruitment")}
-            >
-              <RecruitIcon /> Recruitments
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "project"}
-              className={`tabs__btn${activeTab === "project" ? " tabs__btn--active" : ""}`}
-              onClick={() => setActiveTab("project")}
-            >
-              <ProjectIcon /> Projects
-            </button>
-          </div>
-
-          {/* Cards */}
-          <div className="cards-grid" role="tabpanel">
-            {visibleCards.length === 0 ? (
-              <p style={{ color: "#888", gridColumn: "1 / -1" }}>No {activeTab} posts yet.</p>
-            ) : (
-              visibleCards.map((card: CardData) => (
-                <article key={card.id} className="post-card">
-                  <h2 className="post-card__title">{card.title}</h2>
-                  <div className="post-card__divider" />
-                  <p className="post-card__author">
-                    <strong>{card.author}</strong>, {card.role}
-                  </p>
-                  <div className="post-card__tags">
-                    {card.tags.map((tag) => (
-                      <span key={tag} className="post-card__tag">{tag}</span>
-                    ))}
-                  </div>
-                  <p className="post-card__prereq">
-                    <span className="post-card__prereq-label">Prerequisites: </span>
-                    {card.prerequisites}
-                  </p>
-                </article>
-              ))
-            )}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
   );
 };
+
+const ProfilePage: React.FC = () => (
+  <Suspense fallback={<div>Loading profile data...</div>}>
+    <ProfilePageContent />
+  </Suspense>
+);
 
 export default ProfilePage;

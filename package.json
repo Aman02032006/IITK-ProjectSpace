@@ -23,5 +23,8 @@
   "homepage": "https://github.com/Aman02032006/IITK-ProjectSpace#readme",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "all": "^0.0.0"
   }
 }

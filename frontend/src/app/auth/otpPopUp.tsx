@@ -3,13 +3,13 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import "./otpPopUp.css";
 
-type otpPopUpProps = {
+type OtpPopUpProps = {
   message: string;
   onVerify: (otp: string) => void;
   onClose: () => void;
 };
 
-const otpPopUp = ({ message, onVerify, onClose }: otpPopUpProps) => {
+const OtpPopUp = ({ message, onVerify, onClose }: OtpPopUpProps) => {
   const [otp, setOtp] = useState("");
 
   const handleVerifyClick = () => {
@@ -18,12 +18,19 @@ const otpPopUp = ({ message, onVerify, onClose }: otpPopUpProps) => {
   }
   useEffect(() => {
     const originalStyle = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
     document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.body.style.overflow = originalStyle;
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [onClose]);
 
   return createPortal(
     <div className="otp-backdrop">
@@ -48,4 +55,4 @@ const otpPopUp = ({ message, onVerify, onClose }: otpPopUpProps) => {
   );
 };
 
-export default otpPopUp;
+export default OtpPopUp;

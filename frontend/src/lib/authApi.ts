@@ -1,8 +1,13 @@
 import { saveToken, removeToken } from "@/lib/token";
 
-const API = "http://127.0.0.1:8000/auth";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API = `${BASE_URL}/auth`;
 
-const extractError = (data: any, fallbackMsg: string) => {
+type ApiErrorData = {
+  detail?: string | Array<{ msg?: string }>;
+} | null;
+
+const extractError = (data: ApiErrorData, fallbackMsg: string) => {
   if (!data || !data.detail) return fallbackMsg;
   if (typeof data.detail === "string") return data.detail; // Custom HTTPExceptions
   if (Array.isArray(data.detail) && data.detail[0]?.msg) {
@@ -60,7 +65,7 @@ export async function requestResetOTP(email: string) {
   return data;
 }
 
-export async function checkOTP(email: string, otp: string, purpose: "register") {
+export async function checkOTP(email: string, otp: string, purpose: "register" | "reset") {
   const res = await fetch(`${API}/check-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -1,5 +1,15 @@
 from enum import Enum
 
+
+class NotificationType(str, Enum):
+    VERIFICATION_REQUEST = "VERIFICATION_REQUEST"
+    VERIFICATION_RESULT = "VERIFICATION_RESULT"
+    NEW_APPLICATION = "NEW_APPLICATION"
+    APPLICATION_RESULT = "APPLICATION_RESULT"
+    NEW_COMMENT = "NEW_COMMENT"
+    COMMENT_REPLY = "COMMENT_REPLY"
+
+
 class Designation(Enum):
     NA = ""
     UG_STUDENT = "Undergraduate Student"
@@ -9,7 +19,8 @@ class Designation(Enum):
     ASST_PROF = "Assistant Professor"
     ASSCT_PROF = "Associate Professor"
     PROF = "Professor"
-    HAG_PROF = "Higher Academic Grade Professor" 
+    HAG_PROF = "Higher Academic Grade Professor"
+
 
 class Degree(Enum):
     NA = ""
@@ -28,6 +39,7 @@ class Degree(Enum):
     MBA = "MBA"
     MSP = "MS/Ph.D Dual"
     PHD = "Ph.D"
+
 
 class Department(Enum):
     NA = ""

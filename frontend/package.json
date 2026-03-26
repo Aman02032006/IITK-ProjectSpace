@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "all": "^0.0.0",
     "axios": "^1.13.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -17,6 +18,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-markdown": "^9.0.1",
     "react-select": "^5.10.2",
     "tailwind-merge": "^3.4.0"
   },

@@ -11,14 +11,16 @@ import {
   finalizeRegistration,
   finalizePasswordReset,
 } from "../../lib/authApi";
-import { Playwrite_DK_Uloopet_Guides } from "next/font/google";
 import { useRouter } from "next/navigation";
 
 
 
 type Mode = "login" | "register-step1" | "register-password" | "forgot-email" | "forgot-reset";
 
-const loginPage = () => {
+const getErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error && error.message ? error.message : fallback;
+
+const LoginPage = () => {
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +68,7 @@ const loginPage = () => {
         triggerAlert("Login successful!", "success");
         router.replace("/profilePage");
       }
-    } catch (err) {
+    } catch {
       triggerAlert("Invalid email or password", "error");
     } finally {
       setIsLoading(false);
@@ -87,15 +89,26 @@ const loginPage = () => {
 
       setOtpPurpose(purpose);
       setShowOtpModal(true);
-    } catch (err: any) {
-      triggerAlert(err.message || "Failed to send OTP. Ensure it is an @iitk.ac.in email.", "error");
+    } catch (error: unknown) {
+      triggerAlert(
+        getErrorMessage(
+          error,
+          "Failed to send OTP. Ensure it is an @iitk.ac.in email."
+        ),
+        "error"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOtpVerify = async (otp: string) => {
-    setIsLoading(false);
+    if (!otpPurpose) {
+      triggerAlert("OTP purpose is missing. Please request OTP again.", "error");
+      return;
+    }
+
+    setIsLoading(true);
     try {
       await checkOTP(email, otp, otpPurpose); 
       setShowOtpModal(false);
@@ -106,7 +119,7 @@ const loginPage = () => {
       } else {
         setMode("forgot-reset");
       }
-    } catch (err) {
+    } catch {
       triggerAlert("Invalid or expired OTP", "error");
     } finally {
       setIsLoading(false);
@@ -124,7 +137,7 @@ const loginPage = () => {
       triggerAlert("Account created successfully!", "success");
       router.replace("/profilePage");
       setPassword(""); setConfirmPassword("");
-    } catch (err) {
+    } catch {
       triggerAlert("Registration failed", "error");
     } finally {
       setIsLoading(false);
@@ -142,7 +155,7 @@ const loginPage = () => {
       triggerAlert("Password updated successfully!", "success");
       handleModeSwitch("login");
       setPassword(""); setConfirmPassword("");
-    } catch (err) {
+    } catch {
       triggerAlert("Failed to update password.", "error");
     } finally {
       setIsLoading(false);
@@ -286,4 +299,4 @@ const loginPage = () => {
   );
 };
 
-export default loginPage;
+export default LoginPage;

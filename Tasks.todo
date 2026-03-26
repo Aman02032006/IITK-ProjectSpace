@@ -1,0 +1,28 @@
+Database Models:
+    ☐ Project Model (models/project.py)
+    ☐ Recruitment Model (models/recruitment.py)
+
+Pydantic Schemas:
+    ☐ schemas/project.py (ProjectCreate, ProjectRead)
+    ☐ schemas/recruitment.py (RecruitmentCreate, RecruitmentRead)
+
+CRUD Operations:
+    ☐ crud/project.py
+    ☐ crud/recruitment.py
+
+API Endpoints:
+    ☐ routers/projects.py (POST /projects/, GET /projects/, GET /user/{user_id}/projects)
+    ☐ routers/recruitments.py (POST /recruitments/, GET /recruitments/, GET /user/{user_id}/recruitments)
+
+Frontend API Client:
+    ☐ src/lib/postAPI.ts
+    ☐ createProject(), createRecruitment(), fetchAllProjects(), fetchMyPosts()
+
+Frontend UI:
+    ☐ Card Component (src/components/PostCasrd & RecruitmentCard)
+    ☐ HomePage Card Component (src/components/HomePageProjectCard & HomePageRecruitmentCard)
+    ☐ Post Creation Page
+    ☐ Project Showcase
+    ☐ Recruitment Showcase
+    ☐ Displaying project and Recruitment Cards in profile
+

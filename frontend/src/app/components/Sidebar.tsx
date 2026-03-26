@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import "./Sidebar.css";
+import NotificationDrawer from "./NotificationDrawer";
 
 /* Icon components */
 const HomeIcon = () => (
@@ -65,13 +66,12 @@ interface NavItem {
   id: string;
   icon: React.ReactNode;
   label: string;
-  badge?: number;
 }
 
 const topNavItems: NavItem[] = [
   { id: "home",    icon: <HomeIcon />,    label: "Home" },
   { id: "search",  icon: <SearchIcon />,  label: "Search" },
-  { id: "alerts",  icon: <BellIcon />,    label: "Notifications", badge: 3 },
+  { id: "alerts",  icon: <BellIcon />,    label: "Notifications" },
   { id: "profile", icon: <ProfileIcon />, label: "Profile" },
   { id: "create",  icon: <PlusIcon />,    label: "Create" },
 ];
@@ -88,6 +88,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   defaultExpanded = true,
 }) => {
   const [active, setActive] = useState(defaultActive);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const router = useRouter();
 
@@ -100,68 +102,99 @@ const Sidebar: React.FC<SidebarProps> = ({
   });
 
   const handleClick = (id: string) => {
-    setActive(id);
     onNavigate?.(id);
+
+    if (id === "alerts") {
+      setNotificationsOpen((prev) => !prev);
+      return;
+    }
+
+    setActive(id);
+    setNotificationsOpen(false);
+
+    const routes: Record<string, string> = {
+      home: "/homepage",
+      search: "/searchPage",
+      profile: "/profilePage",
+      create: "/postCreationForm",
+    };
+
+    if(routes[id]) router.push(routes[id]);
   };
 
   const onLogout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("sidebar-expanded");
+    setNotificationsOpen(false);
     router.push("/auth");
   };
 
   return (
-    <aside className={`sidebar${expanded ? " sidebar--expanded" : ""}`}>
-
-      {/* Collapse / Expand toggle */}
-      <button
-        className="sidebar__toggle"
-        onClick={() => setExpanded((v) => {
-          localStorage.setItem("sidebar-expanded", String(!v));
-          return !v;
-        })}
-        title={expanded ? "Collapse sidebar" : "Expand sidebar"}
-        aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
-      >
-        <span className="sidebar__icon">
-          {expanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-        </span>
-        <span className="sidebar__toggle-label">Collapse</span>
-      </button>
-
-      {/* Main nav */}
-      <nav className="sidebar__nav">
-        {topNavItems.map((item) => (
-          <button
-            key={item.id}
-            className={`sidebar__nav-item${active === item.id ? " sidebar__nav-item--active" : ""}`}
-            onClick={() => handleClick(item.id)}
-            title={item.label}
-            aria-label={item.label}
-          >
-            <span className="sidebar__icon">{item.icon}</span>
-            <span className="sidebar__label">{item.label}</span>
-            {item.badge !== undefined && (
-              <span className="sidebar__badge">{item.badge}</span>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      {/* logout */}
-      <div className="sidebar__bottom">
+    <>
+      <aside className={`sidebar${expanded ? " sidebar--expanded" : ""}`}>
+        {/* Collapse / Expand toggle */}
         <button
-          className="sidebar__nav-item sidebar__logout"
-          onClick={onLogout}
-          title="Logout"
-          aria-label="Logout"
+          className="sidebar__toggle"
+          onClick={() => setExpanded((v) => {
+            localStorage.setItem("sidebar-expanded", String(!v));
+            return !v;
+          })}
+          title={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
         >
           <span className="sidebar__icon">
-            <LogoutIcon />
+            {expanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </span>
-          <span className="sidebar__label">Logout</span>
+          <span className="sidebar__toggle-label">Collapse</span>
         </button>
-      </div>
-    </aside>
+
+        {/* Main nav */}
+        <nav className="sidebar__nav">
+          {topNavItems.map((item) => {
+            const isNotificationsItem = item.id === "alerts";
+            const isActive = isNotificationsItem ? notificationsOpen : active === item.id;
+            const badgeCount = isNotificationsItem ? unreadCount : 0;
+
+            return (
+              <button
+                key={item.id}
+                className={`sidebar__nav-item${isActive ? " sidebar__nav-item--active" : ""}`}
+                onClick={() => handleClick(item.id)}
+                title={item.label}
+                aria-label={item.label}
+              >
+                <span className="sidebar__icon">{item.icon}</span>
+                <span className="sidebar__label">{item.label}</span>
+                {badgeCount > 0 && (
+                  <span className="sidebar__badge">{badgeCount > 99 ? "99+" : badgeCount}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* logout */}
+        <div className="sidebar__bottom">
+          <button
+            className="sidebar__nav-item sidebar__logout"
+            onClick={onLogout}
+            title="Logout"
+            aria-label="Logout"
+          >
+            <span className="sidebar__icon">
+              <LogoutIcon />
+            </span>
+            <span className="sidebar__label">Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <NotificationDrawer
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        onUnreadCountChange={setUnreadCount}
+      />
+    </>
   );
 };
 

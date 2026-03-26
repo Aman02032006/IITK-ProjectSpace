@@ -9,7 +9,7 @@ from core.utils import Degree, Department, Designation
 
 class UserBase(BaseModel):
 
-    fullname: str = None
+    fullname: Optional[str] = None
     iitk_email: EmailStr
 
     @field_validator("iitk_email")
@@ -111,7 +111,6 @@ class UserPublic(UserBase):
     domains: List[str] = []
 
     is_active: bool
-    is_admin: bool
     created_at: datetime
 
     class Config:
