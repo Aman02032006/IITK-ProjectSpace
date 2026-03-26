@@ -42,7 +42,7 @@ The interface of the web app is intuitive and restricted strictly to the campus 
 
 The Software Requirements Specification (SRS) document describes what the software will do and how it will be expected to perform. It also describes the product's functionality to fulfil all stakeholders' needs.
 
-**Link to SRS:** [IITK ProjectSpace SRS Document](Documentation/IITK_ProjectSpace_SRS_Document.pdf)
+**Link to SRS:** [IITK ProjectSpace SRS Document](https://github.com/Aman02032006/IITK-ProjectSpace/blob/main/Documentation/IITK%20ProjectSpace%20Design%20Document.pdf)
 
 ### Software Design Document (SDD)
 
