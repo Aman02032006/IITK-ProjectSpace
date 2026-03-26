@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlmodel import Session, select
 from typing import List
 import uuid
+import pathlib
 import os
 import shutil
 
@@ -71,14 +72,19 @@ def upload_profile_picture(
 
     filename = f"{current_user.id}_pfp.{extension}"
 
-    # Define the save path
-    save_dir = os.path.join("uploads", "profilePictures")
+    # Define a robust save path relative to the backend root, not the current working directory
+    backend_root = pathlib.Path(__file__).resolve().parent.parent
+    save_dir = backend_root / "uploads" / "profilePictures"
     os.makedirs(save_dir, exist_ok=True)
-    file_path = os.path.join(save_dir, filename)
+    file_path = save_dir / filename
 
     # Save the physical file
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception:
+        # This will help debug permissions or disk space issues in the future.
+        raise HTTPException(status_code=500, detail="Could not save file to disk.")
 
     # Build URL that matches the /uploads static mount in main.py
     url_path = f"/uploads/profilePictures/{filename}"

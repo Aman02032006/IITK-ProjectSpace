@@ -2,6 +2,8 @@ import { authHeaders } from "@/lib/token";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/recruitments`;
+const UUID_PATTERN =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
 type ApiErrorData = {
   detail?: string | Array<{ msg?: string }>;
@@ -18,13 +20,28 @@ const extractError = (data: ApiErrorData, fallbackMsg: string): string => {
   return fallbackMsg;
 };
 
+const normalizeUuid = (rawId: string, fieldLabel: string): string => {
+  const cleaned = rawId.trim().replace(/^['"`]+|['"`]+$/g, "");
+  const match = cleaned.match(UUID_PATTERN)?.[0];
+  if (!match) {
+    throw new Error(`Invalid ${fieldLabel}: ${rawId}`);
+  }
+  return match;
+};
+
+const toAbsoluteUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${BASE_URL}${url}`;
+};
+
 // Types
 export interface UserSummary {
   id: string;
   fullname: string;
   designation: string;
   department: string;
-  profile_picture_url?: string;
+  profile_picture_url?: string | null;
 }
 
 export interface ApplicationPublic {
@@ -78,11 +95,12 @@ export interface RecruitmentPublic {
   created_at: string;
   updated_at: string;
   recruiters: UserSummary[];
+  pending_recruiters: UserSummary[];
   applications: ApplicationPublic[];
 
   creator_id: string;
   creator_name: string;
-  creator_avatar_url?: string;
+  creator_avatar_url?: string | null;
 }
 
 export interface RecruitmentSummary {
@@ -99,7 +117,7 @@ export interface RecruitmentSummary {
 
   creator_id: string;
   creator_name: string;
-  creator_avatar_url?: string;
+  creator_avatar_url?: string | null;
 }
 
 export interface ApplicationCreate {
@@ -111,6 +129,36 @@ export interface ApplicationUpdate {
   status: "Pending" | "Accepted" | "Rejected";
 }
 
+const normalizeUserSummary = (user: UserSummary): UserSummary => ({
+  ...user,
+  profile_picture_url: toAbsoluteUrl(user.profile_picture_url) ?? null,
+});
+
+const normalizeApplication = (application: ApplicationPublic): ApplicationPublic => ({
+  ...application,
+  applicant: normalizeUserSummary(application.applicant),
+});
+
+export const normalizeRecruitmentPublic = (
+  recruitment: RecruitmentPublic
+): RecruitmentPublic => ({
+  ...recruitment,
+  media_urls: (recruitment.media_urls ?? []).map((url) => toAbsoluteUrl(url) ?? url),
+  recruiters: (recruitment.recruiters ?? []).map(normalizeUserSummary),
+  pending_recruiters: (recruitment.pending_recruiters ?? []).map(normalizeUserSummary),
+  applications: (recruitment.applications ?? []).map(normalizeApplication),
+  creator_avatar_url: toAbsoluteUrl(recruitment.creator_avatar_url) ?? null,
+});
+
+export const normalizeRecruitmentSummary = (
+  recruitment: RecruitmentSummary
+): RecruitmentSummary => ({
+  ...recruitment,
+  media_urls: (recruitment.media_urls ?? []).map((url) => toAbsoluteUrl(url) ?? url),
+  recruiters: (recruitment.recruiters ?? []).map(normalizeUserSummary),
+  creator_avatar_url: toAbsoluteUrl(recruitment.creator_avatar_url) ?? null,
+});
+
 // API Functions
 export async function createRecruitment(payload: RecruitmentCreate): Promise<RecruitmentPublic> {
   const res = await fetch(`${API}/`, {
@@ -120,7 +168,7 @@ export async function createRecruitment(payload: RecruitmentCreate): Promise<Rec
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to create recruitment"));
-  return data;
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
 }
 
 export async function uploadRecruitmentMedia(recruitmentId: string, files: File[]): Promise<void> {
@@ -156,7 +204,7 @@ export async function getRecruitment(recruitmentId: string): Promise<Recruitment
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch recruitment"));
-  return data;
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
 }
 
 export async function getAllRecruitments(skip = 0, limit = 10): Promise<RecruitmentSummary[]> {
@@ -165,7 +213,7 @@ export async function getAllRecruitments(skip = 0, limit = 10): Promise<Recruitm
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch recruitments"));
-  return data;
+  return (data as RecruitmentSummary[]).map(normalizeRecruitmentSummary);
 }
 
 export async function updateRecruitment(recruitmentId: string, payload: RecruitmentUpdate): Promise<RecruitmentPublic> {
@@ -176,7 +224,7 @@ export async function updateRecruitment(recruitmentId: string, payload: Recruitm
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to update recruitment"));
-  return data;
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
 }
 
 export async function deleteRecruitment(recruitmentId: string): Promise<void> {
@@ -191,13 +239,13 @@ export async function deleteRecruitment(recruitmentId: string): Promise<void> {
 }
 
 export async function addRecruiter(recruitmentId: string, userId: string): Promise<RecruitmentPublic> {
-  const res = await fetch(`${API}/${recruitmentId}/invites/${userId}`, {
+  const res = await fetch(`${API}/${recruitmentId}/invites/users/${userId}`, {
     method: "POST",
     headers: { ...authHeaders() },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to add recruiter"));
-  return data;
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
 }
 
 export async function removeRecruiter(recruitmentId: string, userId: string): Promise<RecruitmentPublic> {
@@ -207,7 +255,39 @@ export async function removeRecruiter(recruitmentId: string, userId: string): Pr
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to remove recruiter"));
-  return data;
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
+}
+
+export async function acceptRecruiterInvite(recruitmentId: string): Promise<RecruitmentPublic> {
+  const normalizedId = normalizeUuid(recruitmentId, "recruitment_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/accept`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to accept recruiter invitation")} [url=${url}]`
+    );
+  }
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
+}
+
+export async function rejectRecruiterInvite(recruitmentId: string): Promise<RecruitmentPublic> {
+  const normalizedId = normalizeUuid(recruitmentId, "recruitment_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/reject`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to reject recruiter invitation")} [url=${url}]`
+    );
+  }
+  return normalizeRecruitmentPublic(data as RecruitmentPublic);
 }
 
 export async function applyToRecruitment(recruitmentId: string, payload: ApplicationCreate): Promise<ApplicationPublic> {
@@ -218,7 +298,7 @@ export async function applyToRecruitment(recruitmentId: string, payload: Applica
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to submit application"));
-  return data;
+  return normalizeApplication(data as ApplicationPublic);
 }
 
 export async function updateApplicationStatus(
@@ -233,5 +313,5 @@ export async function updateApplicationStatus(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to update application status"));
-  return data;
+  return normalizeApplication(data as ApplicationPublic);
 }

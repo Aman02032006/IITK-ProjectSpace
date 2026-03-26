@@ -2,6 +2,8 @@ import { authHeaders } from "@/lib/token";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/projects`;
+const UUID_PATTERN =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
 type ApiErrorData = {
   detail?: string | Array<{ msg?: string }>;
@@ -18,12 +20,27 @@ const extractError = (data: ApiErrorData, fallbackMsg: string): string => {
   return fallbackMsg;
 };
 
+const normalizeUuid = (rawId: string, fieldLabel: string): string => {
+  const cleaned = rawId.trim().replace(/^['"`]+|['"`]+$/g, "");
+  const match = cleaned.match(UUID_PATTERN)?.[0];
+  if (!match) {
+    throw new Error(`Invalid ${fieldLabel}: ${rawId}`);
+  }
+  return match;
+};
+
+const toAbsoluteUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${BASE_URL}${url}`;
+};
+
 // Types
 export interface UserSummary {
   id: string;
   fullname: string;
   designation: string;
-  profile_picture_url?: string;
+  profile_picture_url?: string | null;
 }
 
 export interface ProjectCreate {
@@ -59,10 +76,11 @@ export interface ProjectPublic {
   created_at: string;
   updated_at: string;
   team_members: UserSummary[];
+  pending_members: UserSummary[];
 
   creator_id: string;
   creator_name: string;
-  creator_avatar_url?: string;
+  creator_avatar_url?: string | null;
 }
 
 export interface ProjectSummary {
@@ -76,8 +94,28 @@ export interface ProjectSummary {
 
   creator_id: string;
   creator_name: string;
-  creator_avatar_url?: string;
+  creator_avatar_url?: string | null;
 }
+
+const normalizeUserSummary = (user: UserSummary): UserSummary => ({
+  ...user,
+  profile_picture_url: toAbsoluteUrl(user.profile_picture_url) ?? null,
+});
+
+export const normalizeProjectPublic = (project: ProjectPublic): ProjectPublic => ({
+  ...project,
+  media_urls: (project.media_urls ?? []).map((url) => toAbsoluteUrl(url) ?? url),
+  team_members: (project.team_members ?? []).map(normalizeUserSummary),
+  pending_members: (project.pending_members ?? []).map(normalizeUserSummary),
+  creator_avatar_url: toAbsoluteUrl(project.creator_avatar_url) ?? null,
+});
+
+export const normalizeProjectSummary = (project: ProjectSummary): ProjectSummary => ({
+  ...project,
+  media_urls: (project.media_urls ?? []).map((url) => toAbsoluteUrl(url) ?? url),
+  team_members: (project.team_members ?? []).map(normalizeUserSummary),
+  creator_avatar_url: toAbsoluteUrl(project.creator_avatar_url) ?? null,
+});
 
 // API Functions
 export async function createProject(payload: ProjectCreate): Promise<ProjectPublic> {
@@ -88,7 +126,7 @@ export async function createProject(payload: ProjectCreate): Promise<ProjectPubl
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to create project"));
-  return data;
+  return normalizeProjectPublic(data as ProjectPublic);
 }
 
 export async function uploadProjectMedia(projectId: string, files: File[]): Promise<void> {
@@ -124,7 +162,7 @@ export async function getProject(projectId: string): Promise<ProjectPublic> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch project"));
-  return data;
+  return normalizeProjectPublic(data as ProjectPublic);
 }
 
 export async function getAllProjects(skip = 0, limit = 10): Promise<ProjectSummary[]> {
@@ -133,7 +171,7 @@ export async function getAllProjects(skip = 0, limit = 10): Promise<ProjectSumma
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to fetch projects"));
-  return data;
+  return (data as ProjectSummary[]).map(normalizeProjectSummary);
 }
 
 export async function updateProject(projectId: string, payload: ProjectUpdate): Promise<ProjectPublic> {
@@ -144,7 +182,7 @@ export async function updateProject(projectId: string, payload: ProjectUpdate): 
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to update project"));
-  return data;
+  return normalizeProjectPublic(data as ProjectPublic);
 }
 
 export async function deleteProject(projectId: string): Promise<void> {
@@ -159,13 +197,13 @@ export async function deleteProject(projectId: string): Promise<void> {
 }
 
 export async function addProjectMember(projectId: string, userId: string): Promise<ProjectPublic> {
-  const res = await fetch(`${API}/${projectId}/invites/${userId}`, {
+  const res = await fetch(`${API}/${projectId}/invites/users/${userId}`, {
     method: "POST",
     headers: { ...authHeaders() },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to add member"));
-  return data;
+  return normalizeProjectPublic(data as ProjectPublic);
 }
 
 export async function removeProjectMember(projectId: string, userId: string): Promise<ProjectPublic> {
@@ -175,5 +213,37 @@ export async function removeProjectMember(projectId: string, userId: string): Pr
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to remove member"));
-  return data;
+  return normalizeProjectPublic(data as ProjectPublic);
+}
+
+export async function acceptProjectInvite(projectId: string): Promise<ProjectPublic> {
+  const normalizedId = normalizeUuid(projectId, "project_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/accept`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to accept project invitation")} [url=${url}]`
+    );
+  }
+  return normalizeProjectPublic(data as ProjectPublic);
+}
+
+export async function rejectProjectInvite(projectId: string): Promise<ProjectPublic> {
+  const normalizedId = normalizeUuid(projectId, "project_id");
+  const url = `${API}/${encodeURIComponent(normalizedId)}/invites/reject`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      `${extractError(data, "Failed to reject project invitation")} [url=${url}]`
+    );
+  }
+  return normalizeProjectPublic(data as ProjectPublic);
 }

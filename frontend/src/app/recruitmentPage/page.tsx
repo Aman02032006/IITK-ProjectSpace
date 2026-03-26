@@ -7,6 +7,8 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
+  acceptRecruiterInvite,
+  rejectRecruiterInvite,
   getRecruitment,
   applyToRecruitment,
   updateRecruitment,
@@ -35,6 +37,7 @@ export interface Recruitment {
   created_at: string;
   updated_at: string;
   recruiters: UserSummary[];
+  pending_recruiters?: UserSummary[];
   application_count?: number;
   creator_name?: string;
   creator_avatar_url?: string;
@@ -85,6 +88,13 @@ function mapToRecruitment(r: RecruitmentPublic): Recruitment {
     created_at: r.created_at,
     updated_at: r.updated_at,
     recruiters: r.recruiters.map((rec) => ({
+      id: rec.id,
+      fullname: rec.fullname,
+      designation: rec.designation,
+      department: rec.department,
+      profile_picture_url: getFullUrl(rec.profile_picture_url ?? undefined),
+    })),
+    pending_recruiters: (r.pending_recruiters ?? []).map((rec) => ({
       id: rec.id,
       fullname: rec.fullname,
       designation: rec.designation,
@@ -160,6 +170,9 @@ const RecruitmentPageContent: React.FC = () => {
   const [applyError, setApplyError]     = useState<string | null>(null);
   const [togglingStatus, setTogglingStatus] = useState(false);
   const [applicationUpdating, setApplicationUpdating] = useState<Record<string, boolean>>({});
+  const [inviteActionLoading, setInviteActionLoading] = useState<"accept" | "reject" | null>(null);
+  const [inviteActionError, setInviteActionError] = useState<string | null>(null);
+  const [inviteResolved, setInviteResolved] = useState(false);
 
   useEffect(() => {
     if (!recruitmentId) return;
@@ -189,6 +202,10 @@ const RecruitmentPageContent: React.FC = () => {
     };
 
     fetchData();
+  }, [recruitmentId]);
+
+  useEffect(() => {
+    setInviteResolved(false);
   }, [recruitmentId]);
 
   const handleApply = async () => {
@@ -260,6 +277,9 @@ const RecruitmentPageContent: React.FC = () => {
   };
 
   const isRecruiter = recruitment?.recruiters?.some((r) => r.id === currentUserId) ?? false;
+  const hasPendingInvite =
+    recruitment?.pending_recruiters?.some((r) => r.id === currentUserId) ?? false;
+  const showInviteBanner = hasPendingInvite && !inviteResolved;
   const isOpen     = recruitment?.status === "Open";
   const wasUpdated = recruitment ? recruitment.updated_at !== recruitment.created_at : false;
   const myApplication =
@@ -276,6 +296,44 @@ const RecruitmentPageContent: React.FC = () => {
   else if (myApplicationStatus) applyText = myApplicationStatus;
   else if (isRecruiter) applyText = "Cannot Apply";
   else if (!isOpen) applyText = "Closed";
+
+  const refreshRecruitment = async () => {
+    const raw = await getRecruitment(recruitmentId);
+    setRecruitment(mapToRecruitment(raw));
+    setCreatorId(raw.creator_id);
+  };
+
+  const handleInviteAction = async (decision: "accept" | "reject") => {
+    if (!recruitment) return;
+    if (inviteActionLoading) return;
+
+    setInviteActionLoading(decision);
+    setInviteActionError(null);
+    try {
+      if (decision === "accept") {
+        await acceptRecruiterInvite(recruitment.id);
+      } else {
+        await rejectRecruiterInvite(recruitment.id);
+      }
+      setInviteResolved(true);
+      await refreshRecruitment();
+    } catch (actionError: unknown) {
+      const message = getErrorMessage(actionError, "Could not update invitation.");
+      if (message === "Unauthorized") {
+        router.replace("/auth");
+        return;
+      }
+      if (message.toLowerCase().includes("no pending invitation found")) {
+        setInviteResolved(true);
+        setInviteActionError(null);
+        await refreshRecruitment().catch(() => undefined);
+      } else {
+        setInviteActionError(message);
+      }
+    } finally {
+      setInviteActionLoading(null);
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -344,6 +402,33 @@ const RecruitmentPageContent: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {showInviteBanner && (
+                <div className="recruit-invite-banner">
+                  <p className="recruit-invite-banner__text">
+                    You have been invited to be a recruiter for this post.
+                  </p>
+                  <div className="recruit-invite-banner__actions">
+                    <button
+                      className="recruit-invite-banner__btn recruit-invite-banner__btn--accept"
+                      disabled={!!inviteActionLoading}
+                      onClick={() => void handleInviteAction("accept")}
+                    >
+                      {inviteActionLoading === "accept" ? "Accepting..." : "Accept"}
+                    </button>
+                    <button
+                      className="recruit-invite-banner__btn recruit-invite-banner__btn--reject"
+                      disabled={!!inviteActionLoading}
+                      onClick={() => void handleInviteAction("reject")}
+                    >
+                      {inviteActionLoading === "reject" ? "Rejecting..." : "Reject"}
+                    </button>
+                  </div>
+                  {inviteActionError && (
+                    <p className="recruit-invite-banner__error">{inviteActionError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Apply feedback */}
               {myApplicationStatus && (

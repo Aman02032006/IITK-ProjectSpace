@@ -5,7 +5,13 @@ import "./projectPage.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getProject, ProjectPublic, UserSummary } from "@/lib/projectApi";
+import {
+  acceptProjectInvite,
+  getProject,
+  ProjectPublic,
+  rejectProjectInvite,
+  UserSummary,
+} from "@/lib/projectApi";
 import { fetchMyProfile } from "@/lib/profileApi";
 import { getRepresentativeString } from "@/lib/formatTeam";
 import ReactMarkdown from "react-markdown";
@@ -26,6 +32,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
   team_members?: UserSummary[];
+  pending_members?: UserSummary[];
   creator_name?: string;
   creator_avatar_url?: string;
 }
@@ -73,6 +80,12 @@ function mapToProject(p: ProjectPublic): Project {
     created_at: p.created_at,
     updated_at: p.updated_at,
     team_members: p.team_members.map((m) => ({
+      id: m.id,
+      fullname: m.fullname,
+      designation: m.designation,
+      profile_picture_url: getFullUrl(m.profile_picture_url ?? undefined),
+    })),
+    pending_members: (p.pending_members ?? []).map((m) => ({
       id: m.id,
       fullname: m.fullname,
       designation: m.designation,
@@ -152,6 +165,9 @@ const ProjectPageContent: React.FC = () => {
   const [creatorId, setCreatorId]         = useState<string | null>(null);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string | null>(null);
+  const [inviteActionLoading, setInviteActionLoading] = useState<"accept" | "reject" | null>(null);
+  const [inviteActionError, setInviteActionError] = useState<string | null>(null);
+  const [inviteResolved, setInviteResolved] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -183,7 +199,13 @@ const ProjectPageContent: React.FC = () => {
     fetchData();
   }, [projectId]);
 
+  useEffect(() => {
+    setInviteResolved(false);
+  }, [projectId]);
+
   const isTeamMember = project?.team_members?.some((m) => m.id === currentUserId) ?? false;
+  const hasPendingInvite = project?.pending_members?.some((m) => m.id === currentUserId) ?? false;
+  const showInviteBanner = hasPendingInvite && !inviteResolved;
   const { displayText, representative } = getRepresentativeString(
     project?.team_members || [],
     project?.creator_name,
@@ -191,6 +213,44 @@ const ProjectPageContent: React.FC = () => {
   );
   const hasTeam = project?.team_members && project.team_members.length > 0;
   const wasUpdated = project ? project.updated_at !== project.created_at : false;
+
+  const refreshProject = async () => {
+    const raw = await getProject(projectId);
+    setProject(mapToProject(raw));
+    setCreatorId(raw.creator_id);
+  };
+
+  const handleInviteAction = async (decision: "accept" | "reject") => {
+    if (!project) return;
+    if (inviteActionLoading) return;
+
+    setInviteActionLoading(decision);
+    setInviteActionError(null);
+    try {
+      if (decision === "accept") {
+        await acceptProjectInvite(project.id);
+      } else {
+        await rejectProjectInvite(project.id);
+      }
+      setInviteResolved(true);
+      await refreshProject();
+    } catch (actionError: unknown) {
+      const message = getErrorMessage(actionError, "Could not update invitation.");
+      if (message === "Unauthorized") {
+        router.replace("/auth");
+        return;
+      }
+      if (message.toLowerCase().includes("no pending invitation found")) {
+        setInviteResolved(true);
+        setInviteActionError(null);
+        await refreshProject().catch(() => undefined);
+      } else {
+        setInviteActionError(message);
+      }
+    } finally {
+      setInviteActionLoading(null);
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -229,6 +289,33 @@ const ProjectPageContent: React.FC = () => {
                   <div className="project-creator-name">{displayText}</div>
                 </div>
               </div>
+
+              {showInviteBanner && (
+                <div className="project-invite-banner">
+                  <p className="project-invite-banner__text">
+                    You have been invited to join this project team.
+                  </p>
+                  <div className="project-invite-banner__actions">
+                    <button
+                      className="project-invite-banner__btn project-invite-banner__btn--accept"
+                      disabled={!!inviteActionLoading}
+                      onClick={() => void handleInviteAction("accept")}
+                    >
+                      {inviteActionLoading === "accept" ? "Accepting..." : "Accept"}
+                    </button>
+                    <button
+                      className="project-invite-banner__btn project-invite-banner__btn--reject"
+                      disabled={!!inviteActionLoading}
+                      onClick={() => void handleInviteAction("reject")}
+                    >
+                      {inviteActionLoading === "reject" ? "Rejecting..." : "Reject"}
+                    </button>
+                  </div>
+                  {inviteActionError && (
+                    <p className="project-invite-banner__error">{inviteActionError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Title */}
               <h1 className="project-title">{project.title}</h1>

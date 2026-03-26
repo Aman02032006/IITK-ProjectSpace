@@ -4,7 +4,12 @@ import { useRouter } from "next/navigation";
 import "./editProfilePage.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
-import { fetchMyProfile, updateMyProfile, UserProfile } from "@/lib/profileApi";
+import {
+  fetchMyProfile,
+  updateMyProfile,
+  uploadMyProfilePicture,
+  UserProfile,
+} from "@/lib/profileApi";
 import CreatableSelect from "react-select/creatable";
 import type { MultiValue } from "react-select";
 
@@ -150,8 +155,7 @@ const EditProfilePage: React.FC = () => {
       await updateMyProfile(updateData);
 
       if (avatarFile) {
-        const formData = new FormData();
-        formData.append("file", avatarFile);
+        await uploadMyProfilePicture(avatarFile);
       }
 
       router.push("/profilePage");

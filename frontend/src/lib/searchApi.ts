@@ -3,6 +3,12 @@ import { authHeaders } from "@/lib/token";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API = `${BASE_URL}/search`;
 
+const toAbsoluteUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${BASE_URL}${url}`;
+};
+
 interface PaginatedResponse<T> {
   total: number;
   offset: number;
@@ -114,7 +120,14 @@ export async function searchUsers(
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(extractError(data, "Failed to search users"));
-  return data;
+  const page = data as PaginatedResponse<SearchUserResult>;
+  return {
+    ...page,
+    results: page.results.map((user) => ({
+      ...user,
+      profile_picture_url: toAbsoluteUrl(user.profile_picture_url),
+    })),
+  };
 }
 
 export async function searchProjects(
@@ -137,7 +150,14 @@ export async function searchProjects(
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(extractError(data, "Failed to search projects"));
-  return data;
+  const page = data as PaginatedResponse<SearchProjectResult>;
+  return {
+    ...page,
+    results: page.results.map((project) => ({
+      ...project,
+      creator_avatar_url: toAbsoluteUrl(project.creator_avatar_url),
+    })),
+  };
 }
 
 export async function searchRecruitments(
@@ -164,5 +184,12 @@ export async function searchRecruitments(
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(extractError(data, "Failed to search recruitments"));
-  return data;
+  const page = data as PaginatedResponse<SearchRecruitmentResult>;
+  return {
+    ...page,
+    results: page.results.map((recruitment) => ({
+      ...recruitment,
+      creator_avatar_url: toAbsoluteUrl(recruitment.creator_avatar_url),
+    })),
+  };
 }

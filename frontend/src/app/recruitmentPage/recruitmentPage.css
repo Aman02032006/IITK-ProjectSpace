@@ -166,6 +166,64 @@
   transform: none;
 }
 
+.recruit-invite-banner {
+  margin: 4px 0 16px;
+  border: 1px solid #b6d5ec;
+  background: #eef7ff;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.recruit-invite-banner__text {
+  margin: 0;
+  color: #113b62;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.recruit-invite-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.recruit-invite-banner__btn {
+  border: 1px solid #9ec3df;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #1c486f;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.recruit-invite-banner__btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.recruit-invite-banner__btn--accept {
+  background: #0d4b7b;
+  border-color: #0d4b7b;
+  color: #ffffff;
+}
+
+.recruit-invite-banner__btn--reject {
+  background: #9f2f2f;
+  border-color: #9f2f2f;
+  color: #ffffff;
+}
+
+.recruit-invite-banner__error {
+  margin: 10px 0 0;
+  color: #9f2f2f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* Title */
 .recruit-title {
   font-size: clamp(1.4rem, 2.6vw, 1.85rem);

@@ -12,3 +12,7 @@ __pycache__/
 postgres_data/
 
 backend/uploads/
+
+*.rem
+projectspace-key.pem
+repomix-output.xml
