@@ -14,11 +14,6 @@ import ConfirmPopUp from "../../components/confirmPopUp";
 
 export const dynamic = 'force-dynamic';
 
-interface Tag {
-  id: string;
-  label: string;
-}
-
 interface LinkEntry {
   id: string;
   value: string;
@@ -44,7 +39,7 @@ function EditProjectPageContent() {
   const [title, setTitle]         = useState("");
   const [summary, setSummary]     = useState("");
   const [details, setDetails]     = useState("");
-  const [tags, setTags]           = useState<Tag[]>([]);
+  const [domains, setDomains]     = useState<string[]>([]);
   const [links, setLinks]         = useState<LinkEntry[]>([{ id: "1", value: "" }]);
   const [uploadedFiles, setUploadedFiles]         = useState<File[]>([]);
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([]);
@@ -71,7 +66,7 @@ function EditProjectPageContent() {
         setSummary(raw.summary);
         setDetails(raw.description);
         setActiveTab(raw.description_format === "markdown" ? "Markdown" : "Plain-Text");
-        setTags(raw.domains.map((d, i) => ({ id: String(i), label: d })));
+        setDomains(raw.domains);
         setLinks(
           raw.links.length > 0
             ? raw.links.map((l, i) => ({ id: String(i), value: l }))
@@ -132,13 +127,12 @@ function EditProjectPageContent() {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  // Tag helpers
+  // Domain helpers
   const addTag = () => {
-    const label = prompt("Enter domain tag:");
-    if (label?.trim())
-      setTags((prev) => [...prev, { id: Date.now().toString(), label: label.trim() }]);
+    const tag = prompt("Enter a domain/tag:");
+    if (tag && tag.trim()) setDomains((prev) => [...prev, tag.trim()]);
   };
-  const removeTag = (id: string) => setTags((prev) => prev.filter((t) => t.id !== id));
+  const removeTag = (tag: string) => setDomains((prev) => prev.filter((t) => t !== tag));
 
   // Link helpers
   const addLink = () => setLinks((prev) => [...prev, { id: Date.now().toString(), value: "" }]);
@@ -186,7 +180,7 @@ function EditProjectPageContent() {
         summary:            summary.trim(),
         description:        details.trim(),
         description_format: activeTab === "Markdown" ? "markdown" : "plain-text",
-        domains:            tags.map((t) => t.label),
+        domains:            domains,
         links:              links.map((l) => l.value).filter(Boolean),
         media_urls:         existingMediaUrls,
       });
@@ -321,14 +315,14 @@ function EditProjectPageContent() {
                       <span className="pcf-label-hint">(Add tags that best describe the domains your project falls under.)</span>
                     </label>
                     <div className="pcf-tags-row">
-                      {tags.map((t) => (
-                        <span key={t.id} className="pcf-tag">
-                          {t.label}
-                          <button className="pcf-tag-remove" onClick={() => removeTag(t.id)}>×</button>
+                      {domains.map((tag) => (
+                        <span key={tag} className="pcf-tag">
+                          {tag}
+                          <button className="pcf-tag-remove" onClick={() => removeTag(tag)}>×</button>
                         </span>
                       ))}
+                      <button className="pcf-add-btn" onClick={addTag}><span className="pcf-add-icon">+</span> Add Tag</button>
                     </div>
-                    <button className="pcf-add-btn" onClick={addTag}><span className="pcf-add-icon">+</span> Add Tag</button>
                   </div>
                 </section>
 
