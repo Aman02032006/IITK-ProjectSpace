@@ -50,23 +50,7 @@ const SKILL_OPTIONS = Array.from(
 
 const PREREQUISITE_OPTIONS = SKILL_OPTIONS;
 
-const DOMAIN_OPTIONS = [
-  "Artificial Intelligence",
-  "Machine Learning",
-  "Data Science",
-  "Software Development",
-  "Web Development",
-  "Robotics",
-  "Computer Vision",
-  "Natural Language Processing",
-  "Cybersecurity",
-  "Finance",
-  "Systems",
-  "Signal Processing",
-  "Embedded Systems",
-  "Cloud Computing",
-  "Human Computer Interaction",
-];
+const DOMAIN_OPTIONS = SKILL_OPTIONS;
 
 const DESIGNATION_OPTIONS = [
   "Undergraduate Student",
