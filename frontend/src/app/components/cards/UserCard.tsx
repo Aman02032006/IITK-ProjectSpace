@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import OverflowTooltip from "@/app/components/cards/OverflowTooltip"
 
 // Props for user profile card

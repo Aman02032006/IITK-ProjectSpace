@@ -7,7 +7,9 @@
     "install:all": "npm install && cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
     "frontend": "cd frontend && npm run dev",
     "backend": "set PYTHONUTF8=1&& cd backend && venv\\Scripts\\activate && fastapi dev main.py",
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\" --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"green,blue\""
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"green,blue\"",
+    "build": "cd frontend && npm run build",
+    "start:prod": "concurrently \"npm run backend\" \"cd frontend && npm start\" --kill-others --names \"BACKEND,FRONTEND\" --prefix-colors \"green,blue\""
   },
   "repository": {
     "type": "git",

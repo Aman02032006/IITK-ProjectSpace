@@ -23,7 +23,7 @@ const DESIGNATION_RANK: Record<string, number> = {
 export function getRepresentativeString(
   members?: UserSummary[],
   fallbackName?: string,
-  fallbackAvatar?: string
+  fallbackAvatar?: string | null
 ): { 
   displayText: string; 
   representative: UserSummary | null 
