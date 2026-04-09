@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -130,7 +131,6 @@ const CommentItem: React.FC<{
   onReply: (parentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => void;
   depth?: number;
-  isLast?: boolean;
 }> = ({
   comment,
   currentUserId,
@@ -138,7 +138,6 @@ const CommentItem: React.FC<{
   onReply,
   onDelete,
   depth = 0,
-  isLast = false,
 }) => {
   const router = useRouter();
 
@@ -283,7 +282,7 @@ const CommentItem: React.FC<{
 
         {hasExpanded && (
           <div className="cs-replies">
-            {replies.map((reply, idx) => (
+            {replies.map((reply) => (
               <CommentItem
                 key={reply.id}
                 comment={reply}
@@ -292,7 +291,6 @@ const CommentItem: React.FC<{
                 onReply={onReply}
                 onDelete={(id) => setReplies((prev) => prev.filter((r) => r.id !== id))}
                 depth={depth + 1}
-                isLast={idx === replies.length - 1 && replies.length >= totalReplies}
               />
             ))}
 
@@ -427,7 +425,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
       {!loading && !error && (
         <div className="cs-list">
-          {comments.map((c, idx) => (
+          {comments.map((c) => (
             <CommentItem
               key={c.id}
               comment={c}
@@ -435,7 +433,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
               postCreatorId={postCreatorId}
               onReply={handleReply}
               onDelete={handleDelete}
-              isLast={idx === comments.length - 1}
             />
           ))}
         </div>
