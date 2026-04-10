@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
 from core.utils import now
@@ -36,7 +36,11 @@ def get_session():
 
 # Requesting OTP Endpoint
 @router.post("/request-otp", status_code=status.HTTP_201_CREATED)
-async def request_otp(request_data: UserBase, db: Session = Depends(get_session)):
+async def request_otp(
+    request_data: UserBase,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_session),
+):
     if not request_data.fullname or not request_data.fullname.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -69,8 +73,9 @@ async def request_otp(request_data: UserBase, db: Session = Depends(get_session)
     db.add(new_otp)
     db.commit()
 
-    # Dispatch the email asynchronously so the API responds instantly
-    await send_otp_email(
+    # Queue OTP email in the background so the request returns quickly.
+    background_tasks.add_task(
+        send_otp_email,
         email_to=request_data.iitk_email,
         otp_code=otp_code,
         name=request_data.fullname.strip(),
@@ -182,7 +187,9 @@ def login_user(user_credentials: UserLogin, db: Session = Depends(get_session)):
 # Forgot Password Initiation
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(
-    request_data: ForgotPasswordRequest, db: Session = Depends(get_session)
+    request_data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_session),
 ):
     """Initiates the password reset flow by sending a 'reset' OTP."""
 
@@ -215,7 +222,8 @@ async def forgot_password(
     db.add(new_otp)
     db.commit()
 
-    await send_otp_email(
+    background_tasks.add_task(
+        send_otp_email,
         email_to=db_user.iitk_email,
         otp_code=otp_code,
         name=db_user.fullname,
