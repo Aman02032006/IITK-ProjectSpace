@@ -431,6 +431,23 @@ def apply_for_recruitment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This recruitment is closed.",
         )
+
+    # Designation eligibility
+    if recruitment.allowed_designations:
+        if current_user.designation.value not in recruitment.allowed_designations:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You are not eligible to apply — your designation ({current_user.designation.value or 'not set'}) is not allowed for this post.",
+            )
+
+    # Department eligibility
+    if recruitment.allowed_departments:
+        if current_user.department.value not in recruitment.allowed_departments:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You are not eligible to apply — your department ({current_user.department.value or 'not set'}) is not allowed for this post.",
+            )
+
     if application_in.recruitment_id != recruitment_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
