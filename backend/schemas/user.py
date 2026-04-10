@@ -92,7 +92,7 @@ class UserCreate(UserBase):
 
 
 class UserLogin(BaseModel):
-    iitk_email: EmailStr
+    identifier: str  # can be either email or username
     password: str
 
 

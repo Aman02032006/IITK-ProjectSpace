@@ -155,8 +155,13 @@ def check_otp(check_data: OTPCheck, db: Session = Depends(get_session)):
 @router.post("/login")
 def login_user(user_credentials: UserLogin, db: Session = Depends(get_session)):
 
+    # Normalise identifier if only username was entered
+    identifier = user_credentials.identifier.strip()
+    if "@" not in identifier:
+        identifier = f"{identifier}@iitk.ac.in"
+
     ## Find if user exists
-    db_user = get_user_by_email(session=db, email=user_credentials.iitk_email)
+    db_user = get_user_by_email(session=db, email=identifier)
 
     if not db_user or not verify_password(
         user_credentials.password, db_user.hashed_password

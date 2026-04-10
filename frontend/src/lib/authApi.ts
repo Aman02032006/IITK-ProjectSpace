@@ -24,7 +24,7 @@ export async function loginUser(email: string, password: string) {
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ iitk_email: email, password: password }),
+    body: JSON.stringify({ identifier: email, password: password }),
   });
 
   const data = await res.json().catch(() => ({}));
