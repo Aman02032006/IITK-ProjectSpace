@@ -183,6 +183,13 @@
   letter-spacing: 1px;
 }
 
+/* Suppress the browser's built-in passowrd visibility functionality */
+.auth-card input[type="password"]::-ms-reveal,
+.auth-card input[type="password"]::-ms-clear,
+.auth-card input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
 /* Password placeholder styling */
 .auth-card input[type = "password"]::placeholder {
   font-family: var(--font-montserrat);
@@ -256,6 +263,49 @@ button:disabled {
   background: #f7f8fa;
   transform: translateY(-1px);
   box-shadow: 0 5px 10px rgba(0, 29, 57, 0.3);
+}
+
+/* Password input wrapper */
+.password-wrapper {
+  position: relative;
+  width: 90%;
+  margin: 0 auto 10px auto;
+  display: block;
+}
+
+.password-wrapper input {
+  width: 100%;
+  margin: 0;
+  padding-right: 40px;
+  font-size: 1rem;
+}
+
+/* Show/hide password toggle button */
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  transition: color 0.2s ease;
+  width: auto;
+  box-shadow: none;
+  margin: 0;
+}
+
+.password-toggle-btn:hover {
+  color: #222;
+  transform: translateY(-50%);
+  box-shadow: none;
+  margin: 0;
 }
 
 /* Password helper text */

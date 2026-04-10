@@ -4,6 +4,19 @@ import React, { useState } from "react";
 import "./loginPage.css";
 import OtpPopUp from "./otpPopUp";
 import AlertPopUp from "./AlertPopUp";
+
+// SVG icons for password visibility toggle
+const EyeShow = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+    <path d="M3.26 11.6A6.97 6.97 0 0 1 10 6c3.2 0 6.06 2.33 6.74 5.6a.5.5 0 0 0 .98-.2A7.97 7.97 0 0 0 10 5a7.97 7.97 0 0 0-7.72 6.4.5.5 0 0 0 .98.2ZM9.99 8a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z"/>
+  </svg>
+);
+
+const EyeHide = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+    <path d="M2.85 2.15a.5.5 0 1 0-.7.7l3.5 3.5a8.1 8.1 0 0 0-3.37 5.05.5.5 0 1 0 .98.2 7.09 7.09 0 0 1 3.1-4.53l1.59 1.59a3.5 3.5 0 1 0 4.88 4.88l4.32 4.31a.5.5 0 0 0 .7-.7l-15-15ZM10.12 8l3.37 3.37A3.5 3.5 0 0 0 10.12 8ZM7.53 5.41l.8.8C8.87 6.07 9.43 6 10 6c3.2 0 6.06 2.33 6.74 5.6a.5.5 0 1 0 .98-.2A7.97 7.97 0 0 0 10 5c-.86 0-1.69.14-2.47.41Z"/>
+  </svg>
+);
 import {
   loginUser,
   requestRegistrationOTP,
@@ -42,6 +55,11 @@ const LoginPage = () => {
     type: "success"
   });
 
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Loading spinner state
   const [isLoading, setIsLoading] = useState(false)
 
@@ -66,6 +84,9 @@ const LoginPage = () => {
     setVerifiedOtp("");
     setShowOtpModal(false);
     setAlertConfig({ ...alertConfig, show: false });
+    setShowLoginPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
   // Login handler
@@ -205,7 +226,14 @@ const LoginPage = () => {
             <input placeholder="Enter your username / IITK email" value={email} onChange={(e) => setEmail(e.target.value)} />
             
             <label>Password</label>
-            <input type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div className="password-wrapper">
+              <input type={showLoginPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              {password.length >= 1 && (
+                <button type="button" className="password-toggle-btn" onClick={() => setShowLoginPassword(v => !v)} tabIndex={-1} title={showLoginPassword ? "Hide password" : "Show password"}>
+                  {showLoginPassword ? <EyeHide /> : <EyeShow />}
+                </button>
+              )}
+            </div>
 
             <button className="primary-btn" onClick={handleLogin} disabled={isLoading}>
               {isLoading ? <div className="button-spinner"></div> : "Login"}
@@ -241,11 +269,25 @@ const LoginPage = () => {
             <input value={email} disabled />
 
             <label>New Password</label>
-            <input type="password" placeholder="Create a strong password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div className="password-wrapper">
+              <input type={showNewPassword ? "text" : "password"} placeholder="Create a strong password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              {password.length >= 1 && (
+                <button type="button" className="password-toggle-btn" onClick={() => setShowNewPassword(v => !v)} tabIndex={-1} title={showNewPassword ? "Hide password" : "Show password"}>
+                  {showNewPassword ? <EyeHide /> : <EyeShow />}
+                </button>
+              )}
+            </div>
             <p className="password-hint">Min. 8 characters with at least one uppercase, one lowercase, one number &amp; one special character.</p>
 
             <label>Confirm Password</label>
-            <input  type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
+            <div className="password-wrapper">
+              <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              {confirmPassword.length >= 1 && (
+                <button type="button" className="password-toggle-btn" onClick={() => setShowConfirmPassword(v => !v)} tabIndex={-1} title={showConfirmPassword ? "Hide password" : "Show password"}>
+                  {showConfirmPassword ? <EyeHide /> : <EyeShow />}
+                </button>
+              )}
+            </div>
             
             <button className="primary-btn" onClick={handleRegister} disabled={isLoading}>
               {isLoading ? <div className="button-spinner"></div> : "Register"}
@@ -276,11 +318,25 @@ const LoginPage = () => {
             <h3 className="section-title">Set New Password</h3>
             
             <label>New Password</label>
-            <input type="password" placeholder="Enter new password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div className="password-wrapper">
+              <input type={showNewPassword ? "text" : "password"} placeholder="Enter new password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              {password.length >= 1 && (
+                <button type="button" className="password-toggle-btn" onClick={() => setShowNewPassword(v => !v)} tabIndex={-1} title={showNewPassword ? "Hide password" : "Show password"}>
+                  {showNewPassword ? <EyeHide /> : <EyeShow />}
+                </button>
+              )}
+            </div>
             <p className="password-hint">Min. 8 characters with at least one uppercase, one lowercase, one number &amp; one special character.</p>
 
             <label>Confirm Password</label>
-            <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+            <div className="password-wrapper">
+              <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              {confirmPassword.length >= 1 && (
+                <button type="button" className="password-toggle-btn" onClick={() => setShowConfirmPassword(v => !v)} tabIndex={-1} title={showConfirmPassword ? "Hide password" : "Show password"}>
+                  {showConfirmPassword ? <EyeHide /> : <EyeShow />}
+                </button>
+              )}
+            </div>
 
             <button className="primary-btn" onClick={handlePasswordReset} disabled={isLoading}>
               {isLoading ? <div className="button-spinner"></div> : "Update Password"}
