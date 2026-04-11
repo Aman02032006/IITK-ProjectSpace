@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import "./editProfilePage.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import OtpPopUp from "../../auth/otpPopUp";
 import {
   fetchMyProfile,
   updateMyProfile,
   uploadMyProfilePicture,
   removeMyProfilePicture,
+  verifySecondaryEmailOtp,
   UserProfile,
 } from "@/lib/profileApi";
 import CreatableSelect from "react-select/creatable";
@@ -49,6 +51,7 @@ const CameraIcon = () => (
 /* Form state */
 interface EditFormState {
   fullname: string;
+  secondary_email: string;
   designation: string;
   degree: string;
   department: string;
@@ -66,12 +69,20 @@ type SelectOption = {
   label: string;
 };
 
+type SecondaryEmailVerificationStatus =
+  | "idle"
+  | "sending_otp"
+  | "awaiting_otp"
+  | "verifying_otp"
+  | "verified";
+
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback;
 
 function profileToForm(p: UserProfile): EditFormState {
   return {
     fullname: p.fullname ?? "",
+    secondary_email: p.secondary_email ?? "",
     designation: p.designation ?? "",
     degree: p.degree ?? "",
     department: p.department ?? "",
@@ -96,13 +107,22 @@ const EditProfilePage: React.FC = () => {
   const [form, setForm] = useState<EditFormState | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
+  const [verifiedSecondaryEmail, setVerifiedSecondaryEmail] = useState("");
+  const [secondaryEmailStatus, setSecondaryEmailStatus] = useState<SecondaryEmailVerificationStatus>("idle");
+  const [showSecondaryOtpModal, setShowSecondaryOtpModal] = useState(false);
+  const [pendingSecondaryEmail, setPendingSecondaryEmail] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
   useEffect(() => {
     fetchMyProfile()
       .then((p) => {
         setProfile(p);
         setForm(profileToForm(p));
+        const existingSecondaryEmail = (p.secondary_email ?? "").trim().toLowerCase();
+        setVerifiedSecondaryEmail(existingSecondaryEmail);
+        setSecondaryEmailStatus(existingSecondaryEmail ? "verified" : "idle");
       })
       .catch((err: Error) => {
         if (err.message === "Unauthorized") {
@@ -117,6 +137,13 @@ const EditProfilePage: React.FC = () => {
   const set = (key: keyof EditFormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setForm((prev) => prev ? { ...prev, [key]: e.target.value } : prev);
+
+  const handleSecondaryEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextEmail = e.target.value;
+    setForm((prev) => prev ? { ...prev, secondary_email: nextEmail } : prev);
+    const isCurrentVerified = nextEmail.trim().toLowerCase() === verifiedSecondaryEmail;
+    setSecondaryEmailStatus(isCurrentVerified && nextEmail.trim() !== "" ? "verified" : "idle");
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -142,6 +169,80 @@ const EditProfilePage: React.FC = () => {
       return `https://${trimmed}`;
     }
     return trimmed;
+  };
+
+  const handleSecondaryEmailVerify = async () => {
+    if (!form || !profile) return;
+
+    const nextSecondaryEmail = form.secondary_email.trim().toLowerCase();
+    if (!nextSecondaryEmail) return;
+
+    if (!isValidEmail(nextSecondaryEmail)) {
+      setSaveError("Please enter a valid secondary email.");
+      return;
+    }
+
+    if (nextSecondaryEmail === profile.iitk_email.trim().toLowerCase()) {
+      setSaveError("Secondary email cannot be the same as your IITK email.");
+      return;
+    }
+
+    if (nextSecondaryEmail === verifiedSecondaryEmail) {
+      setSecondaryEmailStatus("verified");
+      return;
+    }
+
+    setSaveError(null);
+    setSecondaryEmailStatus("sending_otp");
+    try {
+      // request OTP endpoint call should happen here before opening modal.
+
+      setSecondaryEmailStatus("awaiting_otp");
+      setPendingSecondaryEmail(nextSecondaryEmail);
+      setShowSecondaryOtpModal(true);
+    } catch (error: unknown) {
+      setSaveError(getErrorMessage(error, "Secondary email verification failed. Please try again."));
+      setSecondaryEmailStatus("idle");
+    }
+  };
+
+  const handleSecondaryOtpVerify = async (otp: string) => {
+    if (!pendingSecondaryEmail) return;
+
+    setSaveError(null);
+    setSecondaryEmailStatus("verifying_otp");
+    try {
+      const updatedProfile = await verifySecondaryEmailOtp({
+        email: pendingSecondaryEmail,
+        otp,
+      });
+      const persistedSecondaryEmail = (updatedProfile.secondary_email ?? "").trim().toLowerCase();
+
+      setProfile(updatedProfile);
+      setForm((prev) =>
+        prev
+          ? {
+              ...prev,
+              secondary_email: updatedProfile.secondary_email ?? pendingSecondaryEmail,
+            }
+          : prev
+      );
+      setVerifiedSecondaryEmail(persistedSecondaryEmail);
+      setSecondaryEmailStatus(persistedSecondaryEmail ? "verified" : "idle");
+      setShowSecondaryOtpModal(false);
+      setPendingSecondaryEmail("");
+    } catch (error: unknown) {
+      setSaveError(getErrorMessage(error, "Invalid or expired OTP."));
+      setSecondaryEmailStatus("idle");
+    }
+  };
+
+  const handleSecondaryOtpClose = () => {
+    setShowSecondaryOtpModal(false);
+    setPendingSecondaryEmail("");
+    if (secondaryEmailStatus !== "verified") {
+      setSecondaryEmailStatus("idle");
+    }
   };
 
   const handleSubmit = async () => {
@@ -230,6 +331,25 @@ const EditProfilePage: React.FC = () => {
   }
 
   const displayAvatar = form.avatarPreview ?? form.profile_picture_url;
+  const normalizedSecondaryEmail = form.secondary_email.trim().toLowerCase();
+  const secondaryEmailAlreadyVerified = normalizedSecondaryEmail !== "" && normalizedSecondaryEmail === verifiedSecondaryEmail;
+  const canVerifySecondaryEmail =
+    normalizedSecondaryEmail !== "" &&
+    !secondaryEmailAlreadyVerified &&
+    secondaryEmailStatus !== "sending_otp" &&
+    secondaryEmailStatus !== "awaiting_otp" &&
+    secondaryEmailStatus !== "verifying_otp";
+
+  const verifyButtonText =
+    secondaryEmailStatus === "sending_otp"
+      ? "Sending..."
+      : secondaryEmailStatus === "awaiting_otp"
+        ? "OTP Sent"
+      : secondaryEmailStatus === "verifying_otp"
+        ? "Verifying..."
+        : secondaryEmailAlreadyVerified || secondaryEmailStatus === "verified"
+          ? "Verified"
+          : "Verify";
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -313,23 +433,49 @@ const EditProfilePage: React.FC = () => {
                     <input className="edit-profile-page__input" value={form.fullname} onChange={set("fullname")} placeholder="Your full name" />
                   </div>
 
-                  <div className="edit-profile-page__row">
-                    <label className="edit-profile-page__label">Designation</label>
-                    <select 
-                      className="edit-profile-page__input" 
-                      value={form.designation} 
-                      onChange={set("designation")}
-                    >
-                      <option value="" disabled>Select your designation</option>
-                      <option value="Undergraduate Student">Undergraduate Student</option>
-                      <option value="Postgraduate Student">Postgraduate Student</option>
-                      <option value="Ph.D Scholar">Ph.D Scholar</option>
-                      <option value="Post-Doctoral Researcher">Post-Doctoral Researcher</option>
-                      <option value="Assistant Professor">Assistant Professor</option>
-                      <option value="Associate Professor">Associate Professor</option>
-                      <option value="Professor">Professor</option>
-                      <option value="Higher Academic Grade Professor">Higher Academic Grade Professor</option>
-                    </select></div>
+                  <div className="edit-profile-page__row edit-profile-page__row--half">
+                    <div>
+                      <label className="edit-profile-page__label">
+                        Secondary Email
+                        <span className="edit-profile-page__hint-inline"></span>
+                      </label>
+                      <div className="edit-profile-page__inline-action-wrap">
+                        <input
+                          className="edit-profile-page__input edit-profile-page__input--with-inline-action"
+                          type="email"
+                          value={form.secondary_email}
+                          onChange={handleSecondaryEmailChange}
+                          placeholder="name@example.com"
+                        />
+                        <button
+                          type="button"
+                          className="edit-profile-page__inline-action-btn"
+                          onClick={handleSecondaryEmailVerify}
+                          disabled={!canVerifySecondaryEmail}
+                        >
+                          {verifyButtonText}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="edit-profile-page__label">Designation</label>
+                      <select 
+                        className="edit-profile-page__input" 
+                        value={form.designation} 
+                        onChange={set("designation")}
+                      >
+                        <option value="" disabled>Select your designation</option>
+                        <option value="Undergraduate Student">Undergraduate Student</option>
+                        <option value="Postgraduate Student">Postgraduate Student</option>
+                        <option value="Ph.D Scholar">Ph.D Scholar</option>
+                        <option value="Post-Doctoral Researcher">Post-Doctoral Researcher</option>
+                        <option value="Assistant Professor">Assistant Professor</option>
+                        <option value="Associate Professor">Associate Professor</option>
+                        <option value="Professor">Professor</option>
+                        <option value="Higher Academic Grade Professor">Higher Academic Grade Professor</option>
+                      </select>
+                    </div>
+                  </div>
 
                   <div className="edit-profile-page__row edit-profile-page__row--half">
                     <div>
@@ -397,7 +543,6 @@ const EditProfilePage: React.FC = () => {
                     <CreatableSelect
                       isMulti
                       options={seedSkills}
-                      // We map the string array back into the {value, label} objects that react-select needs to render
                       value={form.skills.map((skill) => ({ value: skill, label: skill }))}
                       onChange={handleSkillsChange}
                       placeholder="Search or type to create a skill..."
@@ -432,10 +577,16 @@ const EditProfilePage: React.FC = () => {
             </div>
           </main>
         </div>
+        {showSecondaryOtpModal && (
+          <OtpPopUp
+            message={`Enter the OTP sent to ${pendingSecondaryEmail} to verify your secondary email.`}
+            onVerify={handleSecondaryOtpVerify}
+            onClose={handleSecondaryOtpClose}
+          />
+        )}
       </div>
     </Suspense>
   );
 };
 
 export default EditProfilePage;
-

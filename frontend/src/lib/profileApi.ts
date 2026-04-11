@@ -153,6 +153,26 @@ export async function removeMyProfilePicture(): Promise<void> {
   if (!res.ok) throw new Error(extractError(data, "Failed to remove profile picture"));
 }
 
+export async function verifySecondaryEmailOtp(params: {
+  email: string;
+  otp: string;
+}): Promise<UserProfile> {
+  const res = await fetch(`${API}/users/me/secondary-email/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({
+      secondary_email: params.email,
+      otp_code: params.otp,
+    }),
+  });
+
+  if (res.status === 401) throw new Error("Unauthorized");
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(extractError(data, "Failed to verify secondary email"));
+
+  return mapUserProfile(data as UserProfile);
+}
+
 // Fetch another user's public profile by their ID
 export async function getUserById(userId: string): Promise<UserProfileView> {
   const res = await fetch(`${API}/users/${userId}`, {

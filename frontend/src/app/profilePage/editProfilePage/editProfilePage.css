@@ -254,6 +254,40 @@
   box-shadow: 0 0 0 3px rgba(73, 118, 159, 0.12);
 }
 
+.edit-profile-page__inline-action-wrap {
+  position: relative;
+}
+
+.edit-profile-page__input--with-inline-action {
+  padding-right: 116px;
+}
+
+.edit-profile-page__inline-action-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 98px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-mid);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.edit-profile-page__inline-action-btn:hover:not(:disabled) {
+  background: var(--color-sky);
+}
+
+.edit-profile-page__inline-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 select.edit-profile-page__input {
   appearance: none;
   -webkit-appearance: none;
@@ -280,4 +314,10 @@ select.edit-profile-page__input {
   color: var(--color-mid);
   padding-top: 4px;
   border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 720px) {
+  .edit-profile-page__row--half {
+    grid-template-columns: 1fr;
+  }
 }
