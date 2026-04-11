@@ -129,6 +129,19 @@ export default function PostCreationForm() {
     return () => clearTimeout(delayDebounceFn);
   }, [userSearchQuery, selectedUsers]);
 
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setDropdownOpen(false);
+      setUserSearchResults([]);
+      const active = document.activeElement as HTMLElement | null;
+      if (active && active !== document.body) active.blur();
+    };
+
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, []);
+
   const handleSelectUser = (user: UserSummary) => {
     setSelectedUsers((prev) => [...prev, user]);
     setUserSearchQuery("");

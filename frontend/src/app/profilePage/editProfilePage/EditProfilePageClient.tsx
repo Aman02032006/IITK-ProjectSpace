@@ -291,6 +291,19 @@ const EditProfilePage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const onSaveShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      if (event.key.toLowerCase() !== "s") return;
+      event.preventDefault();
+      if (saving || loading || !profile || !form) return;
+      void handleSubmit();
+    };
+
+    window.addEventListener("keydown", onSaveShortcut);
+    return () => window.removeEventListener("keydown", onSaveShortcut);
+  }, [saving, loading, profile, form, handleSubmit]);
+
   const handleSkillsChange = (selectedOptions: MultiValue<SelectOption>) => {
     const newSkills = selectedOptions.map((opt) => opt.value);
     setForm((prev) => prev ? { ...prev, skills: newSkills } : prev);

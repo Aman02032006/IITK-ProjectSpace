@@ -238,6 +238,19 @@ function EditRecruitmentPageContent() {
     }
   };
 
+  useEffect(() => {
+    const onSaveShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      if (event.key.toLowerCase() !== "s") return;
+      event.preventDefault();
+      if (isSubmitting || loading || !!error) return;
+      void handleSave();
+    };
+
+    window.addEventListener("keydown", onSaveShortcut);
+    return () => window.removeEventListener("keydown", onSaveShortcut);
+  }, [isSubmitting, loading, error, handleSave]);
+
   const TagBlock = ({
     tags: blockTags, onAdd, onRemove, addLabel,
   }: {

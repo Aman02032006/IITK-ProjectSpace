@@ -44,6 +44,8 @@ const XMedium = () => (
 );
 
 /* Header component */
+const SEARCH_FOCUS_ON_ARRIVAL_KEY = "focus-search-on-arrival";
+
 const Header: React.FC<HeaderProps> = ({
   showEditProfile = false,
   editHref,           
@@ -75,8 +77,12 @@ const Header: React.FC<HeaderProps> = ({
     const currentTab = currentParams.get("tab");
     if (currentTab) params.set("tab", currentTab);
     const target = params.toString() ? `/searchPage?${params.toString()}` : "/searchPage";
-    if (pathname === "/searchPage") router.replace(target);
-    else router.push(target);
+    if (pathname === "/searchPage") {
+      router.replace(target);
+    } else {
+      sessionStorage.setItem(SEARCH_FOCUS_ON_ARRIVAL_KEY, "1");
+      router.push(target);
+    }
   }, [currentParams, pathname, router]);
 
   // Close dropdown on outside click
@@ -97,6 +103,21 @@ const Header: React.FC<HeaderProps> = ({
     const timer = setTimeout(() => submitSearch(query), 300);
     return () => clearTimeout(timer);
   }, [isSearchMode, pathname, localValue, submitSearch]);
+
+  // If user navigated to search from another page via header search, auto-focus input on arrival.
+  useEffect(() => {
+    if (pathname !== "/searchPage") return;
+    if (sessionStorage.getItem(SEARCH_FOCUS_ON_ARRIVAL_KEY) !== "1") return;
+    sessionStorage.removeItem(SEARCH_FOCUS_ON_ARRIVAL_KEY);
+
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
+  }, [pathname]);
 
   // Filter suggestions
   const filteredSuggestions = searchSuggestions.filter(

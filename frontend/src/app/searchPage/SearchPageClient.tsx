@@ -37,9 +37,6 @@ const normalizeTab = (tab: string | null): TabType => {
   return "recruitment";
 };
 
-const sameStringArray = (a: string[], b: string[]) =>
-  a.length === b.length && a.every((item, idx) => item === b[idx]);
-
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback;
 
@@ -242,36 +239,21 @@ const SearchPageContent: React.FC = () => {
 
   /* Effects */
   useEffect(() => {
-    if (urlQuery !== searchQuery) setSearchQuery(urlQuery);
-  }, [urlQuery, searchQuery]);
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setDesignationPicker("");
+      setDegreePicker("");
+      setDepartmentPicker("");
+      setSkillPicker("");
+      setPrerequisitePicker("");
+      setDomainPicker("");
+      const active = document.activeElement as HTMLElement | null;
+      if (active && active !== document.body) active.blur();
+    };
 
-  useEffect(() => {
-    if (urlTab !== activeTab) setActiveTab(urlTab);
-  }, [urlTab, activeTab]);
-
-  useEffect(() => {
-    if (!sameStringArray(urlDesignations, designations)) setSelectedDesignations(urlDesignations);
-    if (!sameStringArray(urlDegrees, degrees)) setSelectedDegrees(urlDegrees);
-    if (!sameStringArray(urlDepartments, departments)) setSelectedDepartments(urlDepartments);
-    if (!sameStringArray(urlSkills, skills)) setSelectedSkills(urlSkills);
-    if (!sameStringArray(urlPrerequisites, prerequisites))
-      setSelectedPrerequisites(urlPrerequisites);
-    if (!sameStringArray(urlDomains, domains)) setSelectedDomains(urlDomains);
-  }, [
-    searchParams,
-    urlDesignations,
-    urlDegrees,
-    urlDepartments,
-    urlSkills,
-    urlPrerequisites,
-    urlDomains,
-    designations,
-    degrees,
-    departments,
-    skills,
-    prerequisites,
-    domains,
-  ]);
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -283,9 +265,12 @@ const SearchPageContent: React.FC = () => {
     skills.forEach((value) => params.append("skill", value));
     prerequisites.forEach((value) => params.append("prerequisite", value));
     domains.forEach((value) => params.append("domain", value));
-    const next = `/searchPage?${params.toString()}`;
-    const current = `/searchPage?${searchParams.toString()}`;
-    if (next !== current) router.replace(next, { scroll: false });
+    const nextQuery = params.toString();
+    const next = nextQuery ? `/searchPage?${nextQuery}` : "/searchPage";
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (next !== current) {
+      window.history.replaceState(window.history.state, "", next);
+    }
   }, [
     trimmedQuery,
     activeTab,
@@ -295,8 +280,7 @@ const SearchPageContent: React.FC = () => {
     skills,
     prerequisites,
     domains,
-    searchParams,
-    router,
+    searchQuery,
   ]);
 
   useEffect(() => {

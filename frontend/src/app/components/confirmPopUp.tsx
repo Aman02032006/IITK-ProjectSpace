@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./confirmPopUp.css";
 
@@ -24,26 +24,42 @@ const ConfirmPopUp = ({
   onCancel,
   isDestructive = false,
 }: ConfirmPopUpProps) => {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   // Prevents background scrolling while modal is open
   useEffect(() => {
     const originalStyle = document.body.style.overflow;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel();
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        onConfirm();
+      }
+    };
+
     document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => cancelButtonRef.current?.focus());
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = originalStyle;
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [onCancel, onConfirm]);
 
   // Render modal using React portal
   return createPortal(
-    <div className="confirm-backdrop">
-      <div className="confirm-card">
-        <h2 className="confirm-heading">{heading}</h2>
+    <div className="confirm-backdrop" role="presentation">
+      <div className="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirm-popup-title">
+        <h2 id="confirm-popup-title" className="confirm-heading">{heading}</h2>
         <p className="confirm-message">{message}</p>
 
         {/* Action buttons */}
         <div className="confirm-actions">
-          <button className="confirm-btn confirm-btn--cancel" onClick={onCancel}>
+          <button ref={cancelButtonRef} className="confirm-btn confirm-btn--cancel" onClick={onCancel}>
             {cancelLabel}
           </button>
 
