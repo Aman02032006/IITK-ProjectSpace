@@ -24,7 +24,6 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://13.60.171.224:3000",
-    "http://13-60-171-224.nip.io:3000",
 ]
 
 app = FastAPI(title="IITK ProjectSpace API", lifespan=lifespan)
