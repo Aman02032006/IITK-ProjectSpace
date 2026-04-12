@@ -234,8 +234,8 @@ const LoginPage = () => {
         {/* LOGIN */}
         {mode === "login" && (
           <>
-            <label>Username / IITK Email</label>
-            <input placeholder="Enter your username / IITK email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label>Username / IITK Email / Secondary Mail</label>
+            <input placeholder="Enter your username / IITK email / Secondary Mail" value={email} onChange={(e) => setEmail(e.target.value)} />
             
             <label>Password</label>
             <div className="password-wrapper">
@@ -250,7 +250,6 @@ const LoginPage = () => {
             <button type="submit" className="primary-btn" disabled={isLoading}>
               {isLoading ? <div className="button-spinner"></div> : "Login"}
             </button>
-            <button type="button" className="google-btn">Sign in with Google</button>
 
             <p className="link" onClick={() => !isLoading && handleModeSwitch("forgot-email")}>Forgot Password?</p>
           </>
@@ -357,28 +356,6 @@ const LoginPage = () => {
             <p className="link" onClick={() => !isLoading && handleModeSwitch("login")}>Back to Login</p>
           </>
         )}
-
-        {/* OTP popup */}
-        {showOtpModal && (
-          <OtpPopUp
-            message={
-              otpPurpose === "register"
-                ? "An OTP has been sent to your entered email address."
-                : "Enter the OTP sent to your registered mail to reset your password."
-            }
-            onVerify={handleOtpVerify}
-            onClose={() => setShowOtpModal(false)}
-          />
-        )}
-
-        {/* Alert popup */}
-        {alertConfig.show && (
-          <AlertPopUp 
-            message={alertConfig.message} 
-            type={alertConfig.type} 
-            onClose={() => setAlertConfig({ ...alertConfig, show: false })} 
-          />
-        )}
       </form>
 
       {/* Right side hero section */}
@@ -387,6 +364,28 @@ const LoginPage = () => {
         <h2>IITK ProjectSpace</h2>
         <p>A central stop for all project related tasks</p>
       </div>
+
+      {/* OTP popup */}
+      {showOtpModal && (
+        <OtpPopUp
+          message={
+            otpPurpose === "register"
+              ? "An OTP has been sent to your entered email address."
+              : "Enter the OTP sent to your registered mail to reset your password."
+          }
+          onVerify={handleOtpVerify}
+          onClose={() => setShowOtpModal(false)}
+        />
+      )}
+
+      {/* Alert popup */}
+      {alertConfig.show && (
+        <AlertPopUp 
+          message={alertConfig.message} 
+          type={alertConfig.type} 
+          onClose={() => setAlertConfig({ ...alertConfig, show: false })} 
+        />
+      )}
     </div>
   );
 };

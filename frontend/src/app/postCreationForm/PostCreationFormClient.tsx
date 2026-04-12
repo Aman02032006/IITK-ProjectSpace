@@ -95,7 +95,7 @@ export default function PostCreationForm() {
     "Statistics and Data Science(SDS)",
     "Sustainable Energy Engineering(SEE)"
   ];
-  const DESIGNATIONS = ["UG_STUDENT", "PG_STUDENT", "PHD", "POSTDOC"];
+  const DESIGNATIONS = ["Undergraduate Student", "Postgraduate Student", "Ph.D Scholar", "Post-Doctoral Researcher"];
 
   useEffect(() => {
   if (!getToken()) {
