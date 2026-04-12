@@ -23,7 +23,7 @@ def test_create_project_with_invites_complete(auth_client, session):
         "team_member_ids": [str(friend.id)]
     }
 
-    with patch("routers.projects.create_notification") as mock_notify:
+    with patch("routers.project.create_notification") as mock_notify:
         response = auth_client.post("/projects/", json=project_data)
 
     # API Response Assertions

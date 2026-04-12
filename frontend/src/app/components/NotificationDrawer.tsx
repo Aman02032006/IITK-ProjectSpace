@@ -20,7 +20,7 @@ import {
 } from "@/lib/recruitmentApi";
 import { fetchMyProfile } from "@/lib/profileApi";
 import "./NotificationDrawer.css";
-import ConfirmPopUp from "./confirmPopUp";
+import ConfirmPopup from "./ConfirmPopup";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const LIST_PAGE_SIZE = 25;
@@ -108,10 +108,10 @@ function resolveClientLink(link: string): string | null {
   if (link.startsWith("http://") || link.startsWith("https://")) return link;
 
   const projectMatch = link.match(/^\/projects\/([^/]+)/);
-  if (projectMatch?.[1]) return `/projectPage?id=${projectMatch[1]}`;
+  if (projectMatch?.[1]) return `/project-page?id=${projectMatch[1]}`;
 
   const recruitmentMatch = link.match(/^\/recruitments\/([^/]+)/);
-  if (recruitmentMatch?.[1]) return `/recruitmentPage?id=${recruitmentMatch[1]}`;
+  if (recruitmentMatch?.[1]) return `/recruitment-page?id=${recruitmentMatch[1]}`;
 
   return link;
 }
@@ -681,7 +681,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       </aside>
 
       {confirmDeleteId && (
-        <ConfirmPopUp
+        <ConfirmPopup
           heading="Delete Notification"
           message="Are you sure you want to delete this notification? This cannot be undone."
           confirmLabel="Delete"

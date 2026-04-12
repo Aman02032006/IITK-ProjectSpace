@@ -38,7 +38,7 @@ const pickVisibleField = (
 };
 
 const focusPreferredInput = (pathname: string) => {
-  const prefersSearch = pathname === "/homepage" || pathname === "/searchPage";
+  const prefersSearch = pathname === "/home-page" || pathname === "/search-page";
   const preferredSearchInput = prefersSearch
     ? document.querySelector<HTMLInputElement>(SEARCH_INPUT_SELECTOR)
     : null;

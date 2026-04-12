@@ -3,7 +3,7 @@ from typing import List, Tuple, Any
 from sqlalchemy import or_
 from models.user import User
 from models.project import Project, ProjectTeamLink
-from models.recruitments import Recruitment, RecruitmentRecruiterLink
+from models.recruitment import Recruitment, RecruitmentRecruiterLink
 from core.utils import Designation, Degree, Department
 import re
 

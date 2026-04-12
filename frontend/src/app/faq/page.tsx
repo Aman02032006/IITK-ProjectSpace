@@ -3,8 +3,8 @@
 import React, { Suspense, useState } from "react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
-import "../postCreationForm/postCreationForm.css";
-import "./faq.css";
+import "../post-creation-form/PostCreationForm.css";
+import "./Faq.css";
 
 const faqData = [
   // --- General & Access ---

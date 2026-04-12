@@ -7,7 +7,7 @@ import uuid
 
 from core.utils import Degree, Department, Designation, now
 from models.project import ProjectTeamLink
-from models.recruitments import RecruitmentRecruiterLink
+from models.recruitment import RecruitmentRecruiterLink
 
 
 class User(SQLModel, table=True):

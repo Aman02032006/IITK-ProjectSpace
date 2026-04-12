@@ -1,9 +1,9 @@
 from sqlmodel import Session, select, func
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
-from models.recruitments import Recruitment, Application, RecruitmentRecruiterLink
+from models.recruitment import Recruitment, Application, RecruitmentRecruiterLink
 from models.user import User
-from schemas.recruitments import (
+from schemas.recruitment import (
     RecruitmentCreate,
     RecruitmentUpdate,
     ApplicationCreate,

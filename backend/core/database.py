@@ -6,8 +6,8 @@ from core.config import settings
 from models.user import User
 from models.otp import OTPVerification
 from models.project import Project, ProjectTeamLink
-from models.recruitments import Application, Recruitment, RecruitmentRecruiterLink
-from models.comments import Comment
+from models.recruitment import Application, Recruitment, RecruitmentRecruiterLink
+from models.comment import Comment
 from models.notification import Notification
 
 if not settings.DATABASE_URL:

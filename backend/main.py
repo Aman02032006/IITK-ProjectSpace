@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import create_db_and_tables
 from contextlib import asynccontextmanager
-from routers import auth, users, projects, recruitments, notifications, comments, search
+from routers import auth, user, project, recruitment, notification, comment, search
 
 os.makedirs("uploads/profilePictures", exist_ok=True)
 os.makedirs("uploads/Projects", exist_ok=True)
@@ -31,11 +31,11 @@ app = FastAPI(title="IITK ProjectSpace API", lifespan=lifespan)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(projects.router)
-app.include_router(recruitments.router)
-app.include_router(notifications.router)
-app.include_router(comments.router)
+app.include_router(user.router)
+app.include_router(project.router)
+app.include_router(recruitment.router)
+app.include_router(notification.router)
+app.include_router(comment.router)
 app.include_router(search.router)
 
 

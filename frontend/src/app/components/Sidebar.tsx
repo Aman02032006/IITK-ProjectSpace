@@ -113,10 +113,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     setNotificationsOpen(false);
 
     const routes: Record<string, string> = {
-      home: "/homepage",
-      search: "/searchPage",
-      profile: "/profilePage",
-      create: "/postCreationForm",
+      home: "/home-page",
+      search: "/search-page",
+      profile: "/profile-page",
+      create: "/post-creation-form",
     };
 
     if(routes[id]) router.push(routes[id]);
