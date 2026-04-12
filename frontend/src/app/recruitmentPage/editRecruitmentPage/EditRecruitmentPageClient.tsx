@@ -18,6 +18,9 @@ import {
 import { searchUsers } from "@/lib/profileApi";
 import { UserSummary } from "@/lib/projectApi";
 import ConfirmPopUp from "../../components/confirmPopUp";
+import CreatableSelect from "react-select/creatable";
+import type { MultiValue } from "react-select";
+import skillsData from "@/data/seed_skills.json";
 
 interface Tag {
   id: string;
@@ -28,6 +31,14 @@ interface LinkEntry {
   id: string;
   value: string;
 }
+
+type SelectOption = {
+  value: string;
+  label: string;
+};
+
+const mapOptionsToTags = (selectedOptions: MultiValue<SelectOption>): Tag[] =>
+  selectedOptions.map((option) => ({ id: option.value, label: option.value }));
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback;
@@ -66,6 +77,32 @@ function EditRecruitmentPageContent() {
   const [isSearchingUsers, setIsSearchingUsers]   = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const SKILLS = skillsData;
+  const DEPARTMENTS = [ 
+    "Aerospace Engineering",
+    "Biological Sciences and Bioengineering",
+    "Chemical Engineering",
+    "Chemistry",
+    "Civil Engineering",
+    "Cognitive Sciences",
+    "Computer Science and Engineering",
+    "Design",
+    "Earth Sciences",
+    "Economics",
+    "Electrical Engineering",
+    "Humanities and Social Sciences",
+    "Intelligent Systems",
+    "Management Sciences",
+    "Materials Science and Engineering",
+    "Mathematics",
+    "Mechanical Engineering",
+    "Nuclear Engineering and Technology",
+    "Physics",
+    "Space, Planetary and Astronomical Sciences and Engineering",
+    "Statistics and Data Science",
+    "Sustainable Energy Engineering"
+  ];
+  const DESIGNATIONS = ["Undergraduate Student", "Postgraduate Student", "Ph.D Scholar", "Post-Doctoral Researcher"];
 
   // Pre-populate fields
   useEffect(() => {
@@ -143,22 +180,21 @@ function EditRecruitmentPageContent() {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  // Tag helpers
-  const makeAdder = (setter: React.Dispatch<React.SetStateAction<Tag[]>>, promptText: string) => () => {
-    const label = prompt(promptText);
-    if (label?.trim()) setter((prev) => [...prev, { id: Date.now().toString(), label: label.trim() }]);
+  const handleDomainsChange = (selectedOptions: MultiValue<SelectOption>) => {
+    setDomains(mapOptionsToTags(selectedOptions));
   };
-  const makeRemover = (setter: React.Dispatch<React.SetStateAction<Tag[]>>) => (id: string) =>
-    setter((prev) => prev.filter((t) => t.id !== id));
 
-  const addDomain          = makeAdder(setDomains,               "Enter domain tag:");
-  const removeDomain       = makeRemover(setDomains);
-  const addPrerequisite    = makeAdder(setPrerequisites,          "Enter prerequisite:");
-  const removePrerequisite = makeRemover(setPrerequisites);
-  const addDesignation     = makeAdder(setAllowedDesignations,    "Enter allowed designation:");
-  const removeDesignation  = makeRemover(setAllowedDesignations);
-  const addDepartment      = makeAdder(setAllowedDepartments,     "Enter allowed department:");
-  const removeDepartment   = makeRemover(setAllowedDepartments);
+  const handlePrerequisitesChange = (selectedOptions: MultiValue<SelectOption>) => {
+    setPrerequisites(mapOptionsToTags(selectedOptions));
+  };
+
+  const handleDesignationsChange = (selectedOptions: MultiValue<SelectOption>) => {
+    setAllowedDesignations(mapOptionsToTags(selectedOptions));
+  };
+
+  const handleDepartmentsChange = (selectedOptions: MultiValue<SelectOption>) => {
+    setAllowedDepartments(mapOptionsToTags(selectedOptions));
+  };
 
   // Link helpers
   const addLink = () => setLinks((prev) => [...prev, { id: Date.now().toString(), value: "" }]);
@@ -250,27 +286,6 @@ function EditRecruitmentPageContent() {
     window.addEventListener("keydown", onSaveShortcut);
     return () => window.removeEventListener("keydown", onSaveShortcut);
   }, [isSubmitting, loading, error, handleSave]);
-
-  const TagBlock = ({
-    tags: blockTags, onAdd, onRemove, addLabel,
-  }: {
-    tags: Tag[];
-    onAdd: () => void;
-    onRemove: (id: string) => void;
-    addLabel: string;
-  }) => (
-    <>
-      <div className="pcf-tags-row">
-        {blockTags.map((t) => (
-          <span key={t.id} className="pcf-tag">
-            {t.label}
-            <button className="pcf-tag-remove" onClick={() => onRemove(t.id)}>×</button>
-          </span>
-        ))}
-      </div>
-      <button className="pcf-add-btn" onClick={onAdd}><span className="pcf-add-icon">+</span> {addLabel}</button>
-    </>
-  );
 
   return (
     <div className="app-shell">
@@ -384,13 +399,31 @@ function EditRecruitmentPageContent() {
                   {/* Domains */}
                   <div className="pcf-field">
                     <label className="pcf-label">Domains / Tags<span className="pcf-label-hint">(Add tags that best describe the domains this recruitment falls under.)</span></label>
-                    <TagBlock tags={domains} onAdd={addDomain} onRemove={removeDomain} addLabel="Add Domain" />
+                    <CreatableSelect
+                      instanceId="edit-recruitment-domains-tags"
+                      isMulti
+                      options={SKILLS}
+                      value={domains.map((tag) => ({ value: tag.label, label: tag.label }))}
+                      onChange={handleDomainsChange}
+                      placeholder="Search or type to create a domain/tag..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
                   </div>
 
                   {/* Prerequisites */}
                   <div className="pcf-field">
                     <label className="pcf-label">Prerequisites<span className="pcf-label-hint">(Add skills or technologies applicants should be familiar with.)</span></label>
-                    <TagBlock tags={prerequisites} onAdd={addPrerequisite} onRemove={removePrerequisite} addLabel="Add Prerequisite" />
+                    <CreatableSelect
+                      instanceId="edit-recruitment-prerequisites"
+                      isMulti
+                      options={SKILLS}
+                      value={prerequisites.map((req) => ({ value: req.label, label: req.label }))}
+                      onChange={handlePrerequisitesChange}
+                      placeholder="Search or type to create a prerequisite..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
                   </div>
                 </section>
 
@@ -501,13 +534,31 @@ function EditRecruitmentPageContent() {
                   {/* Allowed Designations */}
                   <div className="pcf-field">
                     <label className="pcf-label">Allowed Designations<span className="pcf-label-hint">(Only applicants with these designations will be able to apply.)</span></label>
-                    <TagBlock tags={allowedDesignations} onAdd={addDesignation} onRemove={removeDesignation} addLabel="Add Designation" />
+                    <CreatableSelect
+                      instanceId="edit-recruitment-allowed-designations"
+                      isMulti
+                      options={DESIGNATIONS.map((designation) => ({ value: designation, label: designation }))}
+                      value={allowedDesignations.map((tag) => ({ value: tag.label, label: tag.label }))}
+                      onChange={handleDesignationsChange}
+                      placeholder="Select or type to create a designation..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
                   </div>
 
                   {/* Allowed Departments */}
                   <div className="pcf-field">
                     <label className="pcf-label">Allowed Departments<span className="pcf-label-hint">(Only applicants from these departments will be able to apply.)</span></label>
-                    <TagBlock tags={allowedDepartments} onAdd={addDepartment} onRemove={removeDepartment} addLabel="Add Department" />
+                    <CreatableSelect
+                      instanceId="edit-recruitment-allowed-departments"
+                      isMulti
+                      options={DEPARTMENTS.map((department) => ({ value: department, label: department }))}
+                      value={allowedDepartments.map((tag) => ({ value: tag.label, label: tag.label }))}
+                      onChange={handleDepartmentsChange}
+                      placeholder="Select or type to create a department..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
                   </div>
 
                   {/* Fellow Recruiters */}

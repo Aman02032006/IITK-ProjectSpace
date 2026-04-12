@@ -11,12 +11,20 @@ import { getProject, updateProject, deleteProject, addProjectMember, removeProje
 import { searchUsers } from "@/lib/profileApi";
 import { UserSummary } from "@/lib/projectApi";
 import ConfirmPopUp from "../../components/confirmPopUp";
+import CreatableSelect from "react-select/creatable";
+import type { MultiValue } from "react-select";
+import skillsData from "@/data/seed_skills.json";
 
 
 interface LinkEntry {
   id: string;
   value: string;
 }
+
+type SelectOption = {
+  value: string;
+  label: string;
+};
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback;
@@ -51,6 +59,7 @@ function EditProjectPageContent() {
   const [isSearchingUsers, setIsSearchingUsers]   = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const SKILLS = skillsData;
 
   // Pre-populate fields
   useEffect(() => {
@@ -126,12 +135,9 @@ function EditProjectPageContent() {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  // Domain helpers
-  const addTag = () => {
-    const tag = prompt("Enter a domain/tag:");
-    if (tag && tag.trim()) setDomains((prev) => [...prev, tag.trim()]);
+  const handleDomainsChange = (selectedOptions: MultiValue<SelectOption>) => {
+    setDomains(selectedOptions.map((option) => option.value));
   };
-  const removeTag = (tag: string) => setDomains((prev) => prev.filter((t) => t !== tag));
 
   // Link helpers
   const addLink = () => setLinks((prev) => [...prev, { id: Date.now().toString(), value: "" }]);
@@ -326,15 +332,16 @@ function EditProjectPageContent() {
                       Domains / Tags
                       <span className="pcf-label-hint">(Add tags that best describe the domains your project falls under.)</span>
                     </label>
-                    <div className="pcf-tags-row">
-                      {domains.map((tag) => (
-                        <span key={tag} className="pcf-tag">
-                          {tag}
-                          <button className="pcf-tag-remove" onClick={() => removeTag(tag)}>×</button>
-                        </span>
-                      ))}
-                      <button className="pcf-add-btn" onClick={addTag}><span className="pcf-add-icon">+</span> Add Tag</button>
-                    </div>
+                    <CreatableSelect
+                      instanceId="edit-project-domains-tags"
+                      isMulti
+                      options={SKILLS}
+                      value={domains.map((domain) => ({ value: domain, label: domain }))}
+                      onChange={handleDomainsChange}
+                      placeholder="Search or type to create a domain/tag..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
                   </div>
                 </section>
 
@@ -503,4 +510,5 @@ export default function EditProjectPage() {
     </Suspense>
   );
 }
+
 
