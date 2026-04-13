@@ -1,7 +1,7 @@
 from unittest.mock import patch
 from sqlmodel import select
 from models.user import User
-from models.comments import Comment
+from models.comment import Comment
 import uuid
 
 
@@ -123,7 +123,7 @@ def test_create_comment_sends_notification_to_post_creator(auth_client, session)
     payload = {"content": "Nice work!", "project_id": project["id"]}
 
     # auth_client IS the creator here — no notification should fire for self
-    with patch("routers.comments.create_notification") as mock_notify:
+    with patch("routers.comment.create_notification") as mock_notify:
         response = auth_client.post("/comments/", json=payload)
 
     assert response.status_code == 201
@@ -149,7 +149,7 @@ def test_create_reply_sends_notification_to_parent_author(auth_client, session):
         "parent_id": parent_id,
     }
 
-    with patch("routers.comments.create_notification") as mock_notify:
+    with patch("routers.comment.create_notification") as mock_notify:
         # Still auth_client here; in a real multi-user test you'd swap clients.
         # This at least exercises the notification path when authors differ.
         auth_client.post("/comments/", json=reply_payload)

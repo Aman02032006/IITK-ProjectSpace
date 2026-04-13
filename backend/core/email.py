@@ -22,6 +22,10 @@ async def send_otp_email(
         subject = "IITK ProjectSpace OTP Verification"
         title = "Password Reset Request"
         message_text = "We received a request to reset your password. Please use the verification code below to proceed:"
+    elif purpose == "secondary_email":
+        subject = "IITK ProjectSpace OTP Verification"
+        title = "Secondary Email Verification"
+        message_text = "We received a request to link this email as an alternative login for your IITK ProjectSpace account. Please use the verification code below to proceed:"
     else:
         subject = "IITK ProjectSpace OTP Verification"
         title = "Welcome to IITK ProjectSpace"

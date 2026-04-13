@@ -14,7 +14,7 @@ def create_user(session: Session, user_create: UserCreate) -> User:
     )
 
     session.add(db_user)
-    session.commit()
+    session.flush()
     session.refresh(db_user)
 
     return db_user
@@ -46,7 +46,7 @@ def update_user(session: Session, db_user: User, user_update: UserUpdate) -> Use
             setattr(db_user, key, value)
 
     session.add(db_user)
-    session.commit()
+    session.flush()
     session.refresh(db_user)
 
     return db_user

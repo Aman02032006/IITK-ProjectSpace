@@ -410,6 +410,10 @@
   color: #1c7657;
 }
 
+.notif-detail__action-state--danger {
+  color: #a53d2a;
+}
+
 .notif-detail__action-state--error {
   color: #a23a3a;
 }

@@ -1,4 +1,5 @@
 from sqlmodel import Session, select, func
+from sqlalchemy import update
 from typing import List, Tuple, Optional
 import uuid
 from models.notification import Notification
@@ -25,7 +26,7 @@ def create_notification(
         related_entity_id=related_entity_id,
     )
     session.add(notification)
-    session.commit()
+    session.flush()
     session.refresh(notification)
     return notification
 
@@ -73,7 +74,7 @@ def mark_notification_read(
     if notification and not notification.is_read:
         notification.is_read = True
         session.add(notification)
-        session.commit()
+        session.flush()
     return notification
 
 
@@ -88,18 +89,13 @@ def delete_notification(
     if not notification:
         return False
     session.delete(notification)
-    session.commit()
+    session.flush()
     return True
 
 
 def mark_all_read(session: Session, user_id: uuid.UUID) -> None:
-    notifications = session.exec(
-        select(Notification).where(
-            Notification.recipient_id == user_id, Notification.is_read == False
-        )
-    ).all()
-    for n in notifications:
-        n.is_read = True
-        session.add(n)
-    if notifications:
-        session.commit()
+    session.exec(
+        update(Notification)
+        .where(Notification.recipient_id == user_id, Notification.is_read == False)
+        .values(is_read=True)
+    )

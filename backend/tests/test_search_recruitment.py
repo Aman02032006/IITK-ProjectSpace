@@ -1,5 +1,5 @@
 from sqlmodel import select
-from models.recruitments import Recruitment
+from models.recruitment import Recruitment
 from models.user import User
 
 
@@ -105,7 +105,7 @@ def test_search_recruitments_domain_filter(auth_client, session):
     assert data["results"][0]["title"] == "Frontend Intern"
 
 def test_search_recruitments_default_open(auth_client, session):
-    from models.recruitments import Recruitment
+    from models.recruitment import Recruitment
     from models.user import User
 
     user = session.exec(select(User)).first()

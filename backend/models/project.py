@@ -88,4 +88,5 @@ class Project(ProjectBase, table=True):
 
     __table_args__ = (
         Index("ix_project_search_vector", "search_vector", postgresql_using="gin"),
+        Index("ix_project_domains_gin", "domains", postgresql_using="gin"),
     )

@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -21,7 +20,7 @@ import {
 } from "@/lib/recruitmentApi";
 import { fetchMyProfile } from "@/lib/profileApi";
 import "./NotificationDrawer.css";
-import ConfirmPopUp from "./confirmPopUp";
+import ConfirmPopup from "./ConfirmPopup";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const LIST_PAGE_SIZE = 25;
@@ -109,10 +108,10 @@ function resolveClientLink(link: string): string | null {
   if (link.startsWith("http://") || link.startsWith("https://")) return link;
 
   const projectMatch = link.match(/^\/projects\/([^/]+)/);
-  if (projectMatch?.[1]) return `/projectPage?id=${projectMatch[1]}`;
+  if (projectMatch?.[1]) return `/project-page?id=${projectMatch[1]}`;
 
   const recruitmentMatch = link.match(/^\/recruitments\/([^/]+)/);
-  if (recruitmentMatch?.[1]) return `/recruitmentPage?id=${recruitmentMatch[1]}`;
+  if (recruitmentMatch?.[1]) return `/recruitment-page?id=${recruitmentMatch[1]}`;
 
   return link;
 }
@@ -285,10 +284,6 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       setLoading(false);
     }
   }, [router, syncUnread]);
-
-  useEffect(() => {
-    void loadNotifications();
-  }, [loadNotifications]);
 
   useEffect(() => {
     if (!open) return;
@@ -554,7 +549,13 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
             </div>
 
             {selectedInviteHandledState && (
-              <p className="notif-detail__action-state notif-detail__action-state--success">
+              <p
+                className={`notif-detail__action-state ${
+                  selectedInviteHandledState === "rejected"
+                    ? "notif-detail__action-state--danger"
+                    : "notif-detail__action-state--success"
+                }`}
+              >
                 {selectedInviteHandledState === "accepted" && "Invitation accepted."}
                 {selectedInviteHandledState === "rejected" && "Invitation rejected."}
                 {selectedInviteHandledState === "resolved" && "Invitation already handled."}
@@ -602,9 +603,6 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
               ) : null}
               <button className="notif-detail__btn" onClick={onOpenTarget}>
                 Open Page
-              </button>
-              <button className="notif-detail__btn" onClick={closeDetail}>
-                Close Card
               </button>
             </div>
           </>
@@ -686,7 +684,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       </aside>
 
       {confirmDeleteId && (
-        <ConfirmPopUp
+        <ConfirmPopup
           heading="Delete Notification"
           message="Are you sure you want to delete this notification? This cannot be undone."
           confirmLabel="Delete"

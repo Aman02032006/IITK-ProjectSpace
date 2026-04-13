@@ -16,3 +16,5 @@ backend/uploads/
 *.rem
 projectspace-key.pem
 repomix-output.xml
+
+env.txt

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import "./Sidebar.css";
 import NotificationDrawer from "./NotificationDrawer";
+import { getNotifications } from "@/lib/notificationApi";
 
 /* Icon components */
 const HomeIcon = () => (
@@ -101,6 +102,28 @@ const Sidebar: React.FC<SidebarProps> = ({
     return defaultExpanded;
   });
 
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) return;
+
+    let cancelled = false;
+
+    const loadUnreadCount = async () => {
+      try {
+        const page = await getNotifications(1, 0);
+        if (!cancelled) setUnreadCount(page.unread_count);
+      } catch {
+        // Keep badge silent on fetch failures; drawer load handles retries.
+      }
+    };
+
+    void loadUnreadCount();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleClick = (id: string) => {
     onNavigate?.(id);
 
@@ -113,10 +136,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     setNotificationsOpen(false);
 
     const routes: Record<string, string> = {
-      home: "/homepage",
-      search: "/searchPage",
-      profile: "/profilePage",
-      create: "/postCreationForm",
+      home: "/home-page",
+      search: "/search-page",
+      profile: "/profile-page",
+      create: "/post-creation-form",
     };
 
     if(routes[id]) router.push(routes[id]);
@@ -126,6 +149,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     localStorage.removeItem("access_token");
     localStorage.removeItem("sidebar-expanded");
     setNotificationsOpen(false);
+    setUnreadCount(0);
     router.push("/auth");
   };
 

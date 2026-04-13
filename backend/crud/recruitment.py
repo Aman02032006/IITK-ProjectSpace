@@ -1,16 +1,14 @@
 from sqlmodel import Session, select, func
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
-from models.recruitments import Recruitment, Application, RecruitmentRecruiterLink
+from models.recruitment import Recruitment, Application, RecruitmentRecruiterLink
 from models.user import User
-from models.comments import Comment
-from schemas.recruitments import (
+from schemas.recruitment import (
     RecruitmentCreate,
     RecruitmentUpdate,
     ApplicationCreate,
     ApplicationUpdate,
 )
-from datetime import datetime
 from core.utils import now
 import uuid
 from typing import Sequence
@@ -19,7 +17,9 @@ from typing import Sequence
 
 
 def create_recruitment(
-    session: Session, recruitment_create: RecruitmentCreate, creator_id: uuid.UUID
+    session: Session,
+    recruitment_create: RecruitmentCreate,
+    creator_id: uuid.UUID,
 ) -> Recruitment:
     """Creates a new recruitment post and populates the Many-to-Many recruiter links."""
     db_recruitment = Recruitment(
@@ -37,8 +37,7 @@ def create_recruitment(
     )
 
     session.add(db_recruitment)
-    session.commit()
-    session.refresh(db_recruitment)
+    session.flush()
 
     # Add the creator as the first recruiter
     creator_link = RecruitmentRecruiterLink(
@@ -46,18 +45,17 @@ def create_recruitment(
     )
     session.add(creator_link)
 
-    if (
-        hasattr(recruitment_create, "recruiter_ids")
-        and recruitment_create.recruiter_ids
-    ):
+    seen_recruiter_ids: set[uuid.UUID] = {creator_id}
+    if hasattr(recruitment_create, "recruiter_ids") and recruitment_create.recruiter_ids:
         for fellow_id in recruitment_create.recruiter_ids:
-            if fellow_id != creator_id:
+            if fellow_id not in seen_recruiter_ids:
                 fellow_link = RecruitmentRecruiterLink(
                     recruitment_id=db_recruitment.id, user_id=fellow_id
                 )
                 session.add(fellow_link)
+                seen_recruiter_ids.add(fellow_id)
 
-    session.commit()
+    session.flush()
     session.refresh(db_recruitment)
     # Explicitly load creator so the response schema can read it
     db_recruitment.creator = session.get(User, creator_id)
@@ -72,26 +70,12 @@ def get_recruitment_by_id(
         select(Recruitment)
         .where(Recruitment.id == recruitment_id)
         .options(
-            selectinload(Recruitment.comments).selectinload(Comment.author),
+            selectinload(Recruitment.creator),
             selectinload(Recruitment.recruiters),
-            selectinload(Recruitment.applications).selectinload(Application.applicant),
+            selectinload(Recruitment.pending_recruiters),
         )
     )
-    """
-    Fetches a single recruitment post. Uses `selectinload` to eager-load 
-    nested relationships (comments, recruiters, applications) in a single database hit.
-    """
-    recruitment = session.exec(statement).first()
-    if recruitment and recruitment.creator is None:
-        recruitment.creator = session.get(User, recruitment.creator_id)
-    if recruitment:
-        for comment in recruitment.comments:
-            comment.reply_count = session.exec(
-                select(func.count())
-                .select_from(Comment)
-                .where(Comment.parent_id == comment.id)
-            ).one()
-    return recruitment
+    return session.exec(statement).first()
 
 
 def get_all_recruitments(
@@ -104,23 +88,24 @@ def get_all_recruitments(
         .limit(limit)
         .options(
             selectinload(Recruitment.creator),
-            selectinload(Recruitment.comments).selectinload(Comment.author),
+            selectinload(Recruitment.recruiters),
         )
     )
-    recruitments = session.exec(statement).all()
-    for recruitment in recruitments:
-        for comment in recruitment.comments:
-            comment.reply_count = session.exec(
-                select(func.count())
-                .select_from(Comment)
-                .where(Comment.parent_id == comment.id)
-            ).one()
-    return recruitments
+    return session.exec(statement).all()
 
 
 def count_recruitments(session: Session) -> int:
     statement = select(func.count()).select_from(Recruitment)
     return session.exec(statement).one()
+
+
+def recruitment_exists(session: Session, recruitment_id: uuid.UUID) -> bool:
+    return (
+        session.exec(
+            select(Recruitment.id).where(Recruitment.id == recruitment_id).limit(1)
+        ).first()
+        is not None
+    )
 
 
 def update_recruitment(
@@ -134,7 +119,7 @@ def update_recruitment(
     db_recruitment.updated_at = now()
 
     session.add(db_recruitment)
-    session.commit()
+    session.flush()
     session.refresh(db_recruitment)
     if db_recruitment.creator is None:
         db_recruitment.creator = session.get(User, db_recruitment.creator_id)
@@ -147,7 +132,6 @@ def delete_recruitment(session: Session, db_recruitment: Recruitment) -> None:
         Application.recruitment_id == db_recruitment.id
     ).delete()
     session.delete(db_recruitment)
-    session.commit()
 
 
 ## Application CRUD
@@ -177,7 +161,7 @@ def create_application(
     )
 
     session.add(db_application)
-    session.commit()
+    session.flush()
     session.refresh(db_application)
 
     return db_application
@@ -187,6 +171,37 @@ def get_application_by_id(
     session: Session, application_id: uuid.UUID
 ) -> Application | None:
     return session.get(Application, application_id)
+
+
+def get_recruitment_applications(
+    session: Session,
+    recruitment_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+) -> Sequence[Application]:
+    statement = (
+        select(Application)
+        .where(Application.recruitment_id == recruitment_id)
+        .order_by(Application.applied_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .options(selectinload(Application.applicant))
+    )
+    return session.exec(statement).all()
+
+
+def get_my_recruitment_application(
+    session: Session,
+    recruitment_id: uuid.UUID,
+    applicant_id: uuid.UUID,
+) -> Application | None:
+    statement = (
+        select(Application)
+        .where(Application.recruitment_id == recruitment_id)
+        .where(Application.applicant_id == applicant_id)
+        .options(selectinload(Application.recruitment))
+    )
+    return session.exec(statement).first()
 
 
 def update_application_status(
@@ -201,7 +216,7 @@ def update_application_status(
     db_application.status = app_update.status
 
     session.add(db_application)
-    session.commit()
+    session.flush()
     session.refresh(db_application)
 
     return db_application

@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, Field
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
-from core.utils import NotificationType
+from core.utils import NotificationType, now
 
 
 class Notification(SQLModel, table=True):
@@ -18,4 +18,4 @@ class Notification(SQLModel, table=True):
     related_entity_id: Optional[uuid.UUID] = Field(default=None)
     is_read: bool = Field(default=False)
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=now)

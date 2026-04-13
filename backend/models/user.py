@@ -7,7 +7,7 @@ import uuid
 
 from core.utils import Degree, Department, Designation, now
 from models.project import ProjectTeamLink
-from models.recruitments import RecruitmentRecruiterLink
+from models.recruitment import RecruitmentRecruiterLink
 
 
 class User(SQLModel, table=True):
@@ -74,4 +74,6 @@ class User(SQLModel, table=True):
 
     __table_args__ = (
         Index("ix_user_search_vector", "search_vector", postgresql_using="gin"),
+        Index("ix_user_skills_gin", "skills", postgresql_using="gin"),
+        Index("ix_user_domains_gin", "domains", postgresql_using="gin"),
     )

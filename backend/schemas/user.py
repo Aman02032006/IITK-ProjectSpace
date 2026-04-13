@@ -6,6 +6,16 @@ from datetime import datetime
 from core.utils import Degree, Department, Designation
 
 
+def validate_fullname_chars(v: Optional[str]) -> Optional[str]:
+    if v is not None:
+        # Only allow letters, spaces, dots, hyphens, and apostrophes
+        if not re.fullmatch(r"^[A-Za-z\s\.\-']+$", v):
+            raise ValueError(
+                "Full name can only contain letters, spaces, dots, hyphens, and apostrophes."
+            )
+    return v
+
+
 def validate_password_strength(v: str) -> str:
     if not re.search(r"[A-Z]", v):
         raise ValueError("Password must contain at least one uppercase letter.")
@@ -17,6 +27,7 @@ def validate_password_strength(v: str) -> str:
         raise ValueError("Password must contain at least one special character.")
     return v
 
+
 # Base User Model (Editable and Shared fields only)
 
 
@@ -25,12 +36,29 @@ class UserBase(BaseModel):
     fullname: Optional[str] = None
     iitk_email: EmailStr
 
+    @field_validator("fullname")
+    @classmethod
+    def validate_fullname(cls, v: Optional[str]) -> Optional[str]:
+        return validate_fullname_chars(v)
+
     @field_validator("iitk_email")
     @classmethod
     def validate_iitk_domain(cls, v: str) -> str:
         if not v.endswith("@iitk.ac.in"):
             raise ValueError("Only IITK Emails are allowed during registration.")
         return v
+
+
+# Secondary Email
+
+
+class SecondaryEmailRequest(BaseModel):
+    secondary_email: EmailStr
+
+
+class SecondaryEmailVerify(BaseModel):
+    secondary_email: EmailStr
+    otp_code: str
 
 
 # OTP Verification
@@ -92,14 +120,14 @@ class UserCreate(UserBase):
 
 
 class UserLogin(BaseModel):
-    iitk_email: EmailStr
+    identifier: str  # can be either email or username
     password: str
 
 
 # Edit Profile
 class UserUpdate(BaseModel):
 
-    fullname: Optional[str] = None
+    fullname: Optional[str] = Field(default=None, max_length=64)
     secondary_email: Optional[EmailStr] = None
 
     profile_picture_url: Optional[str] = None
@@ -116,6 +144,11 @@ class UserUpdate(BaseModel):
 
     skills: Optional[List[str]] = None
     domains: Optional[List[str]] = None
+
+    @field_validator("fullname")
+    @classmethod
+    def validate_fullname(cls, v: Optional[str]) -> Optional[str]:
+        return validate_fullname_chars(v)
 
 
 # what frontend gets for one's own profile

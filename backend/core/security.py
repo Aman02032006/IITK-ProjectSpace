@@ -47,4 +47,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def get_session():
     with Session(engine) as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            session.rollback()
+            raise

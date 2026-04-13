@@ -53,6 +53,17 @@ export interface ApplicationPublic {
   applied_at: string;
 }
 
+export interface MyRecruitmentApplicationPublic {
+  id: string;
+  recruitment_id: string;
+  message?: string;
+  status: "Pending" | "Accepted" | "Rejected";
+  applied_at: string;
+  recruitment_title: string;
+  recruitment_domains: string[];
+  recruitment_status: "Open" | "Closed";
+}
+
 export interface RecruitmentCreate {
   title: string;
   description: string;
@@ -96,7 +107,6 @@ export interface RecruitmentPublic {
   updated_at: string;
   recruiters: UserSummary[];
   pending_recruiters: UserSummary[];
-  applications: ApplicationPublic[];
 
   creator_id: string;
   creator_name: string;
@@ -146,7 +156,6 @@ export const normalizeRecruitmentPublic = (
   media_urls: (recruitment.media_urls ?? []).map((url) => toAbsoluteUrl(url) ?? url),
   recruiters: (recruitment.recruiters ?? []).map(normalizeUserSummary),
   pending_recruiters: (recruitment.pending_recruiters ?? []).map(normalizeUserSummary),
-  applications: (recruitment.applications ?? []).map(normalizeApplication),
   creator_avatar_url: toAbsoluteUrl(recruitment.creator_avatar_url) ?? null,
 });
 
@@ -299,6 +308,31 @@ export async function applyToRecruitment(recruitmentId: string, payload: Applica
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, "Failed to submit application"));
   return normalizeApplication(data as ApplicationPublic);
+}
+
+export async function getRecruitmentApplications(
+  recruitmentId: string,
+  skip = 0,
+  limit = 100
+): Promise<ApplicationPublic[]> {
+  const res = await fetch(`${API}/${recruitmentId}/applications?skip=${skip}&limit=${limit}`, {
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ([]));
+  if (!res.ok) throw new Error(extractError(data as ApiErrorData, "Failed to fetch applications"));
+  return (data as ApplicationPublic[]).map(normalizeApplication);
+}
+
+export async function getMyRecruitmentApplication(
+  recruitmentId: string
+): Promise<MyRecruitmentApplicationPublic | null> {
+  const res = await fetch(`${API}/${recruitmentId}/applications/me`, {
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(extractError(data as ApiErrorData, "Failed to fetch your application"));
+  if (!data) return null;
+  return data as MyRecruitmentApplicationPublic;
 }
 
 export async function updateApplicationStatus(

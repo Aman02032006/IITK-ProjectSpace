@@ -44,6 +44,8 @@ const XMedium = () => (
 );
 
 /* Header component */
+const SEARCH_FOCUS_ON_ARRIVAL_KEY = "focus-search-on-arrival";
+
 const Header: React.FC<HeaderProps> = ({
   showEditProfile = false,
   editHref,           
@@ -74,9 +76,13 @@ const Header: React.FC<HeaderProps> = ({
     if (query) params.set("q", query);
     const currentTab = currentParams.get("tab");
     if (currentTab) params.set("tab", currentTab);
-    const target = params.toString() ? `/searchPage?${params.toString()}` : "/searchPage";
-    if (pathname === "/searchPage") router.replace(target);
-    else router.push(target);
+    const target = params.toString() ? `/search-page?${params.toString()}` : "/search-page";
+    if (pathname === "/search-page") {
+      router.replace(target);
+    } else {
+      sessionStorage.setItem(SEARCH_FOCUS_ON_ARRIVAL_KEY, "1");
+      router.push(target);
+    }
   }, [currentParams, pathname, router]);
 
   // Close dropdown on outside click
@@ -91,12 +97,27 @@ const Header: React.FC<HeaderProps> = ({
 
   // Debounced search when not in tag mode
   useEffect(() => {
-    if (isSearchMode || pathname === "/searchPage") return;
+    if (isSearchMode || pathname === "/search-page") return;
     const query = localValue.trim();
     if (!query) return;
     const timer = setTimeout(() => submitSearch(query), 300);
     return () => clearTimeout(timer);
   }, [isSearchMode, pathname, localValue, submitSearch]);
+
+  // If user navigated to search from another page via header search, auto-focus input on arrival.
+  useEffect(() => {
+    if (pathname !== "/search-page") return;
+    if (sessionStorage.getItem(SEARCH_FOCUS_ON_ARRIVAL_KEY) !== "1") return;
+    sessionStorage.removeItem(SEARCH_FOCUS_ON_ARRIVAL_KEY);
+
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
+  }, [pathname]);
 
   // Filter suggestions
   const filteredSuggestions = searchSuggestions.filter(
@@ -192,7 +213,7 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* Profile edit button */}
       {showEditProfile && (
-        <Link href="/profilePage/editProfilePage" className="header__edit-btn">
+        <Link href="/profile-page/edit-profile-page" className="header__edit-btn">
           Edit Profile
         </Link>
       )}
