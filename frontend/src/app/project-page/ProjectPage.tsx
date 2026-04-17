@@ -346,9 +346,46 @@ const ProjectPageContent: React.FC = () => {
               {/* Media */}
               {project.media_urls.length > 0 && (
                 <div className={`project-media-grid${project.media_urls.length === 1 ? " single-media" : ""}`}>
-                  {project.media_urls.map((url, i) => (
-                    <img key={i} src={url} alt={`Project media ${i + 1}`} className="project-media-item" />
-                  ))}
+                  {project.media_urls.map((url, i) => {
+                    const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
+                    const isPdf = /\.pdf$/i.test(url); // <-- ADDED: PDF check
+                    
+                    if (isVideo) {
+                      return (
+                        <video 
+                          key={i} 
+                          src={url} 
+                          controls 
+                          className="project-media-item"
+                          style={{ backgroundColor: "#000" }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      );
+                    } 
+                    
+                    if (isPdf) {
+                      return (
+                        <iframe
+                          key={i}
+                          src={`${url}#toolbar=0`} // Optional: Hides the default PDF toolbar for a cleaner look
+                          className="project-media-item"
+                          title={`Project document ${i + 1}`}
+                          style={{ minHeight: "400px", backgroundColor: "#fff" }} // Gives the PDF enough room to read
+                        />
+                      );
+                    }
+
+                    // Fallback for everything else (Images)
+                    return (
+                      <img 
+                        key={i} 
+                        src={url} 
+                        alt={`Project media ${i + 1}`} 
+                        className="project-media-item" 
+                      />
+                    );
+                  })}
                 </div>
               )}
 
