@@ -66,7 +66,7 @@ The Test Document outlines the strategy, scope, and results of testing conducted
 
 The User Manual provides end-users with clear instructions on how to configure and use the software product. It includes step-by-step guides, feature overviews, troubleshooting tips, and usage examples to ensure a smooth user experience and effective utilization of the application.
 
-**Link to User Manual:** [IITK ProjectSpace User Manual](Documentation/IITK%20ProjectSpace%20User%20Manual)
+**Link to User Manual:** [IITK ProjectSpace User Manual](Documentation/IITK%20ProjectSpace%20User%20Manual.pdf)
 
 ### Final Presentation
 
