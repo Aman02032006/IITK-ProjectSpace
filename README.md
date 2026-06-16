@@ -36,26 +36,40 @@ The interface of the web app is intuitive and restricted strictly to the campus 
 | Shreyas Asthana | 241001 | shreyasa24@iitk.ac.in |
 | Sujal Satish Motagi | 241052 | sujalsm24@iitk.ac.in |
 
-## Access to Deployed web application
-
-You can click [this link](http://13.60.171.224:3000) to access the deployed version of this web application. Currently the webapp is deployed on an AWS EC2 linux server. 
-
 ## Software Documentation
 
 ### Software Requirement Specification Document
 
 The Software Requirements Specification (SRS) document describes what the software will do and how it will be expected to perform. It also describes the product's functionality to fulfil all stakeholders' needs.
 
-**Link to SRS:** [IITK ProjectSpace SRS Document](https://github.com/Aman02032006/IITK-ProjectSpace/blob/main/Documentation/IITK%20ProjectSpace%20Design%20Document.pdf)
+**Link to SRS:** [IITK ProjectSpace SRS Document](Documentation/IITK%20ProjectSpace%20Design%20Document.pdf)
 
 ### Software Design Document (SDD)
 
 The Software Design Document (SDD) describes software created to facilitate analysis, planning, implementation, and decision-making. This explains how the software product will be built to meet a set of technical requirements.
 
-**Link to SDD:** [IITK ProjectSpace Design Document](https://github.com/Aman02032006/IITK-ProjectSpace/blob/main/Documentation/IITK%20ProjectSpace%20SRS%20Document.pdf)
+**Link to SDD:** [IITK ProjectSpace Design Document](Documentation/IITK%20ProjectSpace%20SRS%20Document.pdf)
 
-### Implementation Document 
+### Software Implementation Document 
 
 The Implementation Document describes in detail the implementation details of the software, including description of the tech stack and reasoning behind the choice of the libraries used. It shows how to navigate the codebase. It also explains the code structure and the various different architectural blocks used to build the entire software.
 
-**Link to Implementation Doc:** [IITK ProjectSpace Implementation Document](https://github.com/Aman02032006/IITK-ProjectSpace/blob/main/Documentation/IITK%20ProjectSpace%20Implementation%20Document.pdf)
+**Link to Implementation Document:** [IITK ProjectSpace Implementation Document](Documentation/IITK%20ProjectSpace%20Implementation%20Document.pdf)
+
+### Software Test Document
+
+The Test Document outlines the strategy, scope, and results of testing conducted on a software product. It includes unit, integration, and system testing details, providing insights into test coverage, methodologies used, tools employed, and overall quality assurance efforts.
+
+**Link to Test Document:** [IITK ProjectSpace Test Document](Documentation/IITK%20ProjectSpace%20Software%20Test%20Document.pdf)
+
+### Software User Manual
+
+The User Manual provides end-users with clear instructions on how to configure and use the software product. It includes step-by-step guides, feature overviews, troubleshooting tips, and usage examples to ensure a smooth user experience and effective utilization of the application.
+
+**Link to User Manual:** [IITK ProjectSpace User Manual](Documentation/IITK%20ProjectSpace%20User%20Manual)
+
+### Final Presentation
+
+The final presentation provides a brief and engaging overview of the entire project. It features the basic requirements that the web application seeks to fulfill, the brief implementation details, outline of future development plans and important lessons we learned as a team.
+
+**Link to Final Presentation:** [IITK ProjectSpace Final Presentation](Documentation/IITK%20ProjectSpace%20Final%20Presentation.pptx)
