@@ -38,7 +38,7 @@ The interface of the web app is intuitive and restricted strictly to the campus 
 
 ## Software Documentation
 
-### Software Requirement Specification Document
+### Software Requirement Specification Document(SRS)
 
 The Software Requirements Specification (SRS) document describes what the software will do and how it will be expected to perform. It also describes the product's functionality to fulfil all stakeholders' needs.
 
